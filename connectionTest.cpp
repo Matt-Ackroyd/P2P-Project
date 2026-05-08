@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <strings.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include <openssl/evp.h>
+#define PORT 5000
+#define MAXLINE 1000
+
+int main(int argc, char const* argv[]) {
+
+
+    // EVP_PKEY *pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-KEM-768");
+
+    // unsigned char *out = NULL;
+    // size_t secretlen = 0;
+
+    // EVP_PKEY_get_raw_private_key(pkey, out, &secretlen);
+
+    // printf("");
+
+    //Create a UDP Socket
+    char buffer[100];
+    char *message = "Hello Client";
+    int listenfd, len;
+    struct sockaddr_in servaddr, cliaddr;
+    bzero(&servaddr, sizeof(servaddr));
+
+    // Create a UDP Socket
+    listenfd = socket(AF_INET, SOCK_DGRAM, 0);        
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_family = AF_INET; 
+ 
+    // bind server address to socket descriptor
+    bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+     
+    //receive the datagram
+    // waiting for response
+    recvfrom(listenfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
+    puts(buffer);
+
+}
