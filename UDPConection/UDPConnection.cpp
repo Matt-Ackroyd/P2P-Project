@@ -1,11 +1,11 @@
 #include "UDPConnection.h"
 
-void UDPConnection::connectTo() {
+void UDPConnection::connectTo(char const *addr) {
     struct sockaddr_in servaddr;
     
     // clear servaddr
     bzero(&servaddr, sizeof(servaddr));
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_addr.s_addr = inet_addr(addr);
     servaddr.sin_port = htons(PORT);
     servaddr.sin_family = AF_INET;
 
@@ -20,6 +20,6 @@ void UDPConnection::connectTo() {
     cout << "Connected\n";
 }
 
-void UDPConnection::send() {
-    sendto(this->s, "FUCK", sizeof("FUCK"), 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+void UDPConnection::send(char const *message) {
+    sendto(this->s, message, MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 }

@@ -9,7 +9,7 @@
 #define PORT 5000
 #define MAXLINE 1000
 
-int main(int argc, char const* argv[]) {
+void ServerTest() {
 
 
     // EVP_PKEY *pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-KEM-768");
@@ -38,8 +38,9 @@ int main(int argc, char const* argv[]) {
     bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
      
     //receive the datagram
-    // waiting for response
-    recvfrom(listenfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
+    len = sizeof(cliaddr);
+    int n = recvfrom(listenfd, buffer, sizeof(buffer),
+            0, (struct sockaddr*)&cliaddr,(socklen_t*)&len); //receive message from server
+    buffer[n] = '\0';
     puts(buffer);
-
 }

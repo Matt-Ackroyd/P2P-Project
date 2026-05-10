@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 
 #define PORT 5000
+#define MAXLINE 1000
 
 using namespace std;
 
@@ -14,6 +15,6 @@ class UDPConnection {
     // Socket s
     int s;
     public:       
-        void connectTo();  
-        void send();
+        void connectTo(char const *addr);  
+        void send(char const *message);
 };

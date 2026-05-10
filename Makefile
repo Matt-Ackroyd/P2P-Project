@@ -1,2 +1,0 @@
-connectionTest: connectionTest.c
-	cc 
