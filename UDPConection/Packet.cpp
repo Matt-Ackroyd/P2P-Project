@@ -35,7 +35,7 @@ char* Packet::encaplulate() {
 
     // Add Data to Output
     offset += sizeof(this->dataType);
-    memcpy(this->encaplulatedPacket+offset, &this->data, this->dataLength);
+    memcpy(this->encaplulatedPacket+offset, this->data, this->dataLength);
 
     return this->encaplulatedPacket;
 }
@@ -43,18 +43,19 @@ char* Packet::encaplulate() {
 void Packet::dencapsulate(char* recivedPacket) {
     //TODO Safty Checks
     long unsigned int offset = 0;
-    memcpy(recivedPacket+offset, &this->seqNum, sizeof(this->seqNum));
-    cout << "\nSeq NUM: " << this->seqNum;
+    memcpy(&this->seqNum, recivedPacket+offset, sizeof(this->seqNum));
 
     offset += sizeof(this->seqNum);
-    memcpy(recivedPacket+offset, &this->dataLength, sizeof(this->dataLength));
+    memcpy(&this->dataLength, recivedPacket+offset, sizeof(this->dataLength));
 
-    offset += sizeof(this->seqNum);
-    memcpy(recivedPacket+offset, &this->dataType, sizeof(this->dataType));
+    offset += sizeof(this->dataLength);
+    memcpy(&this->dataType, recivedPacket+offset, sizeof(this->dataType));
 
-    offset += sizeof(this->seqNum);
+    offset += sizeof(this->dataType);
     this->data = new char[dataLength];
-    memcpy(recivedPacket+offset, this->data, sizeof(this->dataLength));
+    memcpy(this->data, recivedPacket+offset, this->dataLength);
+
+    
 
 }
 

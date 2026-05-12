@@ -50,9 +50,18 @@ void ServerTest() {
         
     }
 
-    Packet a;
-    a.dencapsulate(buffer);
+    Packet b;
+    b.dencapsulate(buffer);
     
-    a.getData()[a.getDataLength()-1] = '\0';
-    puts(a.getData());
+    cout << "Seq Num: " << b.getSeqNum() << "\n";
+    cout << "DataType: " << b.getDataType() << "\n";
+    cout << "DataLength: " << b.getDataLength() << "\n";
+    cout << "Data: \n";
+    for (unsigned long int i = 0; i < b.getDataLength(); i++) {
+        printf("0x%02x", b.getData()[i]);
+        cout << "  " << b.getData()[i];
+        cout << "  " << i;
+        cout << "\n";
+    }
+    cout << "Output: " << b.getData() << "\n";
 }
