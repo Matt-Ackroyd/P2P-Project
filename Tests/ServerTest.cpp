@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "../UDPConection/Packet.h"
 
 #include <openssl/evp.h>
 #define PORT 5000
@@ -23,8 +24,7 @@ void ServerTest() {
 
     //Create a UDP Socket
     char buffer[100];
-    char *message = "Hello Client";
-    int listenfd, len;
+    int listenfd;
     struct sockaddr_in servaddr, cliaddr;
     bzero(&servaddr, sizeof(servaddr));
 
@@ -38,9 +38,21 @@ void ServerTest() {
     bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
      
     //receive the datagram
-    len = sizeof(cliaddr);
+    socklen_t len = sizeof(cliaddr);
     int n = recvfrom(listenfd, buffer, sizeof(buffer),
-            0, (struct sockaddr*)&cliaddr,(socklen_t*)&len); //receive message from server
-    buffer[n] = '\0';
-    puts(buffer);
+            0, (struct sockaddr*)&cliaddr,&len);
+
+    cout << "Data: \n";
+    for (unsigned long int i = 0; i <n; i++) {
+        printf("0x%02x", buffer[i]);
+        cout << "  " << buffer[i];
+        cout << "\n";
+        
+    }
+
+    Packet a;
+    a.dencapsulate(buffer);
+    
+    a.getData()[a.getDataLength()-1] = '\0';
+    puts(a.getData());
 }
