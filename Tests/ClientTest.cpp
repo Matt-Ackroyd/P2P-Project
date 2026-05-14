@@ -1,5 +1,5 @@
-#include "../UDPConection/UDPConnection.cpp"
-#include "../UDPConection/Packet.h"
+#include "../UDPConnection/UDPConnection.cpp"
+#include "../UDPConnection/Packet.h"
 using namespace std;
 
 void ClientTest() {
@@ -19,6 +19,6 @@ void ClientTest() {
         cout << "\n";
     }
     test.send(b.encaplulate());
-    b.cleanup();
+    b.cleanupAfterSend();
     cout << "sent\n";
 }

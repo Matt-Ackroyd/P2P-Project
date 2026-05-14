@@ -12,8 +12,11 @@ void Packet::innit(int SeqNum, char* Data, long unsigned int DataLength, DataTyp
 
 }
 
-void Packet::cleanup() {
+void Packet::cleanupAfterSend() {
     delete this->encaplulatedPacket;
+}
+
+void Packet::cleanupAfterReceive() {
     delete this->data;
 }
 

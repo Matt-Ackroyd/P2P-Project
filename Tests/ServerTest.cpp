@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "../UDPConection/Packet.h"
+#include "../UDPConnection/Packet.h"
 
 #include <openssl/evp.h>
 #define PORT 5000
@@ -43,7 +43,7 @@ void ServerTest() {
             0, (struct sockaddr*)&cliaddr,&len);
 
     cout << "Data: \n";
-    for (unsigned long int i = 0; i <n; i++) {
+    for (unsigned long int i = 0; i < n; i++) {
         printf("0x%02x", buffer[i]);
         cout << "  " << buffer[i];
         cout << "\n";

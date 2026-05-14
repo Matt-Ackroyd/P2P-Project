@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdio.h>
-#include "../UDPConection/Packet.cpp"
+#include "../UDPConnection/Packet.cpp"
 
 
 using namespace std;

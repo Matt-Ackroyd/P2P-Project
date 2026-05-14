@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <string>
+#include <cstring>
 
 using namespace std;
 
@@ -25,7 +26,8 @@ class Packet {
         void innit(int SeqNum, char* Data, long unsigned int dataLength, DataType datatype);
         char* encaplulate();  
         void dencapsulate(char* data);
-        void cleanup();
+        void cleanupAfterSend();
+        void cleanupAfterReceive ();
 
         int getSeqNum();
         long unsigned int getDataLength();
