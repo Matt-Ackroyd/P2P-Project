@@ -8,14 +8,18 @@ using namespace std;
 
 enum DataType
 {
+    ACK,
     MESSAGE,
-    ACK
+    LARGEFILE // Rename??
 };
 
 
 class Packet {
     // Socket s
     int seqNum;
+    int senderID;
+    int serverID;
+    int channelID;
     long unsigned int dataLength;
     DataType dataType;
     char* data;
@@ -23,13 +27,14 @@ class Packet {
     char* encaplulatedPacket;
     long unsigned int packetLength;
     public:       
-        void innit(int SeqNum, char* Data, long unsigned int dataLength, DataType datatype);
+        void innit(char* Data, long unsigned int dataLength, DataType datatype);
         char* encaplulate();  
         void dencapsulate(char* data);
         void cleanupAfterSend();
         void cleanupAfterReceive ();
 
         int getSeqNum();
+        void setSeqNum(int SeqNum);
         long unsigned int getDataLength();
         DataType getDataType();
         char* getData();

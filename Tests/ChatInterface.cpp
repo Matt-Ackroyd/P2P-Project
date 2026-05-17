@@ -14,9 +14,11 @@ void ChatInterface() {
     cout << "SendingPort: ";
     cin >> test.SendingPort;
 
+    test.enableIncomingTraffic(port);
+
 
     // Setup Connections
-    thread t(test.startReceiving, port);
+    
     test.connectTo("127.0.0.1");
 
     
@@ -35,5 +37,5 @@ void ChatInterface() {
         packetToSend.cleanupAfterSend();
     }
 
-    t.join();
+    test.recvThread.join();
 }

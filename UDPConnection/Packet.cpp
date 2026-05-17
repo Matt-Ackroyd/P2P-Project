@@ -4,8 +4,7 @@
 // int data type       4 bytes
 // data                arbitrary
 
-void Packet::innit(int SeqNum, char* Data, long unsigned int DataLength, DataType datatype) {
-    this->seqNum = SeqNum;
+void Packet::innit(char* Data, long unsigned int DataLength, DataType datatype) {
     this->dataType = datatype;
     this->data = Data;
     this->dataLength = DataLength;
@@ -64,6 +63,9 @@ void Packet::dencapsulate(char* recivedPacket) {
 
 int Packet::getSeqNum() {
     return this->seqNum;
+}
+void Packet::setSeqNum(int SeqNum) {
+    this->seqNum = SeqNum;
 }
 long unsigned int Packet::getDataLength() {
     return this->dataLength;
