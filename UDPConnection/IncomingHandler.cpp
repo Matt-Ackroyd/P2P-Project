@@ -4,7 +4,7 @@ void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUs
     packet.getSeqNum();
     // Create an ack packet and send it back
     Packet ack;
-    ack.innit(nullptr, 0, DataType::ACK);
+    ack.innit(nullptr, 0, PacketType::ACK);
     ack.setSeqNum(this->nextExpectedSeqNum);
     sendto(connectedUser.sock, ack.encaplulate(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 }
@@ -62,7 +62,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
 void IncomingHandler::handlePacket(Packet incomingPacket, UDPConnection connectedUser) {
     // Find assosiated user to this packet
     // If the incoming packet is an ACK then remove all packets before the acked one from the sending buffer
-    if (incomingPacket.getDataType() == DataType::ACK) {
+    if (incomingPacket.getPacketType() == PacketType::ACK) {
         
         for (int i = 0; i < connectedUser.sendingBuffer.size(); i++) {
             // Remove any packet that was acknowlaged by the cumulitive ack

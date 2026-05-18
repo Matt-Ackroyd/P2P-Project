@@ -4,40 +4,49 @@
 #include <string>
 #include <cstring>
 
+#include <openssl/aes.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
 using namespace std;
 
-enum DataType
+#define AES_256_KEY_LENGTH      32
+#define AES_256_KEY_LENGTH_BITS 256
+#define AES_256_IVEC_LENGTH     16
+#define AES_256_GCM_TAG_LENGTH  16
+
+enum PacketType
 {
-    ACK,
-    MESSAGE,
-    LARGEFILE // Rename??
+    PACKET,
+    ACK
 };
 
 
 class Packet {
-    // Socket s
+private:
+    PacketType packetType;
     int seqNum;
     int senderID;
-    int serverID;
-    int channelID;
     long unsigned int dataLength;
-    DataType dataType;
     char* data;
 
     char* encaplulatedPacket;
     long unsigned int packetLength;
-    public:       
-        void innit(char* Data, long unsigned int dataLength, DataType datatype);
-        char* encaplulate();  
-        void dencapsulate(char* data);
-        void cleanupAfterSend();
-        void cleanupAfterReceive ();
+public:       
+    void innit(char* Data, long unsigned int dataLength, PacketType PacketType);
+    char* encaplulate();  
+    void dencapsulate(char* data);
+    void cleanupAfterSend();
+    void cleanupAfterReceive();
 
-        int getSeqNum();
-        void setSeqNum(int SeqNum);
-        long unsigned int getDataLength();
-        DataType getDataType();
-        char* getData();
-        long unsigned int getPacketLength();
+    void encrypt(const unsigned char* plaintext, const unsigned char* key);
+    void decrypt(const unsigned char* key);
+
+    int getSeqNum();
+    void setSeqNum(int SeqNum);
+    long unsigned int getDataLength();
+    PacketType getPacketType();
+    char* getData();
+    long unsigned int getPacketLength();
 
 };
