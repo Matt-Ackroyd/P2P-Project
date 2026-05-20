@@ -141,7 +141,7 @@ int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
 
 
 
-int main() {
+int main2() {
     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
     unsigned char iv[] = {1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8};
     unsigned char iv2[] = {1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,9,1,1};
