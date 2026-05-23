@@ -7,6 +7,7 @@ using namespace std;
 class Server {
     vector<User> knownUsers;
     vector<User> onlineUsers;
+    vector<string> activeInvitations;
 
     public: 
         int addUser(User user);

@@ -10,15 +10,13 @@
 
 using namespace std;
 
-#define AES_256_KEY_LENGTH      32
-#define AES_256_KEY_LENGTH_BITS 256
-#define AES_256_IVEC_LENGTH     16
-#define AES_256_GCM_TAG_LENGTH  16
+
 
 enum PacketType
 {
     PACKET,
-    ACK
+    ACK,
+    CONNECTION_REQUEST
 };
 
 
