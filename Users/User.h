@@ -1,7 +1,7 @@
 // Other Users within a server
 #include <vector>
 #include <string>
-#include "../UDPConnection/UDPConnection.h"
+#include "../UDPConnection/SendingPackets/UDPConnection.h"
 
 using namespace std;
 

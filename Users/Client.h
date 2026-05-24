@@ -2,7 +2,7 @@
 // Acts as class that stores information about this particular client, where user refers to other clients 
 #pragma once
 #include "Server.h"
-#include "../UDPConnection/IncomingHandler.h"
+#include "../UDPConnection/ReceivingPackets/IncomingHandler.h"
 #include <vector>
 #include <openssl/evp.h>
 #include <mutex>
@@ -27,4 +27,5 @@ public:
     Client(const Client& obj) = delete;
     static Client* getInstance();
     int registerUser();
+    EVP_PKEY* getKeyPair();
 };

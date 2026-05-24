@@ -41,72 +41,50 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         recvfrom(socketfd, buffer, sizeof(buffer),
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
-        // Revove the IV, Mac and UserID here
-
-        UDPConnection filler;
-
-        // Decrypt Here
-
         Packet incomingPacket;
         incomingPacket.dencapsulate(buffer);
 
-        // Packet Handling
-        this->handlePacket(incomingPacket, filler);
-    
+        // Remove the UserID here
 
+        // Handle Diffrent Packet Types
+        switch(incomingPacket.getPacketType()) {
+            case PacketType::ACK:
+                break;
+            case PacketType::CONNECTION_REQUEST:
+                break;
+            case PacketType::CONNECTION_RESPONSE:
+                break;
+            case PacketType::PACKET:
+                this->handlePacket(incomingPacket);
+                break;
+            default:
+                cout << "Something is not right\n";
+                exit(1);
+        }
         incomingPacket.cleanupAfterReceive();
     }
     
 }
 
-void IncomingHandler::handlePacket(Packet incomingPacket, UDPConnection connectedUser) {
-    // Find assosiated user to this packet
-    // If the incoming packet is an ACK then remove all packets before the acked one from the sending buffer
-    if (incomingPacket.getPacketType() == PacketType::ACK) {
-        
-        for (int i = 0; i < connectedUser.sendingBuffer.size(); i++) {
-            // Remove any packet that was acknowlaged by the cumulitive ack
-            if (connectedUser.sendingBuffer.front().getSeqNum() < incomingPacket.getSeqNum()) {
-                connectedUser.sendingBuffer.pop_front();
-            }
-        }
-        // Early return because we dont need to do anything else with an ack packet
-        return;
-    }
-
-    // If this packet is the one we are expecting update SeqNum
-    if (this->nextExpectedSeqNum == incomingPacket.getSeqNum()) {
-        this->nextExpectedSeqNum+1;
-    }
-
-    // Acknowlage the packet 
-    this->acknowledgePacket(incomingPacket, connectedUser);
-
+void IncomingHandler::handlePacket(Packet incomingPacket) { 
+    // TODO Make sure this is per user
     //Ignore duplicates
     if (this->nextExpectedSeqNum != incomingPacket.getSeqNum()) {
         return;
     }
 
-    
-    // Handle Diffrent Packet Types
-    switch(incomingPacket.getPacketType()) {
-        case PacketType::ACK:
-            break;
-        case PacketType::CONNECTION_REQUEST:
-            break;
-        case PacketType::CONNECTION_RESPONSE:
-            break;
-        case PacketType::PACKET:
-            break;
-        default:
-            cout << "Something is not right\n";
-            exit(1);
-        
+    // Acknowlage the packet 
+    this->acknowledgePacket(incomingPacket, connectedUser);
+
+    // Revove the IV, Mac
+
+    // Decrypt Here
+    if (!symmetricDecryption()) {
+        exit(1);
     }
 
 
-
-
+    // Do Stuff here
     if (incomingPacket.getDataType() == DataType::LARGEFILE) {
         // If the incoming file is larger than the maxsize
         int size = incomingPacket.getDataLength();
@@ -117,4 +95,52 @@ void IncomingHandler::handlePacket(Packet incomingPacket, UDPConnection connecte
         ofstream myfile ("Test.png", ios::out | ios::app | ios::binary);
         myfile.write(incomingPacket.getData(), size);
     }
+
+}
+
+
+void IncomingHandler::handleConnectionRequest(Packet packet) {
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey;
+    size_t secretlen = 0, outlen = 0;
+
+    // Get Rand & Key
+    packet.getData();
+
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+    if (ctx == NULL) {
+        return;
+    }
+
+    if (!EVP_PKEY_encapsulate_init(ctx, NULL)) {
+        return;
+    }
+
+    EVP_PKEY_encapsulate(ctx, NULL, &outlen, NULL, &secretlen);
+    unsigned char out[outlen], secret[secretlen];
+    if (EVP_PKEY_encapsulate(ctx, out, &outlen, secret, &secretlen) < 1) {
+        return;
+    }
+
+    // Create an ID???? for them and a user structure to remember them
+    // Create a reponse packet and send it back
+
+    
+}
+
+void IncomingHandler::handleConnectionResponse(Packet packet) {
+    EVP_PKEY_CTX *ctx = NULL;
+    Client* client = Client::getInstance();
+
+    // Get 
+
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, client->getKeyPair(), NULL);
+
+    cout << "Dencapsulate Innit: " << EVP_PKEY_decapsulate_init(ctx, NULL) << "\n";
+
+    size_t sLen;
+    cout << "Dencapsulate Size Check: " << EVP_PKEY_decapsulate(ctx, NULL, &sLen, out, outlen) << "\n";
+    unsigned char sharedSecret[sLen];
+    cout << sLen << "\n";
+    EVP_PKEY_decapsulate(ctx, sharedSecret, &sLen, out, outlen)
 }

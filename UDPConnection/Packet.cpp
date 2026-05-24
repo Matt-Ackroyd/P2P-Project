@@ -1,15 +1,15 @@
 #include "Packet.h"
 
 
-void Packet::innit(char* Data, long unsigned int DataLength, PacketType packetType) {
+void Packet::innit(unsigned char* Data, long unsigned int DataLength, PacketType packetType) {
     this->packetType = packetType;
     this->data = Data;
     this->dataLength = DataLength;
 }
 
-char* Packet::encaplulate() {
+unsigned char* Packet::encaplulate() {
     this->packetLength = sizeof(this->seqNum) + sizeof(this->dataLength) + sizeof(this->packetType) + this->dataLength;
-    this->encaplulatedPacket = new char[this->packetLength];    
+    this->encaplulatedPacket = new unsigned char[this->packetLength];    
 
     // TODO add safty checks
     // Add SeqNum to Output 
@@ -30,7 +30,7 @@ char* Packet::encaplulate() {
     return this->encaplulatedPacket;
 }
 
-void Packet::dencapsulate(char* recivedPacket) {
+void Packet::dencapsulate(unsigned char* recivedPacket) {
     //TODO Safty Checks
     long unsigned int offset = 0;
     memcpy(&this->seqNum, recivedPacket+offset, sizeof(this->seqNum));
@@ -42,7 +42,7 @@ void Packet::dencapsulate(char* recivedPacket) {
     memcpy(&this->packetType, recivedPacket+offset, sizeof(this->packetType));
 
     offset += sizeof(this->packetType);
-    this->data = new char[dataLength];
+    this->data = new unsigned char[dataLength];
     memcpy(this->data, recivedPacket+offset, this->dataLength);
 
     
@@ -61,7 +61,7 @@ long unsigned int Packet::getDataLength() {
 PacketType Packet::getPacketType() {
     return this->packetType;
 }
-char* Packet::getData() {
+unsigned char* Packet::getData() {
     return this->data;
 }
 long unsigned int Packet::getPacketLength() {

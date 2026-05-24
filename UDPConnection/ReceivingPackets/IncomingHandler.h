@@ -11,7 +11,9 @@
 #include <fstream>
 
 #include "Packet.h"
+#include "Encryption/Encryption.h"
 #include "UDPConnection.h"
+#include "../../Users/Client.h"
 
 #define MAXLINE 1000
 
@@ -27,6 +29,11 @@ class IncomingHandler {
         // Bool to accept Incoming messages from other clients
         bool acceptIncoming;
         void startReceiving(int ReceivingPort);
-        void handlePacket(Packet packet, UDPConnection connectedUser);
+        void handlePacket(Packet packet);
         deque<Packet> ReceivingBuffer;
+
+        void handleAck(Packet packet);
+        void handleConnectionRequest(Packet packet);
+        void handleConnectionResponse(Packet packet);
+        void handleRegularPacket(Packet packet);
 };

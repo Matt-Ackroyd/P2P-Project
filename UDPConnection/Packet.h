@@ -26,26 +26,25 @@ private:
     PacketType packetType;
     int seqNum;
     int senderID;
+    unsigned char* IV;
+    unsigned char* MAC;
     long unsigned int dataLength;
-    char* data;
+    unsigned char* data;
 
-    char* encaplulatedPacket;
+    unsigned char* encaplulatedPacket;
     long unsigned int packetLength;
 public:       
-    void innit(char* Data, long unsigned int dataLength, PacketType PacketType);
-    char* encaplulate();  
-    void dencapsulate(char* data);
+    void innit(unsigned char* Data, long unsigned int dataLength, PacketType PacketType);
+    unsigned char* encaplulate();  
+    void dencapsulate(unsigned char* data);
     void cleanupAfterSend();
     void cleanupAfterReceive();
-
-    void encrypt(const unsigned char* plaintext, const unsigned char* key);
-    void decrypt(const unsigned char* key);
 
     int getSeqNum();
     void setSeqNum(int SeqNum);
     long unsigned int getDataLength();
     PacketType getPacketType();
-    char* getData();
+    unsigned char* getData();
     long unsigned int getPacketLength();
 
 };

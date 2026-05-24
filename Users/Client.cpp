@@ -11,6 +11,10 @@ Client* Client::getInstance() {
     return instancePtr;
 }
 
+EVP_PKEY* Client::getKeyPair() {
+    return this->keyPair;
+}
+
 int Client::registerUser() {
     
 }
