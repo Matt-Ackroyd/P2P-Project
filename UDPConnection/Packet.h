@@ -16,7 +16,8 @@ enum PacketType
 {
     PACKET,
     ACK,
-    CONNECTION_REQUEST
+    CONNECTION_REQUEST,
+    CONNECTION_RESPONSE
 };
 
 

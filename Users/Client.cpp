@@ -10,3 +10,7 @@ Client* Client::getInstance() {
     }
     return instancePtr;
 }
+
+int Client::registerUser() {
+    
+}

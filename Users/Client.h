@@ -4,6 +4,7 @@
 #include "Server.h"
 #include "../UDPConnection/IncomingHandler.h"
 #include <vector>
+#include <openssl/evp.h>
 #include <mutex>
 
 using namespace std;
@@ -13,6 +14,7 @@ private:
     vector<Server> allServers;
     string defaultUsername;
     IncomingHandler incomingHandler;
+    EVP_PKEY *keyPair;
 
     // Static pointer to the Singleton instance
     static Client* instancePtr;
@@ -24,4 +26,5 @@ public:
     // Deleting the copy constructor to prevent copies
     Client(const Client& obj) = delete;
     static Client* getInstance();
+    int registerUser();
 };

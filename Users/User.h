@@ -10,7 +10,6 @@ class User {
     string Username;
     int id;
 
-
     vector<string> knownEndpoints;
     UDPConnection connection;
 

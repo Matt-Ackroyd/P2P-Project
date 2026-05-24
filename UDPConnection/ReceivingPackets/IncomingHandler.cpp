@@ -88,10 +88,24 @@ void IncomingHandler::handlePacket(Packet incomingPacket, UDPConnection connecte
     }
 
     
-    // Handle Diffrent Data Types
-    if (incomingPacket.getDataType() == DataType::MESSAGE) {
-        cout << "\nOther: " << incomingPacket.getData() << "\n";
+    // Handle Diffrent Packet Types
+    switch(incomingPacket.getPacketType()) {
+        case PacketType::ACK:
+            break;
+        case PacketType::CONNECTION_REQUEST:
+            break;
+        case PacketType::CONNECTION_RESPONSE:
+            break;
+        case PacketType::PACKET:
+            break;
+        default:
+            cout << "Something is not right\n";
+            exit(1);
+        
     }
+
+
+
 
     if (incomingPacket.getDataType() == DataType::LARGEFILE) {
         // If the incoming file is larger than the maxsize
