@@ -25,7 +25,6 @@ class Packet {
 private:
     PacketType packetType;
     int seqNum;
-    int senderID;
     unsigned char* IV;
     unsigned char* MAC;
     long unsigned int dataLength;
@@ -34,6 +33,8 @@ private:
     unsigned char* encaplulatedPacket;
     long unsigned int packetLength;
 public:       
+    int senderID;
+    
     void innit(unsigned char* Data, long unsigned int dataLength, PacketType PacketType);
     unsigned char* encaplulate();  
     void dencapsulate(unsigned char* data);

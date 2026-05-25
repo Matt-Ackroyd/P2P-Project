@@ -36,6 +36,7 @@ int main() {
 
     unsigned char out[outlen], secret[secretlen];
     cout << "status: " << EVP_PKEY_encapsulate(ctx, out, &outlen, secret, &secretlen) << "\n";
+    cout << "OutLen: " << outlen << "\n";
 
     FILE *a;
     a = fopen("KEM-ML_Secret.bin", "wb");

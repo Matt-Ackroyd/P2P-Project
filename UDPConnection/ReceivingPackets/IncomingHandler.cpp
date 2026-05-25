@@ -19,7 +19,7 @@ void IncomingHandler::enableIncomingTraffic(int ReceivingPort) {
 // Recive loop
 void IncomingHandler::startReceiving(int ReceivingPort)
 {
-    char buffer[MAXLINE]; 
+    unsigned char buffer[MAXLINE]; 
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
 
@@ -45,6 +45,9 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         incomingPacket.dencapsulate(buffer);
 
         // Remove the UserID here
+        incomingPacket.senderID;
+        User connectedUser;
+
 
         // Handle Diffrent Packet Types
         switch(incomingPacket.getPacketType()) {
@@ -55,7 +58,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
             case PacketType::CONNECTION_RESPONSE:
                 break;
             case PacketType::PACKET:
-                this->handlePacket(incomingPacket);
+                this->handlePacket(incomingPacket, connectedUser);
                 break;
             default:
                 cout << "Something is not right\n";
@@ -66,7 +69,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     
 }
 
-void IncomingHandler::handlePacket(Packet incomingPacket) { 
+void IncomingHandler::handlePacket(Packet incomingPacket, User connectedUser) { 
     // TODO Make sure this is per user
     //Ignore duplicates
     if (this->nextExpectedSeqNum != incomingPacket.getSeqNum()) {
@@ -74,7 +77,7 @@ void IncomingHandler::handlePacket(Packet incomingPacket) {
     }
 
     // Acknowlage the packet 
-    this->acknowledgePacket(incomingPacket, connectedUser);
+    this->acknowledgePacket(incomingPacket, connectedUser.connection);
 
     // Revove the IV, Mac
 
@@ -83,18 +86,16 @@ void IncomingHandler::handlePacket(Packet incomingPacket) {
         exit(1);
     }
 
+    // Get DataType
+    DataTypes packetDataType;
 
-    // Do Stuff here
-    if (incomingPacket.getDataType() == DataType::LARGEFILE) {
-        // If the incoming file is larger than the maxsize
-        int size = incomingPacket.getDataLength();
-        if (incomingPacket.getDataLength() > MAXLINE) {
-            size = MAXLINE;
-        }
-
-        ofstream myfile ("Test.png", ios::out | ios::app | ios::binary);
-        myfile.write(incomingPacket.getData(), size);
+    switch (packetDataType) {
+        case DataTypes::MESSAGE:
+            break;
+        case DataTypes::FILE:
+            break;
     }
+    
 
 }
 
@@ -131,6 +132,7 @@ void IncomingHandler::handleConnectionRequest(Packet packet) {
 void IncomingHandler::handleConnectionResponse(Packet packet) {
     EVP_PKEY_CTX *ctx = NULL;
     Client* client = Client::getInstance();
+    size_t outlen = 1568;
 
     // Get 
 
@@ -142,5 +144,5 @@ void IncomingHandler::handleConnectionResponse(Packet packet) {
     cout << "Dencapsulate Size Check: " << EVP_PKEY_decapsulate(ctx, NULL, &sLen, out, outlen) << "\n";
     unsigned char sharedSecret[sLen];
     cout << sLen << "\n";
-    EVP_PKEY_decapsulate(ctx, sharedSecret, &sLen, out, outlen)
+    EVP_PKEY_decapsulate(ctx, sharedSecret, &sLen, out, outlen);
 }
