@@ -1,9 +1,11 @@
-#include "../UDPConnection/UDPConnection.h"
+#include "../UDPConnection/SendingPackets/UDPConnection.h"
+#include "../UDPConnection/ReceivingPackets/IncomingHandler.h"
 
 using namespace std;
 
 void ChatInterface() {
     UDPConnection test;
+    IncomingHandler a;
     string input;
 
     // Allow for testing on single machine
@@ -14,7 +16,7 @@ void ChatInterface() {
     cout << "SendingPort: ";
     cin >> test.SendingPort;
 
-    test.enableIncomingTraffic(port);
+    a.enableIncomingTraffic(port);
 
 
     // Setup Connections
@@ -26,16 +28,15 @@ void ChatInterface() {
         // User input
         getline(cin, input);
 
-        // Send User Input
-        char message[input.length()+1];
-        strcpy(message, input.c_str());
+        // Send User Input;
+        unsigned char* message = (unsigned char*)input.c_str();
 
 
-        Packet packetToSend;
-        packetToSend.innit(0, message, sizeof(message), MESSAGE);
-        test.send(packetToSend.encaplulate());
-        packetToSend.cleanupAfterSend();
+        Packet packetToSend(0, PacketType::PACKET);
+        
+        sendto(test.sock, packetToSend.serialize(message, sizeof(message), NULL, NULL), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+        //test.send(packetToSend.serialize(message, sizeof(message), NULL, NULL));
     }
 
-    test.recvThread.join();
+    a.recvThread.join();
 }

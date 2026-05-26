@@ -3,10 +3,9 @@
 void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUser) {
     packet.getSeqNum();
     // Create an ack packet and send it back
-    Packet ack;
-    ack.innit(nullptr, 0, PacketType::ACK);
-    ack.setSeqNum(this->nextExpectedSeqNum);
-    sendto(connectedUser.sock, ack.encaplulate(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    Packet ack(this->nextExpectedSeqNum, PacketType::ACK);
+
+    sendto(connectedUser.sock, ack.serialize(NULL, 0, NULL, NULL), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 }
 
 
@@ -41,8 +40,8 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         recvfrom(socketfd, buffer, sizeof(buffer),
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
-        Packet incomingPacket;
-        incomingPacket.dencapsulate(buffer);
+        Packet incomingPacket(-1, PacketType::NONE);
+        incomingPacket.deserialize(buffer);
 
         // Remove the UserID here
         incomingPacket.senderID;
@@ -64,7 +63,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
                 cout << "Something is not right\n";
                 exit(1);
         }
-        incomingPacket.cleanupAfterReceive();
+        delete &incomingPacket;
     }
     
 }
@@ -77,7 +76,7 @@ void IncomingHandler::handlePacket(Packet incomingPacket, User connectedUser) {
     }
 
     // Acknowlage the packet 
-    this->acknowledgePacket(incomingPacket, connectedUser.connection);
+    //this->acknowledgePacket(incomingPacket, connectedUser.connection);
 
     // Revove the IV, Mac
 
@@ -90,9 +89,9 @@ void IncomingHandler::handlePacket(Packet incomingPacket, User connectedUser) {
     DataTypes packetDataType;
 
     switch (packetDataType) {
-        case DataTypes::MESSAGE:
+        case DataTypes::MESSAGETYPE:
             break;
-        case DataTypes::FILE:
+        case DataTypes::FILETYPE:
             break;
     }
     
@@ -132,7 +131,10 @@ void IncomingHandler::handleConnectionRequest(Packet packet) {
 
     // Create an ID???? for them and a user structure to remember them
     // Create a reponse packet and send it back
-
+    Client* client = Client::getInstance();
+    
+    // Add Temp User
+    User tmpUser;
     
 }
 

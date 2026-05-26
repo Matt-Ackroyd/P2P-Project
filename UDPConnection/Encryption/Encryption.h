@@ -1,3 +1,4 @@
+#pragma once
 #include <openssl/evp.h>
 #include <iostream>
 using namespace std;

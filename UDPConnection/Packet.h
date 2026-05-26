@@ -4,21 +4,17 @@
 #include <string>
 #include <cstring>
 
-#include <openssl/aes.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
+#include "Encryption/Encryption.h"
 
 using namespace std;
-
-#define MACSIZE 10
-#define IVSIZE 10
 
 enum PacketType
 {
     PACKET,
     ACK,
     CONNECTION_REQUEST,
-    CONNECTION_RESPONSE
+    CONNECTION_RESPONSE,
+    NONE
 };
 
 
@@ -26,8 +22,8 @@ class Packet {
 private:
     PacketType packetType;
     int seqNum;
-    unsigned char IV[IVSIZE];
-    unsigned char MAC[MACSIZE];
+    unsigned char IV[AES_256_IV_LENGTH];
+    unsigned char MAC[AES_256_GCM_TAG_LENGTH];
     unsigned char* data;
 
 public:       

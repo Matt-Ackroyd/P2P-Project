@@ -10,11 +10,11 @@
 #include <deque>
 #include <fstream>
 
-#include "Packet.h"
-#include "Encryption/Encryption.h"
-#include "UDPConnection.h"
+#include "../Packet.h"
+#include "../Encryption/Encryption.h"
+#include "../SendingPackets/UDPConnection.h"
 #include "../../Users/Client.h"
-#include "DataTypes/DataTypes.h"
+#include "../DataTypes/DataTypes.h"
 
 #define MAXLINE 1000
 #define KEYLENGTH 1568

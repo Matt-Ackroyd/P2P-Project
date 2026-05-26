@@ -10,7 +10,7 @@
 #include <deque>
 #include <fstream>
 
-#include "Packet.h"
+#include "../Packet.h"
 
 #define MAXLINE 1000
 
@@ -18,10 +18,11 @@ using namespace std;
 
 class UDPConnection {
 private:
-    int SendingPort = 5000;
-    int currentSeqNum;
+    
 
-public:     
+public:    
+    int SendingPort = 5000;
+    int currentSeqNum; 
     int sock;
     void connectTo(char const *addr);  
     void send(Packet packet);

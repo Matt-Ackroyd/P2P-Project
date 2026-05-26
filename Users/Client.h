@@ -13,7 +13,7 @@ class Client {
 private:
     vector<Server> allServers;
     string defaultUsername;
-    IncomingHandler incomingHandler;
+    //IncomingHandler incomingHandler;
     EVP_PKEY *keyPair;
 
     // Static pointer to the Singleton instance

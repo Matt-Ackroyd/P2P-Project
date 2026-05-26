@@ -1,8 +1,8 @@
 
 
 enum DataTypes {
-    MESSAGE,
-    FILE
+    MESSAGETYPE,
+    FILETYPE
 };
 
 

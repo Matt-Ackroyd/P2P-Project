@@ -9,7 +9,7 @@ Packet::Packet(int seqNum, PacketType packetType) {
 
 
 unsigned char* Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
-    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(dataLen) + IVSIZE + dataLen + MACSIZE;
+    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(dataLen) + AES_256_IV_LENGTH + dataLen + AES_256_GCM_TAG_LENGTH;
     this->data = new unsigned char[packetLength];    
 
     // Add Packet Type to Output
@@ -26,15 +26,15 @@ unsigned char* Packet::serialize(unsigned char* unserializedData, int dataLen, u
 
     // IV
     offset += sizeof(dataLen);
-    memcpy(this->data+offset, IV, IVSIZE);
+    memcpy(this->data+offset, IV, AES_256_IV_LENGTH);
 
     // Add Data to Output
-    offset += IVSIZE;
+    offset += AES_256_IV_LENGTH;
     memcpy(this->data+offset, unserializedData, dataLen);
 
     // MAC
     offset += dataLen;
-    memcpy(this->data+offset, IV, IVSIZE);
+    memcpy(this->data+offset, MAC, AES_256_GCM_TAG_LENGTH);
 
     return this->data;
 }
@@ -57,16 +57,16 @@ int Packet::deserialize(unsigned char* serializedData) {
 
     // IV
     offset += sizeof(dataLen);
-    memcpy(this->IV, serializedData+offset, IVSIZE);
+    memcpy(this->IV, serializedData+offset, AES_256_IV_LENGTH);
 
     // Data
-    offset += IVSIZE;
+    offset += AES_256_IV_LENGTH;
     this->data = new unsigned char[dataLen];
     memcpy(this->data, serializedData+offset, dataLen);
 
     // MAC
     offset += dataLen;
-    memcpy(this->MAC, serializedData+offset, MACSIZE);
+    memcpy(this->MAC, serializedData+offset, AES_256_GCM_TAG_LENGTH);
 
     return dataLen;
 

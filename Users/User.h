@@ -13,5 +13,5 @@ class User {
     vector<string> knownEndpoints;
     UDPConnection connection;
 
-    char* sharedSecret;
+    unsigned char* sharedSecret;
 };

@@ -21,14 +21,14 @@ void UDPConnection::connectTo(char const *addr) {
 }
 
 void UDPConnection::send(Packet packet) {
-    // Update SeqNumbers
-    packet.setSeqNum(this->currentSeqNum);
-    this->currentSeqNum += 1;
+    // // Update SeqNumbers
+    // packet.setSeqNum(this->currentSeqNum);
+    // this->currentSeqNum += 1;
 
-    // Add Packet to buffer until its acknowlaged
-    this->sendingBuffer.push_back(packet);
+    // // Add Packet to buffer until its acknowlaged
+    // this->sendingBuffer.push_back(packet);
 
-    // Send Over Socket
-    sendto(this->sock, packet.encaplulate(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    // // Send Over Socket
+    // sendto(this->sock, packet.encaplulate(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 
 }
