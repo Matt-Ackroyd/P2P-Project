@@ -105,8 +105,15 @@ void IncomingHandler::handleConnectionRequest(Packet packet) {
     EVP_PKEY *pkey;
     size_t secretlen = 0, outlen = 0;
 
-    // Get Rand & Key
-    packet.getData();
+    // Get Rand & Public Key
+    unsigned int rand;
+    memcpy(&rand, packet.getData(), sizeof(unsigned int));
+    unsigned char rawKey[KEYLENGTH];
+    memcpy(rawKey, packet.getData()+sizeof(unsigned int), KEYLENGTH);
+
+
+
+    pkey = EVP_PKEY_new_raw_public_key(NULL, NULL, rawKey, KEYLENGTH);
 
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
     if (ctx == NULL) {
@@ -132,17 +139,22 @@ void IncomingHandler::handleConnectionRequest(Packet packet) {
 void IncomingHandler::handleConnectionResponse(Packet packet) {
     EVP_PKEY_CTX *ctx = NULL;
     Client* client = Client::getInstance();
-    size_t outlen = 1568;
+    
 
-    // Get 
+    // Get pre-master & Random Values
+    unsigned int rand;
+    memcpy(&rand, packet.getData(), sizeof(unsigned int));
+    unsigned char* out;
+    memcpy(out, packet.getData()+sizeof(unsigned int), KEYLENGTH);
+
 
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, client->getKeyPair(), NULL);
 
     cout << "Dencapsulate Innit: " << EVP_PKEY_decapsulate_init(ctx, NULL) << "\n";
 
     size_t sLen;
-    cout << "Dencapsulate Size Check: " << EVP_PKEY_decapsulate(ctx, NULL, &sLen, out, outlen) << "\n";
+    cout << "Dencapsulate Size Check: " << EVP_PKEY_decapsulate(ctx, NULL, &sLen, out, KEYLENGTH) << "\n";
     unsigned char sharedSecret[sLen];
     cout << sLen << "\n";
-    EVP_PKEY_decapsulate(ctx, sharedSecret, &sLen, out, outlen);
+    EVP_PKEY_decapsulate(ctx, sharedSecret, &sLen, out, KEYLENGTH);
 }

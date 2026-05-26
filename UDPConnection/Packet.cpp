@@ -1,49 +1,78 @@
 #include "Packet.h"
 
 
-void Packet::innit(unsigned char* Data, long unsigned int DataLength, PacketType packetType) {
+Packet::Packet(int seqNum, PacketType packetType) {
+    this->seqNum = seqNum;
     this->packetType = packetType;
-    this->data = Data;
-    this->dataLength = DataLength;
+
 }
 
-unsigned char* Packet::encaplulate() {
-    this->packetLength = sizeof(this->seqNum) + sizeof(this->dataLength) + sizeof(this->packetType) + this->dataLength;
-    this->encaplulatedPacket = new unsigned char[this->packetLength];    
 
-    // TODO add safty checks
+unsigned char* Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
+    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(dataLen) + IVSIZE + dataLen + MACSIZE;
+    this->data = new unsigned char[packetLength];    
+
+    // Add Packet Type to Output
+    long unsigned int offset = 0;
+    memcpy(this->data+offset, &this->packetType, sizeof(this->packetType));
+
     // Add SeqNum to Output 
-    memcpy(this->encaplulatedPacket, &this->seqNum, sizeof(this->seqNum));
+    offset += sizeof(this->packetType);
+    memcpy(this->data+offset, &this->seqNum, sizeof(this->seqNum));
 
     // Add Data Length to Output
-    long unsigned int offset = sizeof(this->seqNum);
-    memcpy(this->encaplulatedPacket+offset, &this->dataLength, sizeof(this->dataLength));
+    offset += sizeof(this->seqNum);
+    memcpy(this->data+offset, &dataLen, sizeof(dataLen));
 
-    // Add Data Type to Output
-    offset += sizeof(this->dataLength);
-    memcpy(this->encaplulatedPacket+offset, &this->packetType, sizeof(this->packetType));
+    // IV
+    offset += sizeof(dataLen);
+    memcpy(this->data+offset, IV, IVSIZE);
 
     // Add Data to Output
-    offset += sizeof(this->packetType);
-    memcpy(this->encaplulatedPacket+offset, this->data, this->dataLength);
+    offset += IVSIZE;
+    memcpy(this->data+offset, unserializedData, dataLen);
 
-    return this->encaplulatedPacket;
+    // MAC
+    offset += dataLen;
+    memcpy(this->data+offset, IV, IVSIZE);
+
+    return this->data;
 }
 
-void Packet::dencapsulate(unsigned char* recivedPacket) {
-    //TODO Safty Checks
+// Returns data length
+int Packet::deserialize(unsigned char* serializedData) {
+    int dataLen;
+
+    // PacketType
     long unsigned int offset = 0;
-    memcpy(&this->seqNum, recivedPacket+offset, sizeof(this->seqNum));
+    memcpy(&this->packetType, serializedData+offset, sizeof(this->packetType));
 
-    offset += sizeof(this->seqNum);
-    memcpy(&this->dataLength, recivedPacket+offset, sizeof(this->dataLength));
-
-    offset += sizeof(this->dataLength);
-    memcpy(&this->packetType, recivedPacket+offset, sizeof(this->packetType));
-
+    // Seqence Number
     offset += sizeof(this->packetType);
-    this->data = new unsigned char[dataLength];
-    memcpy(this->data, recivedPacket+offset, this->dataLength);
+    memcpy(&this->seqNum, serializedData+offset, sizeof(this->seqNum));
+
+    // DataLength
+    offset += sizeof(this->seqNum);
+    memcpy(&dataLen, serializedData+offset, sizeof(dataLen));
+
+    // IV
+    offset += sizeof(dataLen);
+    memcpy(this->IV, serializedData+offset, IVSIZE);
+
+    // Data
+    offset += IVSIZE;
+    this->data = new unsigned char[dataLen];
+    memcpy(this->data, serializedData+offset, dataLen);
+
+    // MAC
+    offset += dataLen;
+    memcpy(this->MAC, serializedData+offset, MACSIZE);
+
+    return dataLen;
+
+    
+    
+    
 
     
 
@@ -52,27 +81,16 @@ void Packet::dencapsulate(unsigned char* recivedPacket) {
 int Packet::getSeqNum() {
     return this->seqNum;
 }
-void Packet::setSeqNum(int SeqNum) {
-    this->seqNum = SeqNum;
-}
-long unsigned int Packet::getDataLength() {
-    return this->dataLength;
-}
 PacketType Packet::getPacketType() {
     return this->packetType;
 }
 unsigned char* Packet::getData() {
     return this->data;
 }
-long unsigned int Packet::getPacketLength() {
-    return this->packetLength;
-}
 
 
-void Packet::cleanupAfterSend() {
-    delete this->encaplulatedPacket;
-}
-void Packet::cleanupAfterReceive() {
+
+Packet::~Packet() {
     delete this->data;
 }
 

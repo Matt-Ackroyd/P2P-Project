@@ -20,6 +20,8 @@ int main() {
     // Public key
 
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+    EVP_PKEY_get_raw_public_key(pkey, NULL, &publen);
+    cout << "Public Key length: " << publen << "\n";
     //EVP_PKEY_new_raw_private_key(); // Imports
 
     if (ctx == NULL) {

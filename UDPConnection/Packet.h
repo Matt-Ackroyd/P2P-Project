@@ -10,7 +10,8 @@
 
 using namespace std;
 
-
+#define MACSIZE 10
+#define IVSIZE 10
 
 enum PacketType
 {
@@ -25,27 +26,20 @@ class Packet {
 private:
     PacketType packetType;
     int seqNum;
-    unsigned char* IV;
-    unsigned char* MAC;
-    long unsigned int dataLength;
+    unsigned char IV[IVSIZE];
+    unsigned char MAC[MACSIZE];
     unsigned char* data;
 
-    unsigned char* encaplulatedPacket;
-    long unsigned int packetLength;
 public:       
     int senderID;
-    
-    void innit(unsigned char* Data, long unsigned int dataLength, PacketType PacketType);
-    unsigned char* encaplulate();  
-    void dencapsulate(unsigned char* data);
-    void cleanupAfterSend();
-    void cleanupAfterReceive();
+
+    Packet(int seqNum, PacketType packetType);
+    ~Packet();
+
+    unsigned char* serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
+    int deserialize(unsigned char* serializedData);
 
     int getSeqNum();
-    void setSeqNum(int SeqNum);
-    long unsigned int getDataLength();
     PacketType getPacketType();
     unsigned char* getData();
-    long unsigned int getPacketLength();
-
 };

@@ -17,6 +17,7 @@
 #include "DataTypes/DataTypes.h"
 
 #define MAXLINE 1000
+#define KEYLENGTH 1568
 
 using namespace std;
 
