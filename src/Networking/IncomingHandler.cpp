@@ -40,16 +40,16 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         recvfrom(socketfd, buffer, sizeof(buffer),
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
-        Packet incomingPacket(-1, PacketType::NONE);
-        incomingPacket.deserialize(buffer);
+        Packet *incomingPacket = new Packet(-1, PacketType::NONE);
+        incomingPacket->deserialize(buffer);
 
         // Remove the UserID here
-        incomingPacket.senderID;
-        User connectedUser;
+        incomingPacket->senderID;
+        RemoteUser connectedUser;
 
 
         // Handle Diffrent Packet Types
-        switch(incomingPacket.getPacketType()) {
+        switch(incomingPacket->getPacketType()) {
             case PacketType::ACK:
                 break;
             case PacketType::CONNECTION_REQUEST:
@@ -57,7 +57,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
             case PacketType::CONNECTION_RESPONSE:
                 break;
             case PacketType::PACKET:
-                this->handlePacket(incomingPacket, connectedUser);
+                //this->handlePacket(incomingPacket, connectedUser);
                 break;
             default:
                 cout << "Something is not right\n";
@@ -68,7 +68,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     
 }
 
-void IncomingHandler::handlePacket(Packet incomingPacket, User connectedUser) { 
+void IncomingHandler::handlePacket(Packet incomingPacket, RemoteUser connectedUser) { 
     // TODO Make sure this is per user
     //Ignore duplicates
     if (this->nextExpectedSeqNum != incomingPacket.getSeqNum()) {
@@ -81,9 +81,9 @@ void IncomingHandler::handlePacket(Packet incomingPacket, User connectedUser) {
     // Revove the IV, Mac
 
     // Decrypt Here
-    if (!symmetricDecryption()) {
-        exit(1);
-    }
+    // if (!symmetricDecryption()) {
+    //     exit(1);
+    // }
 
     // Get DataType
     DataTypes packetDataType;
@@ -131,16 +131,16 @@ void IncomingHandler::handleConnectionRequest(Packet packet) {
 
     // Create an ID???? for them and a user structure to remember them
     // Create a reponse packet and send it back
-    Client* client = Client::getInstance();
+    PrimaryClient* client = PrimaryClient::getInstance();
     
     // Add Temp User
-    User tmpUser;
+    RemoteUser tmpUser;
     
 }
 
 void IncomingHandler::handleConnectionResponse(Packet packet) {
     EVP_PKEY_CTX *ctx = NULL;
-    Client* client = Client::getInstance();
+    PrimaryClient* client = PrimaryClient::getInstance();
     
 
     // Get pre-master & Random Values

@@ -12,7 +12,4 @@ using namespace std;
 int symmetricEncryption();
 int symmetricDecryption();
 
-void handleErrors() {
-    cout << "We Messed Up\n";
-    exit(1);
-}
+void handleErrors();

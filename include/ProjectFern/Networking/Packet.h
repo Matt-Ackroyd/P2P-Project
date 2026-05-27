@@ -4,7 +4,7 @@
 #include <string>
 #include <cstring>
 
-#include "Encryption/Encryption.h"
+#include "Encryption.h"
 
 using namespace std;
 

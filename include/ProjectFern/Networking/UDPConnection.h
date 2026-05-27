@@ -10,7 +10,7 @@
 #include <deque>
 #include <fstream>
 
-#include "../Packet.h"
+#include "Packet.h"
 
 #define MAXLINE 1000
 

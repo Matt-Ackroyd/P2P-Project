@@ -10,11 +10,11 @@
 #include <deque>
 #include <fstream>
 
-#include "../Packet.h"
-#include "../Encryption/Encryption.h"
-#include "../SendingPackets/UDPConnection.h"
-#include "../../Users/Client.h"
-#include "../DataTypes/DataTypes.h"
+#include "Packet.h"
+#include "Encryption.h"
+#include "UDPConnection.h"
+#include "PrimaryClient.h"
+#include "DataTypes.h"
 
 #define MAXLINE 1000
 #define KEYLENGTH 1568
@@ -33,8 +33,8 @@ class IncomingHandler {
         void startReceiving(int ReceivingPort);
         deque<Packet> ReceivingBuffer;
 
-        void handleAck(Packet packet, User connectedUser);
+        void handleAck(Packet packet, RemoteUser connectedUser);
         void handleConnectionRequest(Packet packet);
         void handleConnectionResponse(Packet packet);
-        void handlePacket(Packet packet, User connectedUser);
+        void handlePacket(Packet packet, RemoteUser connectedUser);
 };

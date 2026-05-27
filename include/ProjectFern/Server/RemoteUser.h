@@ -1,12 +1,12 @@
 // Other Users within a server
 #include <vector>
 #include <string>
-#include "../UDPConnection/SendingPackets/UDPConnection.h"
+#include "UDPConnection.h"
 
 using namespace std;
 
 
-class User {
+class RemoteUser {
     string Username;
     int id;
 

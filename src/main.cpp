@@ -1,5 +1,4 @@
-#include "Tests/ChatInterface.cpp"
-//#include "UDPConnection/SendingPackets/UDPConnection.h"
+#include "../Tests/ChatInterface.cpp"
 
 using namespace std;
 

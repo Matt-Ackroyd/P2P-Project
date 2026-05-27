@@ -130,4 +130,8 @@ int symmetricDecryption(unsigned char *ciphertext, int ciphertext_len,
 }
 
 
+void handleErrors() {
+    cout << "We Messed Up\n";
+    exit(1);
+}
 

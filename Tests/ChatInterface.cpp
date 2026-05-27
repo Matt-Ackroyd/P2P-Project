@@ -1,5 +1,5 @@
-#include "../UDPConnection/SendingPackets/UDPConnection.h"
-#include "../UDPConnection/ReceivingPackets/IncomingHandler.h"
+#include "UDPConnection.h"
+#include "IncomingHandler.h"
 
 using namespace std;
 

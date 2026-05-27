@@ -2,14 +2,14 @@
 // Acts as class that stores information about this particular client, where user refers to other clients 
 #pragma once
 #include "Server.h"
-#include "../UDPConnection/ReceivingPackets/IncomingHandler.h"
+#include "IncomingHandler.h"
 #include <vector>
 #include <openssl/evp.h>
 #include <mutex>
 
 using namespace std;
 
-class Client {
+class PrimaryClient {
 private:
     vector<Server> allServers;
     string defaultUsername;
@@ -17,15 +17,15 @@ private:
     EVP_PKEY *keyPair;
 
     // Static pointer to the Singleton instance
-    static Client* instancePtr;
+    static PrimaryClient* instancePtr;
     // Mutex to ensure thread safety
     static mutex mtx;
     // Private Constructor
-    Client() {}
+    PrimaryClient() {}
 public:
     // Deleting the copy constructor to prevent copies
-    Client(const Client& obj) = delete;
-    static Client* getInstance();
+    PrimaryClient(const PrimaryClient& obj) = delete;
+    static PrimaryClient* getInstance();
     int registerUser();
     EVP_PKEY* getKeyPair();
 };
