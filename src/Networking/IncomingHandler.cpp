@@ -35,6 +35,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     int a = bind(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
     cout << " Bind Return: \n" << a;
 
+    this->acceptIncoming = true;
     while (this->acceptIncoming)
     {
         recvfrom(socketfd, buffer, sizeof(buffer),
