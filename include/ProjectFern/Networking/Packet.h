@@ -32,7 +32,7 @@ public:
     Packet(int seqNum, PacketType packetType);
     ~Packet();
 
-    unsigned char* serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
+    int serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
     int deserialize(unsigned char* serializedData);
 
     int getSeqNum();

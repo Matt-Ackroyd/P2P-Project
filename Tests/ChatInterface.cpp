@@ -16,7 +16,7 @@ void ChatInterface() {
     cout << "SendingPort: ";
     cin >> test.SendingPort;
 
-    //a.enableIncomingTraffic(port);
+    a.enableIncomingTraffic(port);
 
 
     // Setup Connections
@@ -31,11 +31,14 @@ void ChatInterface() {
 
         // Send User Input;
         unsigned char* message = (unsigned char*)input.c_str();
-
-
-        Packet packetToSend(123, PacketType::PACKET);
         
-        sendto(test.sock, packetToSend.serialize(message, sizeof(message), NULL, NULL), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+        Packet *packetToSend = new Packet(123, PacketType::PACKET);
+
+        int packetlen = packetToSend->serialize(message, input.length()+1, NULL, NULL);
+        
+        
+        
+        sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
         //test.send(packetToSend.serialize(message, sizeof(message), NULL, NULL));
     }
 

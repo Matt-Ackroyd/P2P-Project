@@ -4,8 +4,9 @@ void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUs
     packet.getSeqNum();
     // Create an ack packet and send it back
     Packet ack(this->nextExpectedSeqNum, PacketType::ACK);
+    ack.serialize(NULL, 0, NULL, NULL);
 
-    sendto(connectedUser.sock, ack.serialize(NULL, 0, NULL, NULL), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    sendto(connectedUser.sock, ack.getData(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 }
 
 
@@ -42,7 +43,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
         Packet *incomingPacket = new Packet(-1, PacketType::NONE);
-        incomingPacket->deserialize(buffer);
+        int datalen = incomingPacket->deserialize(buffer);
 
         // Remove the UserID here
         incomingPacket->senderID;
@@ -58,13 +59,18 @@ void IncomingHandler::startReceiving(int ReceivingPort)
             case PacketType::CONNECTION_RESPONSE:
                 break;
             case PacketType::PACKET:
+                cout << "Other: ";
+                for (int i = 0; i < datalen; i++) {
+                    cout << incomingPacket->getData()[i];
+                }
+                cout << "\n";
                 //this->handlePacket(incomingPacket, connectedUser);
                 break;
             default:
                 cout << "Something is not right\n";
                 exit(1);
         }
-        delete &incomingPacket;
+        delete incomingPacket;
     }
     
 }

@@ -4,22 +4,22 @@
 Packet::Packet(int seqNum, PacketType packetType) {
     this->seqNum = seqNum;
     this->packetType = packetType;
-
+    //this->data = new unsigned char[10];
 }
 
 
-unsigned char* Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
-    unsigned char controlVar = 0;
+int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
+    unsigned char controlVar = (char)0;
     size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(dataLen) + dataLen + sizeof(controlVar);
 
     // Control variable to let the reciver know to expect the IV(1), MAC(2) or both(3)
     if (IV != NULL) {
         packetLength + AES_256_IV_LENGTH;
-        controlVar += 1;
+        controlVar += (char)1;
     }
     if (MAC != NULL) {
         packetLength + AES_256_GCM_TAG_LENGTH;
-        controlVar += 2;
+        controlVar += (char)2;
     }
 
     this->data = new unsigned char[packetLength];    
@@ -43,7 +43,7 @@ unsigned char* Packet::serialize(unsigned char* unserializedData, int dataLen, u
     offset += dataLen;
 
     // Iv/Mac Control val
-    memcpy(this->data+offset, &controlVar, dataLen);
+    memcpy(this->data+offset, &controlVar, sizeof(controlVar));
     offset += sizeof(controlVar);
 
     // IV
@@ -57,7 +57,7 @@ unsigned char* Packet::serialize(unsigned char* unserializedData, int dataLen, u
         memcpy(this->data+offset, MAC, AES_256_GCM_TAG_LENGTH);
     }
 
-    return this->data;
+    return packetLength;
 }
 
 // Returns data length
@@ -84,7 +84,7 @@ int Packet::deserialize(unsigned char* serializedData) {
 
     // Iv/Mac Control val
     unsigned char controlVal;
-    memcpy(&controlVal, serializedData+offset, dataLen);
+    memcpy(&controlVal, serializedData+offset, sizeof(controlVal));
     offset += sizeof(controlVal);
 
     // IV (only if it was sent)
@@ -101,13 +101,6 @@ int Packet::deserialize(unsigned char* serializedData) {
     }
 
     return dataLen;
-
-    
-    
-    
-
-    
-
 }
 
 int Packet::getSeqNum() {
@@ -123,7 +116,7 @@ unsigned char* Packet::getData() {
 
 
 Packet::~Packet() {
-    //delete this->data;
+    delete[] this->data;
 }
 
 
