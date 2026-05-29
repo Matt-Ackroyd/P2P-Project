@@ -33,8 +33,8 @@ class IncomingHandler {
         void startReceiving(int ReceivingPort);
         deque<Packet> ReceivingBuffer;
 
-        void handleAck(Packet packet, RemoteUser connectedUser);
+        void handleAck(Packet packet, UDPConnection connectedUser);
         void handleConnectionRequest(Packet packet);
         void handleConnectionResponse(Packet packet);
-        void handlePacket(Packet packet, RemoteUser connectedUser);
+        void handlePacket(UDPConnection connectedUser, Packet *packet, int datalen);
 };

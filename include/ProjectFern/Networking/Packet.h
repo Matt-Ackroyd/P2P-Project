@@ -38,4 +38,6 @@ public:
     int getSeqNum();
     PacketType getPacketType();
     unsigned char* getData();
+    unsigned char* getIV();
+    unsigned char* getTag();
 };

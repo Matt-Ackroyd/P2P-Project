@@ -10,15 +10,15 @@ Packet::Packet(int seqNum, PacketType packetType) {
 
 int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
     unsigned char controlVar = (char)0;
-    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(dataLen) + dataLen + sizeof(controlVar);
+    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(this->senderID) + sizeof(dataLen) + dataLen + sizeof(controlVar);
 
     // Control variable to let the reciver know to expect the IV(1), MAC(2) or both(3)
     if (IV != NULL) {
-        packetLength + AES_256_IV_LENGTH;
+        packetLength += AES_256_IV_LENGTH;
         controlVar += (char)1;
     }
     if (MAC != NULL) {
-        packetLength + AES_256_GCM_TAG_LENGTH;
+        packetLength += AES_256_GCM_TAG_LENGTH;
         controlVar += (char)2;
     }
 
@@ -33,6 +33,10 @@ int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned cha
     // Add SeqNum to Output 
     memcpy(this->data+offset, &this->seqNum, sizeof(this->seqNum));
     offset += sizeof(this->seqNum);
+
+    // Sender Id
+    memcpy(this->data+offset, &this->senderID, sizeof(this->senderID));
+    offset += sizeof(this->senderID);
 
     // Add Data Length to Output
     memcpy(this->data+offset, &dataLen, sizeof(dataLen));
@@ -73,6 +77,10 @@ int Packet::deserialize(unsigned char* serializedData) {
     memcpy(&this->seqNum, serializedData+offset, sizeof(this->seqNum));
     offset += sizeof(this->seqNum);
 
+    // Sender Id
+    memcpy(&this->senderID, serializedData+offset, sizeof(senderID));
+    offset += sizeof(senderID);
+
     // DataLength
     memcpy(&dataLen, serializedData+offset, sizeof(dataLen));
     offset += sizeof(dataLen);
@@ -112,7 +120,12 @@ PacketType Packet::getPacketType() {
 unsigned char* Packet::getData() {
     return this->data;
 }
-
+unsigned char* Packet::getTag() {
+    return this->MAC;
+}
+unsigned char* Packet::getIV() {
+    return this->IV;
+}
 
 
 Packet::~Packet() {

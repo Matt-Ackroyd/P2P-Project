@@ -11,6 +11,7 @@
 #include <fstream>
 
 #include "Packet.h"
+#include "Encryption.h"
 
 #define MAXLINE 1000
 
@@ -25,7 +26,11 @@ public:
     int currentSeqNum; 
     int sock;
     void connectTo(char const *addr);  
-    void send(Packet packet);
+    void send(unsigned char* data, int datalen);
     deque<Packet> sendingBuffer;
+
+    unsigned char* sharedSecret;
+
+    unsigned char* getSharedSecret();
         
 };

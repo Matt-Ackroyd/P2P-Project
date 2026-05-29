@@ -1,5 +1,6 @@
 #pragma once
 #include <openssl/evp.h>
+#include <openssl/rand.h>
 #include <iostream>
 using namespace std;
 
@@ -9,7 +10,17 @@ using namespace std;
 #define AES_256_GCM_TAG_LENGTH  16
 
 
-int symmetricEncryption();
-int symmetricDecryption();
+int symmetricEncryption(unsigned char *plaintext, int plaintext_len,
+                unsigned char *aad, int aad_len,
+                unsigned char *key,
+                unsigned char *iv, int iv_len,
+                unsigned char *ciphertext,
+                unsigned char *tag);
+int symmetricDecryption(unsigned char *ciphertext, int ciphertext_len,
+                unsigned char *aad, int aad_len,
+                unsigned char *tag,
+                unsigned char *key,
+                unsigned char *iv, int iv_len,
+                unsigned char *plaintext);
 
 void handleErrors();

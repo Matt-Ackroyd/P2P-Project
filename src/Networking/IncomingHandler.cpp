@@ -59,12 +59,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
             case PacketType::CONNECTION_RESPONSE:
                 break;
             case PacketType::PACKET:
-                cout << "Other: ";
-                for (int i = 0; i < datalen; i++) {
-                    cout << incomingPacket->getData()[i];
-                }
-                cout << "\n";
-                //this->handlePacket(incomingPacket, connectedUser);
+                this->handlePacket(connectedUser.connection, incomingPacket, datalen);
                 break;
             default:
                 cout << "Something is not right\n";
@@ -75,22 +70,40 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     
 }
 
-void IncomingHandler::handlePacket(Packet incomingPacket, RemoteUser connectedUser) { 
+void IncomingHandler::handlePacket(UDPConnection connection, Packet *incomingPacket, int datalen) { 
     // TODO Make sure this is per user
     //Ignore duplicates
-    if (this->nextExpectedSeqNum != incomingPacket.getSeqNum()) {
-        return;
-    }
+    //if (this->nextExpectedSeqNum != incomingPacket->getSeqNum()) {
+    //    return;
+    //}
 
     // Acknowlage the packet 
-    //this->acknowledgePacket(incomingPacket, connectedUser.connection);
+    //this->acknowledgePacket(incomingPacket, connection);
 
     // Revove the IV, Mac
 
+    // AAD Gen for the senderID and incoming length of the data
+    unsigned char aad[sizeof(incomingPacket->senderID) + sizeof(datalen)];
+    memcpy(aad, &incomingPacket->senderID, sizeof(incomingPacket->senderID));
+    memcpy(aad+sizeof(incomingPacket->senderID), &datalen, sizeof(datalen));
+
+    // TEMP MUST REMOVE TODO
+    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
+    connection.sharedSecret = key;
+
+
     // Decrypt Here
-    // if (!symmetricDecryption()) {
-    //     exit(1);
-    // }
+    unsigned char output[datalen];
+    if (!symmetricDecryption(incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
+            connection.getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
+        exit(1);
+    }
+
+    cout << "Other: ";
+    for (int i = 0; i < datalen; i++) {
+        cout << output[i];
+    }
+    cout << "\n";
 
     // Get DataType
     DataTypes packetDataType;

@@ -20,7 +20,7 @@ void UDPConnection::connectTo(char const *addr) {
     cout << "Connected\n";
 }
 
-void UDPConnection::send(Packet packet) {
+void UDPConnection::send(unsigned char* data, int datalen) {
     // // Update SeqNumbers
     // packet.setSeqNum(this->currentSeqNum);
     // this->currentSeqNum += 1;
@@ -29,6 +29,40 @@ void UDPConnection::send(Packet packet) {
     // this->sendingBuffer.push_back(packet);
 
     // // Send Over Socket
-    // sendto(this->sock, packet.encaplulate(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 
+
+    // TEMP PLEASE REMOVE TODO
+    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
+    this->sharedSecret = key;
+
+    //Gen IV
+    Packet *packetToSend = new Packet(123, PacketType::PACKET);
+
+    // AAD Gen for the senderID and incoming length of the data
+    unsigned char aad[sizeof(packetToSend->senderID) + sizeof(datalen)];
+    memcpy(aad, &packetToSend->senderID, sizeof(packetToSend->senderID));
+    memcpy(aad+sizeof(packetToSend->senderID), &datalen, sizeof(datalen));
+
+
+    // IV GEN
+    unsigned char iv[AES_256_IV_LENGTH];
+    if (!RAND_bytes(iv, AES_256_IV_LENGTH)) {
+        handleErrors();
+    }
+
+    // Encryption
+    unsigned char ciphertext[datalen];
+    unsigned char tag[AES_256_GCM_TAG_LENGTH];
+    symmetricEncryption(data, datalen, aad, sizeof(aad), this->sharedSecret, iv, AES_256_IV_LENGTH, ciphertext, tag);
+    
+    
+    // Encapsulate in a packet & send
+    int packetlen = packetToSend->serialize(ciphertext, datalen, iv, tag);
+    sendto(this->sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+
+}
+
+
+unsigned char* UDPConnection::getSharedSecret() {
+    return this->sharedSecret;
 }

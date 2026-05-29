@@ -30,16 +30,11 @@ void ChatInterface() {
         getline(cin, input);
 
         // Send User Input;
-        unsigned char* message = (unsigned char*)input.c_str();
-        
-        Packet *packetToSend = new Packet(123, PacketType::PACKET);
-
-        int packetlen = packetToSend->serialize(message, input.length()+1, NULL, NULL);
+        unsigned char* message = (unsigned char*)input.c_str();        
         
         
-        
-        sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
-        //test.send(packetToSend.serialize(message, sizeof(message), NULL, NULL));
+        //sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+        test.send(message, input.length()+1);
     }
 
     a.recvThread.join();
