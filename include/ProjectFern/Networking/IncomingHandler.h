@@ -16,8 +16,7 @@
 #include "PrimaryClient.h"
 #include "DataTypes.h"
 
-#define MAXLINE 1000
-#define KEYLENGTH 1568
+#define MAXLINE 3000
 
 using namespace std;
 
@@ -34,7 +33,7 @@ class IncomingHandler {
         deque<Packet> ReceivingBuffer;
 
         void handleAck(Packet packet, UDPConnection connectedUser);
-        void handleConnectionRequest(Packet packet);
-        void handleConnectionResponse(Packet packet);
+        void handleConnectionRequest(Packet *packet, int returnSock, sockaddr_in *returnAdress, socklen_t returnLen);
+        void handleConnectionResponse(Packet *packet, int returnSock, sockaddr_in *returnAdress, socklen_t returnLen);
         void handlePacket(UDPConnection connectedUser, Packet *packet, int datalen);
 };

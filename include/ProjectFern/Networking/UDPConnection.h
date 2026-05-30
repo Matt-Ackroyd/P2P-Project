@@ -13,8 +13,6 @@
 #include "Packet.h"
 #include "Encryption.h"
 
-#define MAXLINE 1000
-
 using namespace std;
 
 class UDPConnection {
@@ -30,6 +28,8 @@ public:
     deque<Packet> sendingBuffer;
 
     unsigned char* sharedSecret;
+
+    void sendConnectionRequest();
 
     unsigned char* getSharedSecret();
         

@@ -1,4 +1,5 @@
 #include "UDPConnection.h"
+#include <PrimaryClient.h>
 
 void UDPConnection::connectTo(char const *addr) {
     struct sockaddr_in servaddr;
@@ -59,7 +60,25 @@ void UDPConnection::send(unsigned char* data, int datalen) {
     // Encapsulate in a packet & send
     int packetlen = packetToSend->serialize(ciphertext, datalen, iv, tag);
     sendto(this->sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    delete packetToSend;
+}
 
+void UDPConnection::sendConnectionRequest() {
+    Packet *packet = new Packet(-1, PacketType::CONNECTION_REQUEST);
+    unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
+
+    // Generate Random Number for handshake
+    RAND_bytes(data, ML_KEM_HANDSHAKE_RANDSIZE);
+
+    // Get Public key & place in data(offset by the randsize)
+    size_t publen = ML_KEM_KEYLENGTH;
+    EVP_PKEY_get_raw_public_key(PrimaryClient::getInstance()->getKeyPair(), 
+        data+ML_KEM_HANDSHAKE_RANDSIZE, &publen);
+    
+
+    int packetlen = packet->serialize(data, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
+    sendto(this->sock, packet->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    delete packet;
 }
 
 
