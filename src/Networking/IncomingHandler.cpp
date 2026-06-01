@@ -1,4 +1,5 @@
 #include "IncomingHandler.h"
+#include <unordered_set>
 
 void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUser) {
     packet.getSeqNum();
@@ -176,6 +177,27 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
     
     // Add Temp User
     RemoteUser tmpUser;
+
+    // Hash
+    string saltStr = "Handshake";
+    int hashInputlen = secretlen + 2*ML_KEM_HANDSHAKE_RANDSIZE + saltStr.length()+1;
+    unsigned char hashInput[hashInputlen];
+
+    memcpy(hashInput, secret, secretlen);
+    int offset = secretlen;
+
+    memcpy(hashInput+offset, rand, ML_KEM_HANDSHAKE_RANDSIZE);
+    offset += ML_KEM_HANDSHAKE_RANDSIZE;
+
+    memcpy(hashInput+offset, secret, ML_KEM_HANDSHAKE_RANDSIZE);
+    offset += ML_KEM_HANDSHAKE_RANDSIZE;
+
+    memcpy(hashInput+offset, (unsigned char*)saltStr.c_str(), saltStr.length()+1);
+
+    unsigned char hashOutput[32];
+    shaw256Hash(hashInput, hashInputlen, hashOutput);
+    //cout << (uint32_t)hashOutput;
+    //unordered_set<unsigned char[32]> test;
     
 }
 
