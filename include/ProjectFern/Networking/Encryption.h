@@ -27,4 +27,6 @@ int symmetricDecryption(unsigned char *ciphertext, int ciphertext_len,
                 unsigned char *iv, int iv_len,
                 unsigned char *plaintext);
 
+int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output);
+
 void handleErrors();

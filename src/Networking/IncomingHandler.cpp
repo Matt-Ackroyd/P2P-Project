@@ -154,6 +154,12 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
     if (EVP_PKEY_encapsulate(ctx, out+ML_KEM_HANDSHAKE_RANDSIZE, &outlen, secret, &secretlen) < 1) {
         return;
     }
+
+    FILE *a;
+    a = fopen("KEM-ML_OUT1.bin", "wb");
+    fwrite(out+ML_KEM_HANDSHAKE_RANDSIZE, 1, outlen, a);
+    fclose(a);
+
     // TODO CLEAN
     //Generate Random this yourself
     RAND_bytes(out, ML_KEM_HANDSHAKE_RANDSIZE);
@@ -183,7 +189,6 @@ void IncomingHandler::handleConnectionResponse(Packet *packet, int socketfd, soc
     memcpy(&rand, packet->getData(), ML_KEM_HANDSHAKE_RANDSIZE);
     unsigned char out[ML_KEM_KEYLENGTH];
     memcpy(out, packet->getData()+ML_KEM_HANDSHAKE_RANDSIZE, ML_KEM_KEYLENGTH);
-
 
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, client->getKeyPair(), NULL);
 

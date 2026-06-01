@@ -9,6 +9,9 @@ PrimaryClient* PrimaryClient::getInstance() {
         lock_guard<mutex> lock(mtx);
         if (instancePtr == nullptr) {
             instancePtr = new PrimaryClient();
+
+            // TEMP
+            instancePtr->keyPair = NULL;
         }
     }
     return instancePtr;
@@ -16,7 +19,9 @@ PrimaryClient* PrimaryClient::getInstance() {
 
 EVP_PKEY* PrimaryClient::getKeyPair() {
     // TEMP TODO Save KEYPAIR
-    this->keyPair = EVP_PKEY_Q_keygen(NULL, NULL, "ML-KEM-1024");
+    if (this->keyPair == NULL) {
+        this->keyPair = EVP_PKEY_Q_keygen(NULL, NULL, "ML-KEM-1024");
+    }
     return this->keyPair;
 }
 

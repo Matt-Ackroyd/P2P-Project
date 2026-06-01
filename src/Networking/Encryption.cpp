@@ -129,6 +129,38 @@ int symmetricDecryption(unsigned char *ciphertext, int ciphertext_len,
     }
 }
 
+int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output) {
+    EVP_MD_CTX *ctx = NULL;
+    EVP_MD *sha256 = NULL;
+
+    // only has to be done once TODO MOVE OUTSIDE
+    // New ctx for hash
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL)
+        handleErrors();
+
+    // Fetch the shaw alg
+    sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
+    if (sha256 == NULL)
+        handleErrors();
+
+
+    
+    // innit
+    if (!EVP_DigestInit_ex(ctx, sha256, NULL))
+       handleErrors();
+
+    // Hash
+    if (!EVP_DigestUpdate(ctx, input, inputlen))
+        handleErrors();
+    
+    // Hash output
+    unsigned int len;
+    if (!EVP_DigestFinal_ex(ctx, shaw256output, &len))
+        handleErrors();
+    cout << len;
+    return 1;
+}
 
 void handleErrors() {
     cout << "We Messed Up\n";
