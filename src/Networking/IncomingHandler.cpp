@@ -50,8 +50,8 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         int datalen = incomingPacket->deserialize(buffer);
 
         // Remove the UserID here
-        incomingPacket->senderID;
-        RemoteUser connectedUser;
+        incomingPacket->packetAuthorID;
+        RemoteUser connectedUser(incomingPacket->packetAuthorID);
 
 
         // Handle Diffrent Packet Types
@@ -89,9 +89,9 @@ void IncomingHandler::handlePacket(UDPConnection connection, Packet *incomingPac
     // Revove the IV, Mac
 
     // AAD Gen for the senderID and incoming length of the data
-    unsigned char aad[sizeof(incomingPacket->senderID) + sizeof(datalen)];
-    memcpy(aad, &incomingPacket->senderID, sizeof(incomingPacket->senderID));
-    memcpy(aad+sizeof(incomingPacket->senderID), &datalen, sizeof(datalen));
+    unsigned char aad[sizeof(incomingPacket->packetAuthorID) + sizeof(datalen)];
+    memcpy(aad, &incomingPacket->packetAuthorID, sizeof(incomingPacket->packetAuthorID));
+    memcpy(aad+sizeof(incomingPacket->packetAuthorID), &datalen, sizeof(datalen));
 
     // TEMP MUST REMOVE TODO
     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
@@ -137,9 +137,8 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
     memcpy(rawKey, packet->getData()+ML_KEM_HANDSHAKE_RANDSIZE, ML_KEM_KEYLENGTH);
 
 
-
+    // ML KEM Innit
     pkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-KEM-1024", NULL, rawKey, ML_KEM_KEYLENGTH);
-
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
     if (ctx == NULL) {
         return;
@@ -148,22 +147,18 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
     if (!EVP_PKEY_encapsulate_init(ctx, NULL)) {
         return;
     }
-
+    // ML KEM
     EVP_PKEY_encapsulate(ctx, NULL, &outlen, NULL, &secretlen);
     unsigned char out[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH], secret[secretlen];
-
     if (EVP_PKEY_encapsulate(ctx, out+ML_KEM_HANDSHAKE_RANDSIZE, &outlen, secret, &secretlen) < 1) {
         return;
     }
 
-    FILE *a;
-    a = fopen("KEM-ML_OUT1.bin", "wb");
-    fwrite(out+ML_KEM_HANDSHAKE_RANDSIZE, 1, outlen, a);
-    fclose(a);
-
-    // TODO CLEAN
-    //Generate Random this yourself
-    RAND_bytes(out, ML_KEM_HANDSHAKE_RANDSIZE);
+    //Generate Random for yourself
+    unsigned char selfRand[ML_KEM_HANDSHAKE_RANDSIZE];
+    RAND_bytes(selfRand, ML_KEM_HANDSHAKE_RANDSIZE);
+    // send the rand back
+    memcpy(out, selfRand, ML_KEM_HANDSHAKE_RANDSIZE);
 
     // Create Return Packet
     Packet *returnPacket = new Packet(-1, PacketType::CONNECTION_RESPONSE);
@@ -171,34 +166,13 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
     sendto(socketfd, returnPacket->getData(), packetlen, 0, (const struct sockaddr *)returnAdress, returnLen);
     delete returnPacket;
 
-    // Create an ID???? for them and a user structure to remember them
-    // Create a reponse packet and send it back
-    PrimaryClient* client = PrimaryClient::getInstance();
     
-    // Add Temp User
-    RemoteUser tmpUser;
-
-    // Hash
-    string saltStr = "Handshake";
-    int hashInputlen = secretlen + 2*ML_KEM_HANDSHAKE_RANDSIZE + saltStr.length()+1;
-    unsigned char hashInput[hashInputlen];
-
-    memcpy(hashInput, secret, secretlen);
-    int offset = secretlen;
-
-    memcpy(hashInput+offset, rand, ML_KEM_HANDSHAKE_RANDSIZE);
-    offset += ML_KEM_HANDSHAKE_RANDSIZE;
-
-    memcpy(hashInput+offset, secret, ML_KEM_HANDSHAKE_RANDSIZE);
-    offset += ML_KEM_HANDSHAKE_RANDSIZE;
-
-    memcpy(hashInput+offset, (unsigned char*)saltStr.c_str(), saltStr.length()+1);
-
-    unsigned char hashOutput[32];
-    shaw256Hash(hashInput, hashInputlen, hashOutput);
-    //cout << (uint32_t)hashOutput;
-    //unordered_set<unsigned char[32]> test;
+    // Hash the premaster with rand values + a salt
+    unsigned char* hashOutput = new unsigned char[32];
+    handshakeHash(secret, secretlen, selfRand, rand, hashOutput);
     
+    // User creation
+    PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
 }
 
 void IncomingHandler::handleConnectionResponse(Packet *packet, int socketfd, sockaddr_in *returnAdress, socklen_t returnLen) {
@@ -221,4 +195,14 @@ void IncomingHandler::handleConnectionResponse(Packet *packet, int socketfd, soc
     unsigned char sharedSecret[sLen];
 
     EVP_PKEY_decapsulate(ctx, sharedSecret, &sLen, out, ML_KEM_KEYLENGTH);
+
+
+
+    // Hash the premaster with rand values + a salt
+    unsigned char* hashOutput = new unsigned char[32];
+    handshakeHash(sharedSecret, sLen, rand, client->handShakeRand, hashOutput);
+    
+    // User creation
+    client->registerNewUser(packet->packetAuthorID, hashOutput);
+    
 }

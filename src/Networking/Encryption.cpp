@@ -162,6 +162,27 @@ int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output
     return 1;
 }
 
+void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* rand1, unsigned char* rand2, unsigned char* output) { 
+    string saltStr = "Handshake";
+
+    int hashInputlen = premasterlen + 2*ML_KEM_HANDSHAKE_RANDSIZE + saltStr.length()+1;
+    unsigned char hashInput[hashInputlen];
+
+    memcpy(hashInput, premaster, premasterlen);
+    int offset = premasterlen;
+
+    memcpy(hashInput+offset, rand1, ML_KEM_HANDSHAKE_RANDSIZE);
+    offset += ML_KEM_HANDSHAKE_RANDSIZE;
+
+    memcpy(hashInput+offset, rand2, ML_KEM_HANDSHAKE_RANDSIZE);
+    offset += ML_KEM_HANDSHAKE_RANDSIZE;
+
+    memcpy(hashInput+offset, (unsigned char*)saltStr.c_str(), saltStr.length()+1);
+
+    shaw256Hash(hashInput, hashInputlen, output);
+}
+
+
 void handleErrors() {
     cout << "We Messed Up\n";
     exit(1);

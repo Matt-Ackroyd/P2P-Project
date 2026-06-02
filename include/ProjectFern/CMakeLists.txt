@@ -9,9 +9,10 @@ add_library(
     ${PROJECT_SOURCE_DIR}/src/Networking/Encryption.cpp
     ${PROJECT_SOURCE_DIR}/src/Networking/Packet.cpp
     ${PROJECT_SOURCE_DIR}/src/Networking/UDPConnection.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/IncomingHandler.cpp
     ${PROJECT_SOURCE_DIR}/src/Server/PrimaryClient.cpp
     ${PROJECT_SOURCE_DIR}/src/Server/Server.cpp
-    ${PROJECT_SOURCE_DIR}/src/Networking/IncomingHandler.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/RemoteUser.cpp
 )
 
 target_include_directories(FernLib PUBLIC DataTypes/)

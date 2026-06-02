@@ -10,7 +10,7 @@ PrimaryClient* PrimaryClient::getInstance() {
         if (instancePtr == nullptr) {
             instancePtr = new PrimaryClient();
 
-            // TEMP
+            // Innital Values 
             instancePtr->keyPair = NULL;
         }
     }
@@ -25,6 +25,13 @@ EVP_PKEY* PrimaryClient::getKeyPair() {
     return this->keyPair;
 }
 
-int PrimaryClient::registerUser() {
-    return 1;
+__int128_t PrimaryClient::getClientID() {
+    return this->clientID;
+}
+
+
+int PrimaryClient::registerNewUser(__int128 id, unsigned char* secret) {
+    RemoteUser *test = new RemoteUser(id);
+    test->connection.sharedSecret = secret;
+    // TODO link remote user connection    
 }

@@ -11,6 +11,7 @@ using namespace std;
 
 class PrimaryClient {
 private:
+    __int128_t clientID;
     vector<Server> allServers;
     string defaultUsername;
     //IncomingHandler incomingHandler;
@@ -22,10 +23,16 @@ private:
     static mutex mtx;
     // Private Constructor
     PrimaryClient() {}
+
 public:
     // Deleting the copy constructor to prevent copies
     PrimaryClient(const PrimaryClient& obj) = delete;
     static PrimaryClient* getInstance();
-    int registerUser();
+    int registerNewUser(__int128_t id, unsigned char* secret);
     EVP_PKEY* getKeyPair();
+
+    __int128_t getClientID();
+
+    // A Temparary buffer for the current ongoing handshake, TODO allow for multiple handshakes to be ongoing at once
+    unsigned char handShakeRand[ML_KEM_HANDSHAKE_RANDSIZE];
 };

@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "Encryption.h"
+#include "PrimaryClient.h"
 
 using namespace std;
 
@@ -27,7 +28,7 @@ private:
     unsigned char* data;
 
 public:       
-    int senderID;
+    __int128_t packetAuthorID;
 
     Packet(int seqNum, PacketType packetType);
     ~Packet();

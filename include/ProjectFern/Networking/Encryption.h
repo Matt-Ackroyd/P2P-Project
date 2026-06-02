@@ -2,6 +2,8 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <iostream>
+#include <cstring>
+
 using namespace std;
 
 //#define AES_256_KEY_LENGTH      32
@@ -28,5 +30,7 @@ int symmetricDecryption(unsigned char *ciphertext, int ciphertext_len,
                 unsigned char *plaintext);
 
 int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output);
+
+void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* rand1, unsigned char* rand2, unsigned char* output);
 
 void handleErrors();

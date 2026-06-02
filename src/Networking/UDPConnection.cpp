@@ -67,8 +67,9 @@ void UDPConnection::sendConnectionRequest() {
     Packet *packet = new Packet(-1, PacketType::CONNECTION_REQUEST);
     unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
 
-    // Generate Random Number for handshake
-    RAND_bytes(data, ML_KEM_HANDSHAKE_RANDSIZE);
+    // Generate Random Number for handshake & store it for later in Primary Client
+    RAND_bytes(PrimaryClient::getInstance()->handShakeRand, ML_KEM_HANDSHAKE_RANDSIZE);
+    memcpy(data, PrimaryClient::getInstance()->handShakeRand, ML_KEM_HANDSHAKE_RANDSIZE);
 
     // Get Public key & place in data(offset by the randsize)
     size_t publen = ML_KEM_KEYLENGTH;

@@ -13,5 +13,6 @@ class RemoteUser {
 
     vector<string> knownEndpoints;
 public:
+    RemoteUser(int id);
     UDPConnection connection;
 };

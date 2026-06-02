@@ -2,6 +2,7 @@
 
 
 Packet::Packet(int seqNum, PacketType packetType) {
+    this->packetAuthorID = PrimaryClient::getInstance()->getClientID();
     this->seqNum = seqNum;
     this->packetType = packetType;
     //this->data = new unsigned char[10];
@@ -10,7 +11,7 @@ Packet::Packet(int seqNum, PacketType packetType) {
 
 int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
     unsigned char controlVar = (char)0;
-    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(this->senderID) + sizeof(dataLen) + dataLen + sizeof(controlVar);
+    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(this->packetAuthorID) + sizeof(dataLen) + dataLen + sizeof(controlVar);
 
     // Control variable to let the reciver know to expect the IV(1), MAC(2) or both(3)
     if (IV != NULL) {
@@ -35,8 +36,8 @@ int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned cha
     offset += sizeof(this->seqNum);
 
     // Sender Id
-    memcpy(this->data+offset, &this->senderID, sizeof(this->senderID));
-    offset += sizeof(this->senderID);
+    memcpy(this->data+offset, &this->packetAuthorID, sizeof(this->packetAuthorID));
+    offset += sizeof(this->packetAuthorID);
 
     // Add Data Length to Output
     memcpy(this->data+offset, &dataLen, sizeof(dataLen));
@@ -78,8 +79,8 @@ int Packet::deserialize(unsigned char* serializedData) {
     offset += sizeof(this->seqNum);
 
     // Sender Id
-    memcpy(&this->senderID, serializedData+offset, sizeof(senderID));
-    offset += sizeof(senderID);
+    memcpy(&this->packetAuthorID, serializedData+offset, sizeof(packetAuthorID));
+    offset += sizeof(packetAuthorID);
 
     // DataLength
     memcpy(&dataLen, serializedData+offset, sizeof(dataLen));
