@@ -1,9 +1,13 @@
 #include "UDPConnection.h"
 #include "IncomingHandler.h"
+#include "UUID.h"
 
 using namespace std;
 
 void ChatInterface() {
+    UUID idTest(NULL);
+
+    return;
     UDPConnection test;
     IncomingHandler a;
     string input;

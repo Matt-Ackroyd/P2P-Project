@@ -5,7 +5,7 @@
 #include <cstring>
 
 #include "Encryption.h"
-#include "PrimaryClient.h"
+//#include "PrimaryClient.h"
 
 using namespace std;
 

@@ -2,7 +2,7 @@
 
 
 Packet::Packet(int seqNum, PacketType packetType) {
-    this->packetAuthorID = PrimaryClient::getInstance()->getClientID();
+    //this->packetAuthorID = PrimaryClient::getInstance()->getClientID();
     this->seqNum = seqNum;
     this->packetType = packetType;
     //this->data = new unsigned char[10];

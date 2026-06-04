@@ -40,9 +40,9 @@ void UDPConnection::send(unsigned char* data, int datalen) {
     Packet *packetToSend = new Packet(123, PacketType::PACKET);
 
     // AAD Gen for the senderID and incoming length of the data
-    unsigned char aad[sizeof(packetToSend->senderID) + sizeof(datalen)];
-    memcpy(aad, &packetToSend->senderID, sizeof(packetToSend->senderID));
-    memcpy(aad+sizeof(packetToSend->senderID), &datalen, sizeof(datalen));
+    unsigned char aad[sizeof(packetToSend->packetAuthorID) + sizeof(datalen)];
+    memcpy(aad, &packetToSend->packetAuthorID, sizeof(packetToSend->packetAuthorID));
+    memcpy(aad+sizeof(packetToSend->packetAuthorID), &datalen, sizeof(datalen));
 
 
     // IV GEN
