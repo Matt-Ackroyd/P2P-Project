@@ -172,7 +172,7 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
     handshakeHash(secret, secretlen, selfRand, rand, hashOutput);
     
     // User creation
-    PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
+    //PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
 }
 
 void IncomingHandler::handleConnectionResponse(Packet *packet, int socketfd, sockaddr_in *returnAdress, socklen_t returnLen) {

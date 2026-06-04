@@ -31,6 +31,6 @@ UUID PrimaryClient::getClientID() {
 
 
 int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
-    RemoteUser test(id, secret);
+    //RemoteUser test(id, secret);
     // TODO link remote user connection    
 }
