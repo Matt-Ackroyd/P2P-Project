@@ -158,7 +158,6 @@ int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output
     unsigned int len;
     if (!EVP_DigestFinal_ex(ctx, shaw256output, &len))
         handleErrors();
-    cout << len;
     return 1;
 }
 

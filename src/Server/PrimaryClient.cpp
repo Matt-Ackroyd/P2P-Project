@@ -12,6 +12,8 @@ PrimaryClient* PrimaryClient::getInstance() {
 
             // Innital Values 
             instancePtr->keyPair = NULL;
+            // Load from file later
+            instancePtr->clientID.GenerateNewID();
         }
     }
     return instancePtr;
@@ -31,6 +33,7 @@ UUID PrimaryClient::getClientID() {
 
 
 int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
-    //RemoteUser test(id, secret);
-    // TODO link remote user connection    
+    RemoteUser test(id, secret);
+    // TODO link remote user connection  
+    return 1;  
 }

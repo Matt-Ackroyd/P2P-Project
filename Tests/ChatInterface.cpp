@@ -22,10 +22,10 @@ void ChatInterface() {
     test->SendingPort = 5000;
     a.enableIncomingTraffic(5000);
 
-
     // Setup Connections
     
     test->connectTo("127.0.0.1");
+    test->sendConnectionRequest();
 
     cin.ignore();
     
@@ -33,14 +33,14 @@ void ChatInterface() {
         // User input
         getline(cin, input);
 
-        test->sendConnectionRequest();
+        
 
         // Send User Input;
         unsigned char* message = (unsigned char*)input.c_str();        
         
         
         //sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
-        //test.send(message, input.length()+1);
+        test->send(message, input.length()+1);
     }
 
     a.recvThread.join();

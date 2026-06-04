@@ -75,8 +75,8 @@ void IncomingHandler::startReceiving(int ReceivingPort)
 void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen) { 
     //Remove the UserID here
     incomingPacket->packetAuthorID;
-    RemoteUser connectedUser(incomingPacket->packetAuthorID, NULL);
-    UDPConnection *connection = connectedUser.connection;
+    //RemoteUser connectedUser(incomingPacket->packetAuthorID, NULL);
+    //UDPConnection *connection = connectedUser.connection;
     // TODO Make sure this is per user
     //Ignore duplicates
     //if (this->nextExpectedSeqNum != incomingPacket->getSeqNum()) {
@@ -86,22 +86,21 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen) {
     // Acknowlage the packet 
     //this->acknowledgePacket(incomingPacket, connection);
 
-    // Revove the IV, Mac
 
     // AAD Gen for the senderID and incoming length of the data
-    unsigned char aad[sizeof(incomingPacket->packetAuthorID) + sizeof(datalen)];
-    memcpy(aad, &incomingPacket->packetAuthorID, sizeof(incomingPacket->packetAuthorID));
-    memcpy(aad+sizeof(incomingPacket->packetAuthorID), &datalen, sizeof(datalen));
+    unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
+    memcpy(aad, incomingPacket->packetAuthorID.get(), UUID_BYTE_SIZE);
+    memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
     // TEMP MUST REMOVE TODO
     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
-    connection->sharedSecret = key;
+    //connection->sharedSecret = key;
 
 
     // Decrypt Here
     unsigned char output[datalen];
     if (!symmetricDecryption(incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
-            connection->getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
+            key, incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
         exit(1);
     }
 
@@ -172,7 +171,7 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
     handshakeHash(secret, secretlen, selfRand, rand, hashOutput);
     
     // User creation
-    //PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
+    PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
 }
 
 void IncomingHandler::handleConnectionResponse(Packet *packet, int socketfd, sockaddr_in *returnAdress, socklen_t returnLen) {
