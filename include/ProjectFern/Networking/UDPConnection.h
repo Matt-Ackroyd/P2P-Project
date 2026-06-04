@@ -20,6 +20,8 @@ private:
     
 
 public:    
+    UDPConnection(unsigned char* sharedSecret);
+    ~UDPConnection();
     int SendingPort = 5000;
     int currentSeqNum; 
     int sock;

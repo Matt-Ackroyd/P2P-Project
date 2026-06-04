@@ -35,7 +35,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     servaddr.sin_port = htons(ReceivingPort);
 
     int a = bind(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
-    cout << " Bind Return: \n" << a;
+    cout << " Bind Return: " << a << "\n";
 
     this->acceptIncoming = true;
     while (this->acceptIncoming)
@@ -49,10 +49,6 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         Packet *incomingPacket = new Packet(-1, PacketType::NONE);
         int datalen = incomingPacket->deserialize(buffer);
 
-        // Remove the UserID here
-        incomingPacket->packetAuthorID;
-        RemoteUser connectedUser(incomingPacket->packetAuthorID);
-
 
         // Handle Diffrent Packet Types
         switch(incomingPacket->getPacketType()) {
@@ -65,7 +61,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
                 this->handleConnectionResponse(incomingPacket, socketfd, &cliaddr, clientlen);
                 break;
             case PacketType::PACKET:
-                this->handlePacket(connectedUser.connection, incomingPacket, datalen);
+                this->handlePacket(incomingPacket, datalen);
                 break;
             default:
                 cout << "Something is not right\n";
@@ -76,7 +72,11 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     
 }
 
-void IncomingHandler::handlePacket(UDPConnection connection, Packet *incomingPacket, int datalen) { 
+void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen) { 
+    //Remove the UserID here
+    incomingPacket->packetAuthorID;
+    RemoteUser connectedUser(incomingPacket->packetAuthorID, NULL);
+    UDPConnection *connection = connectedUser.connection;
     // TODO Make sure this is per user
     //Ignore duplicates
     //if (this->nextExpectedSeqNum != incomingPacket->getSeqNum()) {
@@ -95,13 +95,13 @@ void IncomingHandler::handlePacket(UDPConnection connection, Packet *incomingPac
 
     // TEMP MUST REMOVE TODO
     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
-    connection.sharedSecret = key;
+    connection->sharedSecret = key;
 
 
     // Decrypt Here
     unsigned char output[datalen];
     if (!symmetricDecryption(incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
-            connection.getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
+            connection->getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
         exit(1);
     }
 

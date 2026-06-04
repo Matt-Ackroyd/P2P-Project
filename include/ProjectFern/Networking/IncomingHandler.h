@@ -35,5 +35,5 @@ class IncomingHandler {
         void handleAck(Packet packet, UDPConnection connectedUser);
         void handleConnectionRequest(Packet *packet, int returnSock, sockaddr_in *returnAdress, socklen_t returnLen);
         void handleConnectionResponse(Packet *packet, int returnSock, sockaddr_in *returnAdress, socklen_t returnLen);
-        void handlePacket(UDPConnection connectedUser, Packet *packet, int datalen);
+        void handlePacket(Packet *packet, int datalen);
 };

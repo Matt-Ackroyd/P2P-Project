@@ -5,27 +5,27 @@
 using namespace std;
 
 void ChatInterface() {
-    UUID idTest(NULL);
+    UUID idTest;
+    idTest.GenerateNewID();
 
-    return;
-    UDPConnection test;
+    UDPConnection *test = new UDPConnection(NULL);
     IncomingHandler a;
     string input;
 
     // Allow for testing on single machine
-    cout << "ReceivingPort: ";
-    int port;
-    cin >> port;
+    // cout << "ReceivingPort: ";
+    // int port;
+    // cin >> port;
 
-    cout << "SendingPort: ";
-    cin >> test.SendingPort;
-
-    a.enableIncomingTraffic(port);
+    // cout << "SendingPort: ";
+    // cin >> test->SendingPort;
+    test->SendingPort = 5000;
+    a.enableIncomingTraffic(5000);
 
 
     // Setup Connections
     
-    test.connectTo("127.0.0.1");
+    test->connectTo("127.0.0.1");
 
     cin.ignore();
     
@@ -33,7 +33,7 @@ void ChatInterface() {
         // User input
         getline(cin, input);
 
-        test.sendConnectionRequest();
+        test->sendConnectionRequest();
 
         // Send User Input;
         unsigned char* message = (unsigned char*)input.c_str();        

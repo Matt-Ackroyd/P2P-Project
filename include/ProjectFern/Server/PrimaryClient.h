@@ -11,7 +11,7 @@ using namespace std;
 
 class PrimaryClient {
 private:
-    __int128_t clientID;
+    UUID clientID;
     vector<Server> allServers;
     string defaultUsername;
     //IncomingHandler incomingHandler;
@@ -28,10 +28,10 @@ public:
     // Deleting the copy constructor to prevent copies
     PrimaryClient(const PrimaryClient& obj) = delete;
     static PrimaryClient* getInstance();
-    int registerNewUser(__int128_t id, unsigned char* secret);
+    int registerNewUser(UUID id, unsigned char* secret);
     EVP_PKEY* getKeyPair();
 
-    __int128_t getClientID();
+    UUID getClientID();
 
     // A Temparary buffer for the current ongoing handshake, TODO allow for multiple handshakes to be ongoing at once
     unsigned char handShakeRand[ML_KEM_HANDSHAKE_RANDSIZE];

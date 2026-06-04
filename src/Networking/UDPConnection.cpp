@@ -1,6 +1,14 @@
 #include "UDPConnection.h"
 #include <PrimaryClient.h>
 
+UDPConnection::UDPConnection(unsigned char* sharedSecret) {
+    this->sharedSecret = sharedSecret;
+}
+
+UDPConnection::~UDPConnection() {
+    delete[] this->sharedSecret;
+}
+
 void UDPConnection::connectTo(char const *addr) {
     struct sockaddr_in servaddr;
     

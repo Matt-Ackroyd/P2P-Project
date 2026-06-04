@@ -25,13 +25,12 @@ EVP_PKEY* PrimaryClient::getKeyPair() {
     return this->keyPair;
 }
 
-__int128_t PrimaryClient::getClientID() {
+UUID PrimaryClient::getClientID() {
     return this->clientID;
 }
 
 
-int PrimaryClient::registerNewUser(__int128 id, unsigned char* secret) {
-    RemoteUser *test = new RemoteUser(id);
-    test->connection.sharedSecret = secret;
+int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
+    RemoteUser test(id, secret);
     // TODO link remote user connection    
 }

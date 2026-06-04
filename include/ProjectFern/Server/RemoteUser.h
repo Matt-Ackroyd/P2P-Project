@@ -9,10 +9,11 @@ using namespace std;
 
 class RemoteUser {
     string Username;
-    int id;
+    UUID *id;
 
     vector<string> knownEndpoints;
 public:
-    RemoteUser(int id);
-    UDPConnection connection;
+    RemoteUser(UUID id, unsigned char* sharedSecret);
+    ~RemoteUser();
+    UDPConnection* connection;
 };
