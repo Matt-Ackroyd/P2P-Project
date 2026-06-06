@@ -3,6 +3,7 @@
 #include <ctime>
 #include <iostream>
 #include <cstring>
+#include <iomanip>
 #include <openssl/rand.h>
 
 #define UUID_BYTE_SIZE 16
@@ -13,9 +14,10 @@ using namespace std;
 //Second set of 8 bytes is random
 class UUID {
 private:
-    unsigned char ID[UUID_BYTE_SIZE];
+    string ID;
 public:
     void GenerateNewID();
     void set(unsigned char* existingUUID);
-    unsigned char* get();
+    string get();
+    unsigned char* get_raw();
 };

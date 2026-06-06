@@ -49,7 +49,7 @@ void UDPConnection::send(unsigned char* data, int datalen) {
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, packetToSend->packetAuthorID.get(), UUID_BYTE_SIZE);
+    memcpy(aad, packetToSend->packetAuthorID.get_raw(), UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
 

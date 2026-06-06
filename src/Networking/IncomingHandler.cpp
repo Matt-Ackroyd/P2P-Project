@@ -89,7 +89,7 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen) {
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, incomingPacket->packetAuthorID.get(), UUID_BYTE_SIZE);
+    memcpy(aad, incomingPacket->packetAuthorID.get_raw(), UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
     // TEMP MUST REMOVE TODO
