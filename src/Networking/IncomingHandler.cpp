@@ -74,7 +74,9 @@ void IncomingHandler::startReceiving(int ReceivingPort)
 
 void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen) { 
     //Remove the UserID here
-    incomingPacket->packetAuthorID;
+    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID.get());
+    
+
     //RemoteUser connectedUser(incomingPacket->packetAuthorID, NULL);
     //UDPConnection *connection = connectedUser.connection;
     // TODO Make sure this is per user
@@ -89,18 +91,14 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen) {
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, incomingPacket->packetAuthorID.get_raw(), UUID_BYTE_SIZE);
+    memcpy(aad, incomingPacket->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
-
-    // TEMP MUST REMOVE TODO
-    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
-    //connection->sharedSecret = key;
 
 
     // Decrypt Here
     unsigned char output[datalen];
     if (!symmetricDecryption(incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
-            key, incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
+            packetAuthor->connection->getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
         exit(1);
     }
 

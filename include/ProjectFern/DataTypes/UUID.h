@@ -15,9 +15,11 @@ using namespace std;
 class UUID {
 private:
     string ID;
+    uint64_t timestamp = 0;
 public:
     void GenerateNewID();
     void set(unsigned char* existingUUID);
     string get();
-    unsigned char* get_raw();
+    unsigned char* getRaw();
+    uint64_t getTimestamp();
 };

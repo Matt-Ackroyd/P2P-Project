@@ -1,12 +1,14 @@
 #pragma once
-#include "RemoteUser.h"
 #include <vector>
+#include <unordered_map>
+#include "RemoteUser.h"
 
 using namespace std;
 
 
 class Server {
-    vector<RemoteUser> knownUsers;
+    UUID id;
+    unordered_map<string, RemoteUser> knownUsers;
     vector<RemoteUser> onlineUsers;
     vector<string> activeInvitations;
 

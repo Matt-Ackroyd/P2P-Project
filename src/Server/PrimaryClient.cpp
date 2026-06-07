@@ -33,7 +33,21 @@ UUID PrimaryClient::getClientID() {
 
 
 int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
-    RemoteUser test(id, secret);
+    // Guard Clause to not overwrite a user
+    if (this->knownConnections[id.get()] != 0) {
+        cout << "User already Exists\n";
+        return -1;
+    }
+
+    // Create a temperary user to asosiate incoming packets from this user will be lost on reset if not proporly added to a server
+    RemoteUser* test = new RemoteUser(id, secret);
     // TODO link remote user connection  
-    return 1;  
+
+    // add to the list of all known connections
+    this->knownConnections[id.get()] = test;
+    return 1;  // return sucsess 
+}
+
+RemoteUser* PrimaryClient::getUser(string userID) {
+    return this->knownConnections[userID];
 }

@@ -37,7 +37,7 @@ int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned cha
     offset += sizeof(this->seqNum);
 
     // Sender Id
-    memcpy(this->data+offset, this->packetAuthorID.get_raw(), UUID_BYTE_SIZE);
+    memcpy(this->data+offset, this->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Add Data Length to Output
