@@ -1,6 +1,5 @@
 // Other Users within a server
 #pragma once
-#include <vector>
 #include <string>
 #include "UDPConnection.h"
 
@@ -11,7 +10,6 @@ class RemoteUser {
     string Username;
     UUID *id;
 
-    vector<string> knownEndpoints;
 public:
     RemoteUser(UUID id, unsigned char* sharedSecret);
     ~RemoteUser();

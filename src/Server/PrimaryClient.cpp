@@ -34,6 +34,12 @@ UUID PrimaryClient::getClientID() {
 
 
 int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
+    // Guard clause to not add oneself as a new user
+    if (id.get() == this->clientID.get()) {
+        cout << "Cannot Register Yourself\n";
+        return -1;
+    }
+    
     // Guard Clause to not overwrite a user
     if (this->knownConnections[id.get()] != 0) {
         cout << "User " << id.get() << " already Exists\n";
@@ -45,6 +51,7 @@ int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
     // TODO link remote user connection  
 
     // add to the list of all known connections
+    cout << "New User Added: " << id.get() << " \n";
     this->knownConnections[id.get()] = test;
     return 1;  // return sucsess 
 }

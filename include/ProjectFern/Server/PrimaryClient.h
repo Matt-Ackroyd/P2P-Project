@@ -52,4 +52,6 @@ public:
 
     // MOVE BACK TO PRIVATE AFTER TESTING
     unordered_map<string, RemoteUser*> knownConnections;
+    // Clean up
+    int socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
 };

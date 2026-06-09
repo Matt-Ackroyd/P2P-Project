@@ -3,30 +3,21 @@
 
 UDPConnection::UDPConnection(unsigned char* sharedSecret) {
     this->sharedSecret = sharedSecret;
+    this->sock = PrimaryClient::getInstance()->socketfd;
+    //Temp set addr
+    this->setAddr("127.0.0.1");
 }
 
 UDPConnection::~UDPConnection() {
     delete[] this->sharedSecret;
 }
 
-void UDPConnection::connectTo(char const *addr) {
-    struct sockaddr_in servaddr;
-    
+void UDPConnection::setAddr(char const *addr) {
     // clear servaddr
-    bzero(&servaddr, sizeof(servaddr));
-    servaddr.sin_addr.s_addr = inet_addr(addr);
-    servaddr.sin_port = htons(this->SendingPort);
-    servaddr.sin_family = AF_INET;
-
-    this->sock = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // connect to server
-    if(connect(this->sock, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-    {
-        printf("\n Error : Connect Failed \n");
-        exit(0);
-    }
-    cout << "Connected\n";
+    bzero(&this->connectionAddr, sizeof(this->connectionAddr));
+    this->connectionAddr.sin_addr.s_addr = inet_addr(addr);
+    this->connectionAddr.sin_port = htons(this->SendingPort);
+    this->connectionAddr.sin_family = AF_INET;
 }
 
 void UDPConnection::send(unsigned char* data, int datalen) {
@@ -63,7 +54,7 @@ void UDPConnection::send(unsigned char* data, int datalen) {
     
     // Encapsulate in a packet & send
     int packetlen = packetToSend->serialize(ciphertext, datalen, iv, tag);
-    sendto(this->sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    sendto(this->sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
     delete packetToSend;
 }
 
@@ -82,7 +73,7 @@ void UDPConnection::sendConnectionRequest() {
     
 
     int packetlen = packet->serialize(data, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
-    sendto(this->sock, packet->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    sendto(this->sock, packet->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
     delete packet;
 }
 

@@ -7,7 +7,7 @@ void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUs
     Packet ack(this->nextExpectedSeqNum, PacketType::ACK);
     ack.serialize(NULL, 0, NULL, NULL);
 
-    sendto(connectedUser.sock, ack.getData(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+    //sendto(connectedUser.sock, ack.getData(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 }
 
 
@@ -24,7 +24,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
 
-    int socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
+    int socketfd = PrimaryClient::getInstance()->socketfd;
 
     bzero(&servaddr, sizeof(servaddr));
     bzero(&cliaddr, sizeof(cliaddr));
@@ -43,8 +43,11 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         recvfrom(socketfd, buffer, MAXLINE,
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
+
+        //cout << "sendback Port:" << ntohs(cliaddr.sin_port) << "\n";
+
         // TODO REPLACE THIS WITH A DEFINED PORT
-        cliaddr.sin_port = htons(5000);
+        //cliaddr.sin_port = htons(5001);
 
         Packet *incomingPacket = new Packet(-1, PacketType::NONE);
         int datalen = incomingPacket->deserialize(buffer);
@@ -61,7 +64,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
                 this->handleConnectionResponse(incomingPacket, socketfd, &cliaddr, clientlen);
                 break;
             case PacketType::PACKET:
-                this->handlePacket(incomingPacket, datalen);
+                this->handlePacket(incomingPacket, datalen, ntohs(cliaddr.sin_port));
                 break;
             default:
                 cout << "Something is not right\n";
@@ -73,9 +76,18 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     
 }
 
-void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen) { 
+void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp) { 
     //Remove the UserID here
     RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID.get());
+    if (packetAuthor == NULL) {
+        return;
+    }
+
+    // Temp for testing
+    packetAuthor->connection->SendingPort = temp;
+    packetAuthor->connection->setAddr("127.0.0.1");
+
+
     
 
     //RemoteUser connectedUser(incomingPacket->packetAuthorID, NULL);

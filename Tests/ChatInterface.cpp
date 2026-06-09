@@ -11,18 +11,21 @@ void ChatInterface() {
     string input;
 
     // Allow for testing on single machine
-    // cout << "ReceivingPort: ";
-    // int port;
-    // cin >> port;
+    cout << "ReceivingPort: ";
+    int port;
+    cin >> port;
 
+    // int sendingPort;
     // cout << "SendingPort: ";
-    // cin >> test->SendingPort;
-    test->SendingPort = 5000;
-    a.enableIncomingTraffic(5000);
+    // cin >> sendingPort;
+    cin.ignore();
+
+    //test->SendingPort = 5000;
+    a.enableIncomingTraffic(port);
 
     // Setup Connections
     
-    test->connectTo("127.0.0.1");
+    //test->SendingPort = sendingPort;
     test->sendConnectionRequest();
 
     cin.ignore();
@@ -40,6 +43,7 @@ void ChatInterface() {
         //sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
         
         for (auto user : PrimaryClient::getInstance()->knownConnections) {
+            //user.second->connection->SendingPort = sendingPort;
             user.second->connection->send(message, input.length()+1);
         }
         
