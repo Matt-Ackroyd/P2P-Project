@@ -9,3 +9,7 @@ RemoteUser::RemoteUser(UUID id, unsigned char* sharedSecret) {
 RemoteUser::~RemoteUser() {
     delete this->connection;
 }
+
+string RemoteUser::getID() {
+    return this->id->get();
+}

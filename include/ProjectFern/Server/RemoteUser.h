@@ -13,5 +13,6 @@ class RemoteUser {
 public:
     RemoteUser(UUID id, unsigned char* sharedSecret);
     ~RemoteUser();
+    string getID();
     UDPConnection* connection;
 };
