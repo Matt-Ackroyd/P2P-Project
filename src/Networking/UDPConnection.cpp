@@ -40,10 +40,6 @@ void UDPConnection::send(unsigned char* data, int datalen) {
     // // Send Over Socket
 
 
-    // TEMP PLEASE REMOVE TODO
-    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14};
-    this->sharedSecret = key;
-
     //Gen IV
     Packet *packetToSend = new Packet(123, PacketType::PACKET);
 

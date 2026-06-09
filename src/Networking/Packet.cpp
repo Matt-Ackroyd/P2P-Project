@@ -70,6 +70,7 @@ int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned cha
 int Packet::deserialize(unsigned char* serializedData) {
     int dataLen;
     long unsigned int offset = 0;
+    this->packetAuthorID.GenerateNewID();
 
     // PacketType
     memcpy(&this->packetType, serializedData+offset, sizeof(this->packetType));

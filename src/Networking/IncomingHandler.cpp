@@ -49,7 +49,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         Packet *incomingPacket = new Packet(-1, PacketType::NONE);
         int datalen = incomingPacket->deserialize(buffer);
 
-
+        
         // Handle Diffrent Packet Types
         switch(incomingPacket->getPacketType()) {
             case PacketType::ACK:
@@ -67,6 +67,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
                 cout << "Something is not right\n";
                 exit(1);
         }
+        
         delete incomingPacket;
     }
     

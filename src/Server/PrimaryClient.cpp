@@ -14,6 +14,7 @@ PrimaryClient* PrimaryClient::getInstance() {
             instancePtr->keyPair = NULL;
             // Load from file later
             instancePtr->clientID.GenerateNewID();
+            cout << instancePtr->clientID.get() << "\n";
         }
     }
     return instancePtr;
@@ -35,7 +36,7 @@ UUID PrimaryClient::getClientID() {
 int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
     // Guard Clause to not overwrite a user
     if (this->knownConnections[id.get()] != 0) {
-        cout << "User already Exists\n";
+        cout << "User " << id.get() << " already Exists\n";
         return -1;
     }
 

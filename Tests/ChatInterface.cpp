@@ -5,9 +5,7 @@
 using namespace std;
 
 void ChatInterface() {
-    UUID idTest;
-    idTest.GenerateNewID();
-
+  
     UDPConnection *test = new UDPConnection(NULL);
     IncomingHandler a;
     string input;
@@ -40,7 +38,11 @@ void ChatInterface() {
         
         
         //sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
-        test->send(message, input.length()+1);
+        
+        for (auto user : PrimaryClient::getInstance()->knownConnections) {
+            user.second->connection->send(message, input.length()+1);
+        }
+        
     }
 
     a.recvThread.join();
