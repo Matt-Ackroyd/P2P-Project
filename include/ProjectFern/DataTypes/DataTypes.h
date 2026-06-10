@@ -1,25 +1,40 @@
 #pragma once
+#include "UUID.h"
 
 enum DataTypes {
     MESSAGETYPE,
-    FILETYPE
+    FILETYPE,
+    FILEINDICATOR
 };
 
 
 class MessageContainer
 {
 private:
-    /* data */
+    UUID messageID;
+    UUID *channelID;
+    UUID *author;
+    char* message;
+    int messageLength;
+    
+    
 public:
-    MessageContainer(/* args */);
-    ~MessageContainer();
+    int createNew(UUID* channel, UUID* author, char* message, int msgLen); // Returns the required length of the buffer to hold this structure
+
+    void serialize(unsigned char* serializedData);
+    static MessageContainer deserialize(unsigned char* data);
+
+    UUID* getMessageID();
+    UUID* getChannel();
+    UUID* getAuthor();
+    char* getMessage();
 };
 
 
 class FileContainer
 {
 private:
-    /* data */
+    UUID fileID;
 public:
     FileContainer(/* args */);
     ~FileContainer();
