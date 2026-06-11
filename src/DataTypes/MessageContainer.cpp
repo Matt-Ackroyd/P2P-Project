@@ -7,6 +7,7 @@ int MessageContainer::createNew(UUID* channel, UUID* author, char* message, int 
     this->author = author;
     this->message = message;
     this->messageLength = msgLen;
+    return UUID_BYTE_SIZE*3 + sizeof(int) + this->messageLength;
 }
 
 void MessageContainer::serialize(unsigned char* serializedData) {
@@ -57,6 +58,7 @@ MessageContainer MessageContainer::deserialize(unsigned char* data) {
     newMessage.message[newMessage.messageLength];
     memcpy(newMessage.message, data+offset, newMessage.messageLength);
     offset += newMessage.messageLength;
+    return newMessage;
 }
 
 UUID* MessageContainer::getMessageID() {
