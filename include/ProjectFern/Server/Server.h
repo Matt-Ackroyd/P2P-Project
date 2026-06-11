@@ -11,7 +11,7 @@ using namespace std;
 
 
 class Server {
-    UUID id;
+    ID id;
     unordered_map<string, RemoteUser*> knownUsers;
     unordered_set<string> onlineUsers;
 

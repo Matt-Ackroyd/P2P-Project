@@ -8,10 +8,10 @@ using namespace std;
 
 class RemoteUser {
     string Username;
-    UUID *id;
+    ID *id;
 
 public:
-    RemoteUser(UUID id, unsigned char* sharedSecret);
+    RemoteUser(ID id, unsigned char* sharedSecret);
     ~RemoteUser();
     string getID();
     UDPConnection* connection;

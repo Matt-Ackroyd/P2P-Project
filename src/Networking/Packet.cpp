@@ -10,7 +10,7 @@ Packet::Packet(int seqNum, PacketType packetType) {
 }
 
 
-int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
+int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
     unsigned char controlVar = (char)0;
     size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(this->packetAuthorID) + sizeof(dataLen) + dataLen + sizeof(controlVar);
 
@@ -24,7 +24,7 @@ int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned cha
         controlVar += (char)2;
     }
 
-    this->data = new unsigned char[packetLength];    
+    this->data = new char[packetLength];    
     
     long unsigned int offset = 0;
 
@@ -67,7 +67,7 @@ int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned cha
 }
 
 // Returns data length
-int Packet::deserialize(unsigned char* serializedData) {
+int Packet::deserialize(char* serializedData) {
     int dataLen;
     long unsigned int offset = 0;
     this->packetAuthorID.GenerateNewID();
@@ -81,7 +81,7 @@ int Packet::deserialize(unsigned char* serializedData) {
     offset += sizeof(this->seqNum);
 
     // Sender Id
-    this->packetAuthorID.set(serializedData+offset);
+    this->packetAuthorID.set((unsigned char*)serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // DataLength
@@ -89,7 +89,7 @@ int Packet::deserialize(unsigned char* serializedData) {
     offset += sizeof(dataLen);
     
     // Data
-    this->data = new unsigned char[dataLen];
+    this->data = new char[dataLen];
     memcpy(this->data, serializedData+offset, dataLen);
     offset += dataLen;
 
@@ -120,7 +120,7 @@ int Packet::getSeqNum() {
 PacketType Packet::getPacketType() {
     return this->packetType;
 }
-unsigned char* Packet::getData() {
+char* Packet::getData() {
     return this->data;
 }
 unsigned char* Packet::getTag() {

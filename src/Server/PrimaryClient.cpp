@@ -28,12 +28,12 @@ EVP_PKEY* PrimaryClient::getKeyPair() {
     return this->keyPair;
 }
 
-UUID PrimaryClient::getClientID() {
+ID PrimaryClient::getClientID() {
     return this->clientID;
 }
 
 
-int PrimaryClient::registerNewUser(UUID id, unsigned char* secret) {
+int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
     // Guard clause to not add oneself as a new user
     if (id.get() == this->clientID.get()) {
         cout << "Cannot Register Yourself\n";

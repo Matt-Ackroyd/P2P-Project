@@ -20,14 +20,14 @@ void IncomingHandler::enableIncomingTraffic(int ReceivingPort) {
 // Recive loop
 void IncomingHandler::startReceiving(int ReceivingPort)
 {
-    unsigned char buffer[MAXLINE]; 
+    char buffer[MAXLINE]; 
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
 
     int socketfd = PrimaryClient::getInstance()->socketfd;
 
-    bzero(&servaddr, sizeof(servaddr));
-    bzero(&cliaddr, sizeof(cliaddr));
+    //bzero(&servaddr, sizeof(servaddr));
+    //bzero(&cliaddr, sizeof(cliaddr));
 
     // Socket: IPV4, Any connection, PORTNumber
     servaddr.sin_family    = AF_INET;
@@ -110,7 +110,7 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
 
     // Decrypt Here
     unsigned char output[datalen];
-    if (!symmetricDecryption(incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
+    if (!symmetricDecryption((unsigned char*)incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
             packetAuthor->connection->getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
         exit(1);
     }
@@ -172,7 +172,7 @@ void IncomingHandler::handleConnectionRequest(Packet *packet, int socketfd, sock
 
     // Create Return Packet
     Packet *returnPacket = new Packet(-1, PacketType::CONNECTION_RESPONSE);
-    int packetlen = returnPacket->serialize(out, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
+    int packetlen = returnPacket->serialize((char*)out, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
     sendto(socketfd, returnPacket->getData(), packetlen, 0, (const struct sockaddr *)returnAdress, returnLen);
     delete returnPacket;
 

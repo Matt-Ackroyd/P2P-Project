@@ -1,7 +1,7 @@
 #include "RemoteUser.h"
 
-RemoteUser::RemoteUser(UUID id, unsigned char* sharedSecret) {
-    this->id = new UUID;
+RemoteUser::RemoteUser(ID id, unsigned char* sharedSecret) {
+    this->id = new ID;
     this->id->set(id.getRaw());
     this->connection = new UDPConnection(sharedSecret);
 }

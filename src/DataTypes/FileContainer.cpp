@@ -1,7 +1,7 @@
 #include "DataTypes.h"
 
 
-int FileContainer::createNew(UUID id, int byteLocation, unsigned char* data, int datalenth) {
+int FileContainer::createNew(ID id, int byteLocation, unsigned char* data, int datalenth) {
     this->fileID = id;
     this->byteLocation = byteLocation;
     this->data = data;

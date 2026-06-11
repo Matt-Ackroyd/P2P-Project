@@ -14,7 +14,7 @@ UDPConnection::~UDPConnection() {
 
 void UDPConnection::setAddr(char const *addr) {
     // clear servaddr
-    bzero(&this->connectionAddr, sizeof(this->connectionAddr));
+    //bzero(&this->connectionAddr, sizeof(this->connectionAddr));
     this->connectionAddr.sin_addr.s_addr = inet_addr(addr);
     this->connectionAddr.sin_port = htons(this->SendingPort);
     this->connectionAddr.sin_family = AF_INET;
@@ -53,7 +53,7 @@ void UDPConnection::send(unsigned char* data, int datalen) {
     
     
     // Encapsulate in a packet & send
-    int packetlen = packetToSend->serialize(ciphertext, datalen, iv, tag);
+    int packetlen = packetToSend->serialize((char*)ciphertext, datalen, iv, tag);
     sendto(this->sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
     delete packetToSend;
 }
@@ -72,7 +72,7 @@ void UDPConnection::sendConnectionRequest() {
         data+ML_KEM_HANDSHAKE_RANDSIZE, &publen);
     
 
-    int packetlen = packet->serialize(data, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
+    int packetlen = packet->serialize((char*)data, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
     sendto(this->sock, packet->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
     delete packet;
 }

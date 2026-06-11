@@ -12,7 +12,7 @@ using namespace std;
 
 //First 8 bytes is the timestamp in nanoseconds 
 //Second set of 8 bytes is random
-class UUID {
+class ID {
 private:
     string ID;
     unsigned char rawID[UUID_BYTE_SIZE];

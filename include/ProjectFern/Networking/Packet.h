@@ -5,7 +5,7 @@
 #include <cstring>
 
 #include "Encryption.h"
-#include "UUID.h"
+#include "ID.h"
 //#include "PrimaryClient.h"
 
 using namespace std;
@@ -26,20 +26,20 @@ private:
     int seqNum;
     unsigned char IV[AES_256_IV_LENGTH];
     unsigned char MAC[AES_256_GCM_TAG_LENGTH];
-    unsigned char* data;
+    char* data;
 
 public:       
-    UUID packetAuthorID;
+    ID packetAuthorID;
 
     Packet(int seqNum, PacketType packetType);
     ~Packet();
 
-    int serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
-    int deserialize(unsigned char* serializedData);
+    int serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
+    int deserialize(char* serializedData);
 
     int getSeqNum();
     PacketType getPacketType();
-    unsigned char* getData();
+    char* getData();
     unsigned char* getIV();
     unsigned char* getTag();
 };

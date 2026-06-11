@@ -3,9 +3,7 @@
 #include <stdio.h>
 #include <strings.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include "socketMacro.h"
 #include <thread>
 #include <deque>
 #include <fstream>

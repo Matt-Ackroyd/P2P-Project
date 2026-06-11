@@ -1,7 +1,7 @@
 #include "DataTypes.h"
 
  // Returns the required length of the buffer to hold this structure
-int MessageContainer::createNew(UUID* channel, UUID* author, char* message, int msgLen) {
+int MessageContainer::createNew(ID* channel, ID* author, char* message, int msgLen) {
     this->messageID.GenerateNewID();
     this->channelID = channel;
     this->author = author;
@@ -61,13 +61,13 @@ MessageContainer MessageContainer::deserialize(unsigned char* data) {
     return newMessage;
 }
 
-UUID* MessageContainer::getMessageID() {
+ID* MessageContainer::getMessageID() {
     return &this->messageID;
 }
-UUID* MessageContainer::getChannel() {
+ID* MessageContainer::getChannel() {
     return this->channelID;
 }
-UUID* MessageContainer::getAuthor() {
+ID* MessageContainer::getAuthor() {
     return this->author;
 }
 char* MessageContainer::getMessage() {

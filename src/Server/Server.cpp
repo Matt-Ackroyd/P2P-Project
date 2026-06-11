@@ -22,7 +22,7 @@ int Server::addUser(RemoteUser *user, string invitation) {
 
 string Server::createNewInvitation() {
     // TODO change to a more in depth method
-    UUID invitation;
+    ID invitation;
     invitation.GenerateNewID();
 
     this->activeInvitations.insert(invitation.get());

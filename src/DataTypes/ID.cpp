@@ -1,7 +1,7 @@
-#include "UUID.h"
+#include "ID.h"
 //64bit timestamp in nanoseconds & 64bits of random
 
-void UUID::set(unsigned char* existingUUID) {
+void ID::set(unsigned char* existingUUID) {
     memcpy(this->rawID, existingUUID, UUID_BYTE_SIZE);
     this->timestamp = 0;
 
@@ -9,7 +9,7 @@ void UUID::set(unsigned char* existingUUID) {
     this->toString();
 }
 
-void UUID::toString() {
+void ID::toString() {
     //Generate String
     std::ostringstream stringS;
     stringS << std::hex << std::setfill('0');
@@ -19,13 +19,13 @@ void UUID::toString() {
     this->ID = stringS.str();
 }
 
-void UUID::GenerateNewID() {
+void ID::GenerateNewID() {
     // Grab Time stamp
     const auto p1 = std::chrono::system_clock::now();
     this->timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
                    p1.time_since_epoch()).count();
  
-    // Copy Timestamp into UUID
+    // Copy Timestamp into ID
     memcpy(rawID, &this->timestamp, 8);
     // Generate 64 Random Bits
     RAND_bytes(rawID+8, 8);
@@ -34,7 +34,7 @@ void UUID::GenerateNewID() {
     this->toString();
 }
 
-uint64_t UUID::getTimestamp() {
+uint64_t ID::getTimestamp() {
     // Guard clause for only calculating this value once
     if (this->timestamp != 0) {
         return this->timestamp;
@@ -55,10 +55,10 @@ uint64_t UUID::getTimestamp() {
     return this->timestamp;
 }
 
-string UUID::get() {
+string ID::get() {
     return this->ID;
 }
 
-unsigned char* UUID::getRaw() {
+unsigned char* ID::getRaw() {
     return this->rawID;
 }

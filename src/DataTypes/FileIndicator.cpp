@@ -1,6 +1,6 @@
 #include "DataTypes.h"
 
-int FileIndicator::createNew(UUID id, int fileSize, string path) {
+int FileIndicator::createNew(ID id, int fileSize, string path) {
      this->fileID = id;
      this->fileSize = fileSize;
      this->relativeFileLocation = path;
