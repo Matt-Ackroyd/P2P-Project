@@ -1,9 +1,13 @@
-#include "../UDPConnection/UDPConnection.h"
+#include "UDPConnection.h"
+#include "IncomingHandler.h"
+#include "UUID.h"
 
 using namespace std;
 
 void ChatInterface() {
-    UDPConnection test;
+  
+    UDPConnection *test = new UDPConnection(NULL);
+    IncomingHandler a;
     string input;
 
     // Allow for testing on single machine
@@ -11,29 +15,39 @@ void ChatInterface() {
     int port;
     cin >> port;
 
-    cout << "SendingPort: ";
-    cin >> test.SendingPort;
+    // int sendingPort;
+    // cout << "SendingPort: ";
+    // cin >> sendingPort;
+    cin.ignore();
 
+    //test->SendingPort = 5000;
+    a.enableIncomingTraffic(port);
 
     // Setup Connections
-    thread t(test.startReceiving, port);
-    test.connectTo("127.0.0.1");
+    
+    //test->SendingPort = sendingPort;
+    test->sendConnectionRequest();
 
+    cin.ignore();
     
     while (input != "exit") {
         // User input
         getline(cin, input);
 
-        // Send User Input
-        char message[input.length()+1];
-        strcpy(message, input.c_str());
+        
 
-
-        Packet packetToSend;
-        packetToSend.innit(0, message, sizeof(message), MESSAGE);
-        test.send(packetToSend.encaplulate());
-        packetToSend.cleanupAfterSend();
+        // Send User Input;
+        unsigned char* message = (unsigned char*)input.c_str();        
+        
+        
+        //sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+        
+        for (auto user : PrimaryClient::getInstance()->knownConnections) {
+            //user.second->connection->SendingPort = sendingPort;
+            user.second->connection->send(message, input.length()+1);
+        }
+        
     }
 
-    t.join();
+    a.recvThread.join();
 }

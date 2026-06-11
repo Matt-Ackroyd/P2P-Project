@@ -1,8 +1,4 @@
-#include "Tests/ClientTest.cpp"
-#include "Tests/ServerTest.cpp"
-#include "Tests/PacketTest.cpp"
-#include "Tests/ChatInterface.cpp"
-#include "UDPConnection/UDPConnection.h"
+#include "../Tests/ChatInterface.cpp"
 
 using namespace std;
 
@@ -18,13 +14,10 @@ int main() {
     switch (input)
     {
     case '0':
-        ServerTest();
         break;
     case '1':
-        ClientTest();
         break;
     case '2':
-        PacketTest();
         break;
     default:
         cout << "Pick one\n";
