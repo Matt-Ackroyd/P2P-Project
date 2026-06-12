@@ -17,11 +17,11 @@ PrimaryClient* PrimaryClient::getInstance() {
             cout << instancePtr->clientID.get() << "\n";
 
             // Socket Compatibility Stuff
-            if (_WIN32) {
+            #ifdef _WIN32
                 WSADATA wsaData;
                 WSAStartup(MAKEWORD(2,2), &wsaData);
                 cout << "CHECK\n";
-            }
+            #endif
             instancePtr->socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
         }
     }
