@@ -24,7 +24,9 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
 
-    int socketfd = PrimaryClient::getInstance()->socketfd;
+
+    SOCKTYPE socketfd = PrimaryClient::getInstance()->socketfd;
+    //SOCKET socketfd = socket(AF_INET, SOCK_DGRAM, 0); 
 
     //bzero(&servaddr, sizeof(servaddr));
     //bzero(&cliaddr, sizeof(cliaddr));
@@ -33,6 +35,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     servaddr.sin_family    = AF_INET;
     servaddr.sin_addr.s_addr = INADDR_ANY; 
     servaddr.sin_port = htons(ReceivingPort);
+    
 
     int a = bind(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
     cout << " Bind Return: " << a << "\n";

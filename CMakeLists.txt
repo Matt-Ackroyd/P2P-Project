@@ -15,5 +15,12 @@ add_executable(${PROJECT_NAME} src/main.cpp)
 # Adds All Internal Library Files
 add_subdirectory("include/ProjectFern")
 
-find_package(OpenSSL)
-target_link_libraries(${PROJECT_NAME} OpenSSL::Crypto)
+if(WIN32)
+    set_target_properties( ${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY 
+        ${CMAKE_BINARY_DIR}/bin )
+    set_target_properties( ${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+        ${CMAKE_BINARY_DIR}/bin )
+endif()
+
+#find_package(OpenSSL)
+#target_link_libraries(${PROJECT_NAME} OpenSSL::Crypto)

@@ -1,6 +1,7 @@
 #include "UDPConnection.h"
 #include "IncomingHandler.h"
-#include "UUID.h"
+#include "ID.h"
+#include <iostream>
 
 using namespace std;
 
@@ -41,10 +42,12 @@ void ChatInterface() {
         
         
         //sendto(test.sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
+        if (PrimaryClient::getInstance()->knownConnections.size() > 0) {
         
-        for (auto user : PrimaryClient::getInstance()->knownConnections) {
-            //user.second->connection->SendingPort = sendingPort;
-            user.second->connection->send(message, input.length()+1);
+            for (auto user : PrimaryClient::getInstance()->knownConnections) {
+                //user.second->connection->SendingPort = sendingPort;
+                user.second->connection->send(message, input.length()+1);
+            }
         }
         
     }
