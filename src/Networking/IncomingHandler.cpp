@@ -88,7 +88,7 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
 
     // Temp for testing
     packetAuthor->connection->SendingPort = temp;
-    packetAuthor->connection->setAddr("127.0.0.1");
+    packetAuthor->connection->setAddr("192.168.0.17");
 
 
     

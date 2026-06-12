@@ -5,7 +5,8 @@ UDPConnection::UDPConnection(unsigned char* sharedSecret) {
     this->sharedSecret = sharedSecret;
     this->sock = PrimaryClient::getInstance()->socketfd;
     //Temp set addr
-    this->setAddr("127.0.0.1");
+    //this->setAddr("127.0.0.1");
+    this->setAddr("192.168.0.17");
 }
 
 UDPConnection::~UDPConnection() {
