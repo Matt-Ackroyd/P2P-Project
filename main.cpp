@@ -2,6 +2,7 @@
 #include <QPushButton>
 #include <QQmlApplicationEngine>
 #include <QQuickView>
+#include "CppInterface.h"
 
 
 void test() {
@@ -10,6 +11,8 @@ void test() {
 
 int main(int argc, char *argv[])
 {
+    qmlRegisterType<CppInterface>("MyFoo", 1, 0, "Foo");
+
     QApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
@@ -19,13 +22,7 @@ int main(int argc, char *argv[])
         &app,
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-    engine.loadFromModule("untitled", "Main");
-
-
-    QObject* rootObject = engine.rootObjects().first();
-    QObject* button = rootObject->findChild<QObject*>("rect");
-    //QObject::connect(button,&QPushButton::clicked,test);
-
+    engine.loadFromModule("project_fern", "Main");
 
     return QGuiApplication::exec();
 }

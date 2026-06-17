@@ -10,13 +10,16 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(app_${PROJECT_NAME}
-    main.cpp
+    main.cpp 
 )
 
+target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/GUI/)
+
 qt_add_qml_module(app_${PROJECT_NAME}
-    URI untitled
+    URI ${PROJECT_NAME}
     QML_FILES
         Main.qml
+        SOURCES include/ProjectFern/GUI/CppInterface.h src/GUI/CppInterface.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -46,6 +49,7 @@ if(WIN32)
         ${CMAKE_BINARY_DIR}/bin )
 endif()
 
+#qt_generate_moc(src/GUI/CppInterface.cpp CppInterface.moc FernLib)
 
 install(TARGETS app_${PROJECT_NAME}
     BUNDLE DESTINATION .
