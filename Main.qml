@@ -8,6 +8,7 @@ Window {
     width: 640
     height: 480
     visible: true
+    modality: Qt.ApplicationModal
     title: qsTr("Project Fern")
 
     Foo { id: foo}
@@ -168,24 +169,10 @@ Window {
             width: 304
             height: 434
             model: ListModel {
+                id: messsageHistoryList
                 ListElement {
                     name: "Red"
                     colorCode: "red"
-                }
-
-                ListElement {
-                    name: "Green"
-                    colorCode: "green"
-                }
-
-                ListElement {
-                    name: "Blue"
-                    colorCode: "blue"
-                }
-
-                ListElement {
-                    name: "White"
-                    colorCode: "white"
                 }
             }
             delegate: Row {
@@ -237,6 +224,11 @@ Window {
             Connections {
                 target: textInput
                 function onAccepted() { foo.test(textInput.text) }
+            }
+
+            Connections {
+                target: textInput
+                function onAccepted() { messsageHistoryList.append({name: "Red"}) }
             }
         }
 
