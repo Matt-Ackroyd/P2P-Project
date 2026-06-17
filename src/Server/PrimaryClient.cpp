@@ -20,9 +20,10 @@ PrimaryClient* PrimaryClient::getInstance() {
             #ifdef _WIN32
                 WSADATA wsaData;
                 WSAStartup(MAKEWORD(2,2), &wsaData);
-                cout << "CHECK\n";
             #endif
+
             instancePtr->socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
+            //setsockopt(instancePtr->socketfd, SOL_SOCKET, SO_REUSEADDR, (const char*)1, sizeof(int));
         }
     }
     return instancePtr;

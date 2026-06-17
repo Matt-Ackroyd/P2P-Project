@@ -28,8 +28,8 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     SOCKTYPE socketfd = PrimaryClient::getInstance()->socketfd;
     //SOCKET socketfd = socket(AF_INET, SOCK_DGRAM, 0); 
 
-    //bzero(&servaddr, sizeof(servaddr));
-    //bzero(&cliaddr, sizeof(cliaddr));
+    memset(&servaddr, 0, sizeof(servaddr));
+    memset(&cliaddr, 0, sizeof(cliaddr));
 
     // Socket: IPV4, Any connection, PORTNumber
     servaddr.sin_family    = AF_INET;
