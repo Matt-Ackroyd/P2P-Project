@@ -7,19 +7,17 @@
 #include "TextChannel.h"
 
 
-using namespace std;
-
 
 class Server {
     ID id;
-    unordered_map<string, RemoteUser*> knownUsers;
-    unordered_set<string> onlineUsers;
+    std::unordered_map<std::string, RemoteUser*> knownUsers;
+    std::unordered_set<std::string> onlineUsers;
 
     // All Active invitations to this server 
-    unordered_set<string> activeInvitations;
+    std::unordered_set<std::string> activeInvitations;
 
     // All known TextChannels within this server 
-    unordered_map<int, TextChannel> knownChannels;
+    std::unordered_map<int, TextChannel> knownChannels;
 
     // Server Settings 
 
@@ -29,8 +27,8 @@ class Server {
 
 public: 
     ~Server();
-    int addUser(RemoteUser *user, string invitation);
+    int addUser(RemoteUser *user, std::string invitation);
     int removeUser(RemoteUser *user);
     
-    string createNewInvitation();
+    std::string createNewInvitation();
 };

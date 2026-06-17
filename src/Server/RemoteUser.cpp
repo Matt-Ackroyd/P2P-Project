@@ -10,6 +10,6 @@ RemoteUser::~RemoteUser() {
     delete this->connection;
 }
 
-string RemoteUser::getID() {
+std::string RemoteUser::getID() {
     return this->id->get();
 }

@@ -3,23 +3,21 @@
 #include "ID.h"
 #include <iostream>
 
-using namespace std;
-
 void ChatInterface() {
   
     UDPConnection *test = new UDPConnection(NULL);
     IncomingHandler a;
-    string input;
+    std::string input;
 
     // Allow for testing on single machine
-    cout << "ReceivingPort: ";
+    std::cout << "ReceivingPort: ";
     int port;
-    cin >> port;
+    std::cin >> port;
 
     // int sendingPort;
     // cout << "SendingPort: ";
     // cin >> sendingPort;
-    cin.ignore();
+    std::cin.ignore();
 
     //test->SendingPort = 5000;
     a.enableIncomingTraffic(port);
@@ -29,11 +27,11 @@ void ChatInterface() {
     //test->SendingPort = sendingPort;
     test->sendConnectionRequest();
 
-    cin.ignore();
+    std::cin.ignore();
     
     while (input != "exit") {
         // User input
-        getline(cin, input);
+        std::getline(std::cin, input);
 
         
 

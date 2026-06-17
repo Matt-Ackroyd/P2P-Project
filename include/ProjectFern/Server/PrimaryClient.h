@@ -8,8 +8,6 @@
 #include <mutex>
 #include <unordered_map>
 
-using namespace std;
-
 class PrimaryClient {
 private:
     ID clientID;
@@ -19,11 +17,11 @@ private:
     
 
     // Every server that this client is a part of
-    unordered_map<string, Server> allServers;
+    std::unordered_map<std::string, Server> allServers;
 
 
     // Specific User profile information
-    string defaultUsername;
+    std::string defaultUsername;
 
 
     // pointer to public & private keys 
@@ -32,7 +30,7 @@ private:
     // Static pointer to the Singleton instance
     static PrimaryClient* instancePtr;
     // Mutex to ensure thread safety
-    static mutex mtx;
+    static std::mutex mtx;
     // Private Constructor
     PrimaryClient() {}
 
@@ -45,13 +43,13 @@ public:
 
     ID getClientID();
 
-    RemoteUser* getUser(string userID);
+    RemoteUser* getUser(std::string userID);
 
     // A Temparary buffer for the current ongoing handshake, TODO allow for multiple handshakes to be ongoing at once
     unsigned char handShakeRand[ML_KEM_HANDSHAKE_RANDSIZE];
 
     // MOVE BACK TO PRIVATE AFTER TESTING
-    unordered_map<string, RemoteUser*> knownConnections;
+    std::unordered_map<std::string, RemoteUser*> knownConnections;
     // Clean up
     SOCKTYPE socketfd;
 };

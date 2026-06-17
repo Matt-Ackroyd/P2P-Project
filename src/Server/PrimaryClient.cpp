@@ -1,12 +1,12 @@
 #include "PrimaryClient.h"
 
 PrimaryClient* PrimaryClient::instancePtr = nullptr;
-mutex PrimaryClient::mtx;
+std::mutex PrimaryClient::mtx;
 
 // Static method to get the Singleton instance
 PrimaryClient* PrimaryClient::getInstance() {
     if (instancePtr == nullptr) {
-        lock_guard<mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx);
         if (instancePtr == nullptr) {
             instancePtr = new PrimaryClient();
 
@@ -14,7 +14,7 @@ PrimaryClient* PrimaryClient::getInstance() {
             instancePtr->keyPair = NULL;
             // Load from file later
             instancePtr->clientID.GenerateNewID();
-            cout << instancePtr->clientID.get() << "\n";
+            std::cout << instancePtr->clientID.get() << "\n";
 
             // Socket Compatibility Stuff
             #ifdef _WIN32
@@ -45,13 +45,13 @@ ID PrimaryClient::getClientID() {
 int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
     // Guard clause to not add oneself as a new user
     if (id.get() == this->clientID.get()) {
-        cout << "Cannot Register Yourself\n";
+        std::cout << "Cannot Register Yourself\n";
         return -1;
     }
     
     // Guard Clause to not overwrite a user
     if (this->knownConnections[id.get()] != 0) {
-        cout << "User " << id.get() << " already Exists\n";
+        std::cout << "User " << id.get() << " already Exists\n";
         return -1;
     }
 
@@ -60,11 +60,11 @@ int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
     // TODO link remote user connection  
 
     // add to the list of all known connections
-    cout << "New User Added: " << id.get() << " \n";
+    std::cout << "New User Added: " << id.get() << " \n";
     this->knownConnections[id.get()] = test;
     return 1;  // return sucsess 
 }
 
-RemoteUser* PrimaryClient::getUser(string userID) {
+RemoteUser* PrimaryClient::getUser(std::string userID) {
     return this->knownConnections[userID];
 }

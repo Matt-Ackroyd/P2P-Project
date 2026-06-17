@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.23)
 
-project(project_fern)
+project(project_fern VERSION 0.1 LANGUAGES CXX)
 
-add_compile_options(-std=gnu++14)
-#add_compile_options(-fsanitize=address)
-#add_link_options(-fsanitize=address)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 string(REGEX REPLACE "\\b-g\\b" "-ggdb3" tmp_value "${CMAKE_C_FLAGS_DEBUG}")
 set_property(CACHE CMAKE_C_FLAGS_DEBUG PROPERTY VALUE "${tmp_value}")

@@ -55,7 +55,7 @@ uint64_t ID::getTimestamp() {
     return this->timestamp;
 }
 
-string ID::get() {
+std::string ID::get() {
     return this->ID;
 }
 

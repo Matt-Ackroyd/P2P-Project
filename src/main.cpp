@@ -1,15 +1,14 @@
 #include "../Tests/ChatInterface.cpp"
 
-using namespace std;
 
 int main() {
 
     ChatInterface();
 
     char input;
-    cout << "0 for server, 1 for client\n";
-    cin >> input;
-    cout << "\n\n\n\n";
+    std::cout << "0 for server, 1 for client\n";
+    std::cin >> input;
+    std::cout << "\n\n\n\n";
 
     switch (input)
     {
@@ -20,7 +19,7 @@ int main() {
     case '2':
         break;
     default:
-        cout << "Pick one\n";
+        std::cout << "Pick one\n";
         break;
     }
     return 0;

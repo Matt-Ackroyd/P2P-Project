@@ -6,7 +6,7 @@ Server::~Server() {
     }
 }
 
-int Server::addUser(RemoteUser *user, string invitation) {
+int Server::addUser(RemoteUser *user, std::string invitation) {
     // Client Side Check for perms TODO
 
     // Make sure the request has a valid invitation
@@ -20,7 +20,7 @@ int Server::addUser(RemoteUser *user, string invitation) {
 }
 
 
-string Server::createNewInvitation() {
+std::string Server::createNewInvitation() {
     // TODO change to a more in depth method
     ID invitation;
     invitation.GenerateNewID();

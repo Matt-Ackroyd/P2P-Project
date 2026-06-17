@@ -12,8 +12,6 @@
 #include "Packet.h"
 #include "Encryption.h"
 
-using namespace std;
-
 class UDPConnection {
 private:
     struct sockaddr_in connectionAddr;
@@ -21,7 +19,7 @@ private:
 
     unsigned char* sharedSecret;
 
-    vector<string> knownEndpoints;
+    std::vector<std::string> knownEndpoints;
 public:    
     UDPConnection(unsigned char* sharedSecret);
     ~UDPConnection();
@@ -30,7 +28,7 @@ public:
     
     void setAddr(char const *addr);  
     void send(unsigned char* data, int datalen);
-    deque<Packet> sendingBuffer;
+    std::deque<Packet> sendingBuffer;
 
     
 

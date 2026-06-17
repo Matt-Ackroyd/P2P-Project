@@ -8,8 +8,6 @@
 #include "ID.h"
 //#include "PrimaryClient.h"
 
-using namespace std;
-
 enum PacketType
 {
     PACKET,

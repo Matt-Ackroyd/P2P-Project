@@ -1,6 +1,6 @@
 #include "DataTypes.h"
 
-int FileIndicator::createNew(ID id, int fileSize, string path) {
+int FileIndicator::createNew(ID id, int fileSize, std::string path) {
      this->fileID = id;
      this->fileSize = fileSize;
      this->relativeFileLocation = path;
@@ -46,7 +46,7 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     offset += sizeof(len);
 
     // Path string
-    string s(reinterpret_cast<char const*>(serializedData+offset), len);
+    std::string s(reinterpret_cast<char const*>(serializedData+offset), len);
     newIndicator.relativeFileLocation = s;
 
     return newIndicator;

@@ -162,7 +162,7 @@ int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output
 }
 
 void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* rand1, unsigned char* rand2, unsigned char* output) { 
-    string saltStr = "Handshake";
+    std::string saltStr = "Handshake";
 
     int hashInputlen = premasterlen + 2*ML_KEM_HANDSHAKE_RANDSIZE + saltStr.length()+1;
     unsigned char hashInput[hashInputlen];
@@ -183,7 +183,7 @@ void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* ra
 
 
 void handleErrors() {
-    cout << "We Messed Up\n";
+    std::cout << "We Messed Up\n";
     exit(1);
 }
 

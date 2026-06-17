@@ -17,11 +17,9 @@
 
 #define MAXLINE 3000
 
-using namespace std;
-
 class IncomingHandler {
     public:     
-        thread recvThread;
+        std::thread recvThread;
         void acknowledgePacket(Packet packet, UDPConnection connectedUser);
         void enableIncomingTraffic(int ReceivingPort);
     private:
@@ -29,7 +27,7 @@ class IncomingHandler {
         // Bool to accept Incoming messages from other clients
         bool acceptIncoming;
         void startReceiving(int ReceivingPort);
-        deque<Packet> ReceivingBuffer;
+        std::deque<Packet> ReceivingBuffer;
 
         void handleAck(Packet packet, UDPConnection connectedUser);
         void handleConnectionRequest(Packet *packet, int returnSock, sockaddr_in *returnAdress, socklen_t returnLen);

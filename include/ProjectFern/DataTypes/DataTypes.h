@@ -47,13 +47,13 @@ class FileIndicator {
 private:
     ID fileID;
     int fileSize;
-    string relativeFileLocation;
+    std::string relativeFileLocation;
     // File Signiture
 
     // Will not be serilized as this is ment for the original person who uploaded the file so we dont copy to the relitive path
-    string localFileLocation;
+    std::string localFileLocation;
 public:
-    int createNew(ID id, int fileSize, string path);
+    int createNew(ID id, int fileSize, std::string path);
     void serialize(unsigned char* serializedData);
     static FileIndicator deserialize(unsigned char* serializedData);
 };

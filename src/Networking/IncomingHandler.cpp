@@ -13,7 +13,7 @@ void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUs
 
 // Starts Up the Reciving Thread
 void IncomingHandler::enableIncomingTraffic(int ReceivingPort) {
-    thread t(&IncomingHandler::startReceiving, this, ReceivingPort);
+    std::thread t(&IncomingHandler::startReceiving, this, ReceivingPort);
     this->recvThread = move(t);
 }
 
@@ -38,7 +38,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     
 
     int a = bind(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
-    cout << " Bind Return: " << a << "\n";
+    std::cout << " Bind Return: " << a << "\n";
 
     this->acceptIncoming = true;
     while (this->acceptIncoming)
@@ -70,7 +70,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
                 this->handlePacket(incomingPacket, datalen, ntohs(cliaddr.sin_port));
                 break;
             default:
-                cout << "Something is not right\n";
+                std::cout << "Something is not right\n";
                 exit(1);
         }
         
@@ -118,11 +118,11 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
         exit(1);
     }
 
-    cout << "Other: ";
+    std::cout << "Other: ";
     for (int i = 0; i < datalen; i++) {
-        cout << output[i];
+        std::cout << output[i];
     }
-    cout << "\n";
+    std::cout << "\n";
 
     // Get DataType
     DataTypes packetDataType;

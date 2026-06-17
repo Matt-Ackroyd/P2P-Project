@@ -3,16 +3,14 @@
 #include <string>
 #include "UDPConnection.h"
 
-using namespace std;
-
 
 class RemoteUser {
-    string Username;
+    std::string Username;
     ID *id;
 
 public:
     RemoteUser(ID id, unsigned char* sharedSecret);
     ~RemoteUser();
-    string getID();
+    std::string getID();
     UDPConnection* connection;
 };
