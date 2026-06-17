@@ -21,7 +21,6 @@ target_include_directories(FernLib PUBLIC DataTypes/)
 target_include_directories(FernLib PUBLIC Networking/)
 target_include_directories(FernLib PUBLIC Server/)
 
-set(OPENSSL_USE_STATIC_LIBS TRUE)
 find_package(OpenSSL)
 target_link_libraries(FernLib OpenSSL::Crypto)
 
@@ -32,5 +31,3 @@ if(WIN32)
   set_target_properties( FernLib PROPERTIES LIBRARY_OUTPUT_DIRECTORY
       ${CMAKE_BINARY_DIR}/bin )
 endif()
-
-target_link_libraries(${PROJECT_NAME} FernLib)
