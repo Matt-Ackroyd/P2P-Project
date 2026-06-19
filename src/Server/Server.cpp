@@ -6,6 +6,10 @@ Server::~Server() {
     }
 }
 
+std::string Server::getID() {
+    return id.get();
+}
+
 int Server::addUser(RemoteUser *user, std::string invitation) {
     // Client Side Check for perms TODO
 

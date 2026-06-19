@@ -7,6 +7,7 @@
 #include <openssl/evp.h>
 #include <mutex>
 #include <unordered_map>
+#include "CppInterface.h"
 
 class PrimaryClient {
 private:
@@ -17,7 +18,7 @@ private:
     
 
     // Every server that this client is a part of
-    std::unordered_map<std::string, Server> allServers;
+    std::unordered_map<std::string, Server*> allServers;
 
 
     // Specific User profile information
@@ -33,6 +34,8 @@ private:
     static std::mutex mtx;
     // Private Constructor
     PrimaryClient() {}
+
+    void init();
 
 public:
     // Deleting the copy constructor to prevent copies
@@ -52,4 +55,6 @@ public:
     std::unordered_map<std::string, RemoteUser*> knownConnections;
     // Clean up
     SOCKTYPE socketfd;
+
+    void addNewServer(std::string id, Server *server);
 };

@@ -27,6 +27,7 @@ class Server {
 
 public: 
     ~Server();
+    std::string getID();
     int addUser(RemoteUser *user, std::string invitation);
     int removeUser(RemoteUser *user);
     

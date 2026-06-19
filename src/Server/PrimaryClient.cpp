@@ -9,24 +9,26 @@ PrimaryClient* PrimaryClient::getInstance() {
         std::lock_guard<std::mutex> lock(mtx);
         if (instancePtr == nullptr) {
             instancePtr = new PrimaryClient();
-
-            // Innital Values 
-            instancePtr->keyPair = NULL;
-            // Load from file later
-            instancePtr->clientID.GenerateNewID();
-            std::cout << instancePtr->clientID.get() << "\n";
-
-            // Socket Compatibility Stuff
-            #ifdef _WIN32
-                WSADATA wsaData;
-                WSAStartup(MAKEWORD(2,2), &wsaData);
-            #endif
-
-            instancePtr->socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
-            //setsockopt(instancePtr->socketfd, SOL_SOCKET, SO_REUSEADDR, (const char*)1, sizeof(int));
         }
     }
     return instancePtr;
+}
+
+void PrimaryClient::init() {
+    // Innital Values 
+    instancePtr->keyPair = NULL;
+    // Load from file later
+    instancePtr->clientID.GenerateNewID();
+    std::cout << instancePtr->clientID.get() << "\n";
+
+    // Socket Compatibility Stuff
+    #ifdef _WIN32
+        WSADATA wsaData;
+        WSAStartup(MAKEWORD(2,2), &wsaData);
+    #endif
+
+    instancePtr->socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
+    //setsockopt(instancePtr->socketfd, SOL_SOCKET, SO_REUSEADDR, (const char*)1, sizeof(int));
 }
 
 EVP_PKEY* PrimaryClient::getKeyPair() {
@@ -67,4 +69,11 @@ int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
 
 RemoteUser* PrimaryClient::getUser(std::string userID) {
     return this->knownConnections[userID];
+}
+
+
+void PrimaryClient::addNewServer(std::string id, Server *server) {
+    this->allServers[id] = server;
+    emit CppInterface::instancePtr->addServer(server);
+    
 }
