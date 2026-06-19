@@ -5,6 +5,7 @@ Item {
     id: server
     property string uuid: "This is a string"
     
+
     Frame {
         id: channelList
         x: 0
@@ -12,6 +13,8 @@ Item {
         width: 163
         height: 480
         
+
+
         Rectangle {
             id: rectangle1
             x: 1
@@ -20,46 +23,68 @@ Item {
             height: 480
             color: "#ccbebe"
         }
-        
+
         ListView {
-            id: listView1
-            x: 2
+            id: listView
+            x: 0
             y: 0
-            width: 162
+            width: 160
             height: 480
             model: ListModel {
-                ListElement {
-                    name: "Red"
-                    colorCode: "red"
-                }
-                
-                ListElement {
-                    name: "Green"
-                    colorCode: "green"
-                }
-                
-                ListElement {
-                    name: "Blue"
-                    colorCode: "blue"
-                }
-                
-                ListElement {
-                    name: "White"
-                    colorCode: "white"
-                }
             }
             delegate: Row {
                 spacing: 5
-                Rectangle {
+
+                Item {
+                    id: channelSelection
                     width: 100
                     height: 20
-                    color: colorCode
+                    property string channelID: channelid
+
+                    Button {
+                        id: button
+                        x: 0
+                        y: 0
+                        width: 100
+                        height: 16
+
+                        Connections {
+                            id: connections
+                            target: button
+                            function onClicked() {
+                                // if its the first load
+                                if (channelLoader.active === false) {
+                                    channelLoader.active = true
+                                }
+                                else {
+                                    // Check if the server selected is diffrent from the current server if so change it
+                                    if (channelLoader.item.uuid !== channelSelection.serverID) {
+                                        channelLoader.active = false
+                                        channelLoader.active = true
+                                        channelLoader.item.uuid = channelSelection.serverID
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 100
+                        height: 20
+                        color: colorCode
+                    }
+
+                    Text {
+                        width: 100
+                        text: name
+                    }
+
                 }
-                
-                Text {
-                    width: 100
-                    text: name
-                }
+            }
+
+            Connections {
+                target: CppInterface
+                function onChannelLoad(channel_id) { listView.model.append({name: "test", colorCode: "yellow", channelid: channel_id}) }
             }
         }
     }
@@ -70,11 +95,7 @@ Item {
         y: 0
         width: 423
         height: 480
-        
-        ChannelStructure {
-            id: channel
-            x: 0
-            y: 0
-        }
+        source: "ChannelStructure.qml"
+        active: false
     }
 }

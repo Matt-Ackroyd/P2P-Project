@@ -4,10 +4,6 @@
 CppInterface* CppInterface::instancePtr = nullptr;
 
 CppInterface* CppInterface::getInstance() {
-    int typeId = qmlTypeId("MyFoo", 1, 0, "Foo");
-    QQmlEngine engine;
-    CppInterface *singleton = engine.singletonInstance<CppInterface *>(typeId);
-    CppInterface::instancePtr = singleton;
     return instancePtr;
 }
 
@@ -17,12 +13,40 @@ void CppInterface::test() {
 void CppInterface::sendMessage(QString Message, QObject* server, QObject* channel) {
     qDebug(qUtf8Printable(Message));
     std::string a = server->property("uuid").toString().toStdString();
-    addServer(NULL);
+    qDebug(qUtf8Printable(QString::fromStdString(a)));
+}
+
+void CppInterface::requestServerInfo(QString Qid) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    std::string id = Qid.toStdString();
+
+    Server* server = client->getServer(id);
+
+    // Loop over all known channels
+    for (auto& [key, channel]: server->knownChannels) { 
+        loadChannel(channel);
+    }
+    
 }
 
 
-void CppInterface::addServer(Server* server) {
 
-    emit serverAdd("Shoot");
-    //STD STring Crashes TODO later problem
+
+
+
+
+
+
+// C++ side interface to add a server to the GUI
+void CppInterface::loadServer(Server* server) {
+    QString id = QString::fromStdString(server->getID());
+    
+    emit serverLoad(id);
+}
+
+// C++ Side Interface to load a channel into the current server on the GUI
+void CppInterface::loadChannel(TextChannel* channel) {
+    QString id = QString::fromStdString(channel->getID());
+    
+    emit channelLoad(id);
 }

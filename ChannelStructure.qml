@@ -22,29 +22,21 @@ Item {
         }
         
         ListView {
-            id: listView
+            id: messsageHistoryList
             x: 0
-            y: 3
+            y: -2
             width: 304
-            height: 434
-            model: ListModel {
-                id: messsageHistoryList
-                ListElement {
-                    name: "Red"
-                    colorCode: "red"
-                }
-            }
+            height: 439
+            model: ListModel {}
             delegate: Row {
                 spacing: 5
-                Rectangle {
-                    width: 100
-                    height: 20
-                    color: colorCode
-                }
                 
                 Text {
-                    width: 100
                     text: name
+                }
+
+                Text {
+                    text: message
                 }
             }
         }
@@ -89,7 +81,7 @@ Item {
             
             Connections {
                 target: textInput
-                function onAccepted() { messsageHistoryList.append({name: "Red"}) }
+                function onAccepted() { messsageHistoryList.model.append({name:  "You: ", message: textInput.text}) }
             }
         }
         

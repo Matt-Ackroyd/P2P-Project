@@ -16,8 +16,8 @@ class Server {
     // All Active invitations to this server 
     std::unordered_set<std::string> activeInvitations;
 
-    // All known TextChannels within this server 
-    std::unordered_map<int, TextChannel> knownChannels;
+
+    
 
     // Server Settings 
 
@@ -26,10 +26,14 @@ class Server {
     // My Role?
 
 public: 
+    Server();
     ~Server();
     std::string getID();
     int addUser(RemoteUser *user, std::string invitation);
     int removeUser(RemoteUser *user);
     
     std::string createNewInvitation();
+
+    // All known TextChannels within this server 
+    std::unordered_map<std::string, TextChannel*> knownChannels;
 };

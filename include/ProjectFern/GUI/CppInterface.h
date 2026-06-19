@@ -5,6 +5,8 @@
 #include <mutex>
 #include <QQmlApplicationEngine>
 #include "Server.h"
+#include "TextChannel.h"
+#include "PrimaryClient.h"
 
 
 
@@ -23,12 +25,16 @@ public:
 
     Q_INVOKABLE void test();
     Q_INVOKABLE void sendMessage(QString message, QObject* server, QObject* channel);
+    Q_INVOKABLE void requestServerInfo(QString Qid);
 
 
-    void addServer(Server* server);
-    void receiveMessage();
+    void loadServer(Server* server);
+    void loadChannel(TextChannel* channel);
+    void loadMessage();
 signals:
-    void serverAdd(QString signal_param);
+    void serverLoad(QString signal_param);
+    void channelLoad(QString channel_id);
+    void messageLoad(QString message_id, QString message);
 };
 
 

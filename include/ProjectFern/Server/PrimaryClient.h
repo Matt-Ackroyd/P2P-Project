@@ -57,4 +57,5 @@ public:
     SOCKTYPE socketfd;
 
     void addNewServer(std::string id, Server *server);
+    Server* getServer(std::string id);
 };

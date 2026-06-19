@@ -34,31 +34,12 @@ Window {
             width: 52
             height: 475
             model: ListModel {
-                ListElement {
-                    name: "Grey"
-                    colorCode: "grey"
-                }
-
-                ListElement {
-                    name: "Red"
-                    colorCode: "red"
-                }
-
-                ListElement {
-                    name: "Blue"
-                    colorCode: "blue"
-                }
-
-                ListElement {
-                    name: "Green"
-                    colorCode: "green"
-                }
             }
             delegate: Item {
-                id: item1
+                id: serverSelection
                 x: 5
                 height: 50
-                property string serverID: ""
+                property string serverID: serverid
                 Column {
                     spacing: 5
                     Rectangle {
@@ -86,12 +67,29 @@ Window {
 
                     Connections {
                         target: button
-                        function onClicked() { CppInterface.test() }
+                        function onClicked() { console.log(serverSelection.serverID) }
                     }
 
                     Connections {
+                        id: connections
                         target: button
-                        function onClicked() { item1.visible = true }
+                        function onClicked() {
+                            // if its the first load
+                            if (serverLoader.active === false) {
+                                serverLoader.active = true
+                                serverLoader.item.uuid = serverSelection.serverID
+                                CppInterface.requestServerInfo(serverSelection.serverID)
+                            }
+                            else {
+                                // Check if the server selected is diffrent from the current server if so change it
+                                if (serverLoader.item.uuid !== serverSelection.serverID) {
+                                    serverLoader.active = false
+                                    serverLoader.active = true
+                                    serverLoader.item.uuid = serverSelection.serverID
+                                    CppInterface.requestServerInfo(serverSelection.serverID)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -100,7 +98,9 @@ Window {
 
             Connections {
                 target: CppInterface
-                function onServerAdd(signal_param) { console.log(signal_param) }
+                function onServerLoad(server_id) {
+                    gridView.model.append({name: "test", colorCode: "red", serverid: server_id})
+                }
             }
         }
     }
@@ -111,30 +111,9 @@ Window {
         y: 0
         width: 588
         height: 480
+        source: "ServerStructure.qml"
+        active: false
     }
-
-    ServerStructure {
-        id: server
-        x: 52
-        y: 0
-        width: 585
-        height: 478
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
+
+

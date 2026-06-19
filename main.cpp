@@ -34,6 +34,11 @@ int main(int argc, char *argv[])
     
     Server* test = new Server();
     client->addNewServer("server id placeholder", test);
+    client->addNewServer("a", new Server());
 
+
+    CppInterface::instancePtr->loadChannel(new TextChannel());
+    CppInterface::instancePtr->loadChannel(new TextChannel());
+    CppInterface::instancePtr->loadChannel(new TextChannel());
     return QGuiApplication::exec();
 }

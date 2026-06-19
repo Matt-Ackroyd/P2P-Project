@@ -22,6 +22,7 @@ qt_add_executable(app_${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/Server/PrimaryClient.cpp
     ${PROJECT_SOURCE_DIR}/src/Server/Server.cpp
     ${PROJECT_SOURCE_DIR}/src/Server/RemoteUser.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/TextChannel.cpp
 )
 target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/DataTypes/)
 target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/Networking/)

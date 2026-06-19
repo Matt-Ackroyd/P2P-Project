@@ -1,5 +1,9 @@
 #include "Server.h"
 
+Server::Server() {
+    //TEMP
+    this->id.GenerateNewID();
+}
 Server::~Server() {
     for (auto user : knownUsers) {
         delete user.second;

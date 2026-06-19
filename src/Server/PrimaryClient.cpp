@@ -68,12 +68,18 @@ int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
 }
 
 RemoteUser* PrimaryClient::getUser(std::string userID) {
+    // NEEDS TO MAKE SURE THE USER EXISTS FIRST
     return this->knownConnections[userID];
 }
 
 
 void PrimaryClient::addNewServer(std::string id, Server *server) {
     this->allServers[id] = server;
-    emit CppInterface::instancePtr->addServer(server);
+    emit CppInterface::instancePtr->loadServer(server);
     
+}
+
+Server* PrimaryClient::getServer(std::string id) {
+    // NEEDS TO MAKE SURE THE SERVER EXISTS FIRST
+    return this->allServers[id];
 }
