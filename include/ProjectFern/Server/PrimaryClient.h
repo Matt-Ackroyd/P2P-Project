@@ -44,7 +44,7 @@ public:
     int registerNewUser(ID id, unsigned char* secret);
     EVP_PKEY* getKeyPair();
 
-    ID getClientID();
+    ID* getClientID();
 
     RemoteUser* getUser(std::string userID);
 
@@ -56,6 +56,6 @@ public:
     // Clean up
     SOCKTYPE socketfd;
 
-    void addNewServer(std::string id, Server *server);
+    void addNewServer(Server *server);
     Server* getServer(std::string id);
 };

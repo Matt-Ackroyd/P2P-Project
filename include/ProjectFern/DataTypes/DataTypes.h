@@ -13,12 +13,12 @@ private:
     ID messageID;
     ID *channelID;
     ID *author;
-    char* message;
+    std::string message;
     int messageLength;
     
     
 public:
-    int createNew(ID* channel, ID* author, char* message, int msgLen); // Returns the required length of the buffer to hold this structure
+    int createNew(ID* channel, ID* author, std::string message); // Returns the required length of the buffer to hold this structure
 
     void serialize(unsigned char* serializedData);
     static MessageContainer deserialize(unsigned char* data);
@@ -26,7 +26,7 @@ public:
     ID* getMessageID();
     ID* getChannel();
     ID* getAuthor();
-    char* getMessage();
+    std::string getMessage();
 };
 
 // a class to contain file data along side its ID

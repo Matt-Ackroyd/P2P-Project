@@ -10,10 +10,21 @@ CppInterface* CppInterface::getInstance() {
 void CppInterface::test() {
     qDebug(qUtf8Printable("AAAAA"));
 }
-void CppInterface::sendMessage(QString Message, QObject* server, QObject* channel) {
-    qDebug(qUtf8Printable(Message));
-    std::string a = server->property("uuid").toString().toStdString();
-    qDebug(qUtf8Printable(QString::fromStdString(a)));
+void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qchannel) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    std::string serverid = qserver->property("uuid").toString().toStdString();
+    std::string channelid = qchannel->property("uuid").toString().toStdString();
+    std::string text = qmessage.toStdString();
+
+    Server* server = client->getServer(serverid);
+    TextChannel* channel = server->knownChannels[channelid];
+
+    MessageContainer* message = new MessageContainer();
+    int len = message->createNew(server->getID(), client->getClientID(), text);
+
+    channel->messages.emplace_back(message);
+    loadMessage(message);
+
 }
 
 void CppInterface::requestServerInfo(QString Qid) {
@@ -29,24 +40,39 @@ void CppInterface::requestServerInfo(QString Qid) {
     
 }
 
+void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    std::string serverid = qserver->property("uuid").toString().toStdString();
+    std::string channelid = qchannel->property("uuid").toString().toStdString();
 
+    Server* server = client->getServer(serverid);
+    TextChannel* channel = server->knownChannels[channelid];
 
-
-
-
+    for (auto& message: channel->messages) { 
+        loadMessage(message);
+    }
+}
 
 
 
 // C++ side interface to add a server to the GUI
 void CppInterface::loadServer(Server* server) {
-    QString id = QString::fromStdString(server->getID());
+    QString id = QString::fromStdString(server->getID()->getString());
     
     emit serverLoad(id);
 }
 
 // C++ Side Interface to load a channel into the current server on the GUI
 void CppInterface::loadChannel(TextChannel* channel) {
-    QString id = QString::fromStdString(channel->getID());
+    QString id = QString::fromStdString(channel->getID()->getString());
     
     emit channelLoad(id);
+}
+
+// C++ side interface to load a message into the current channel on the GUI
+void CppInterface::loadMessage(MessageContainer* message) {
+    QString id = QString::fromStdString(message->getMessageID()->getString());
+    QString message_text = QString::fromStdString(message->getMessage());
+
+    emit messageLoad(id, message_text);
 }

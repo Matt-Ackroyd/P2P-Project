@@ -81,7 +81,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
 
 void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp) { 
     //Remove the UserID here
-    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID.get());
+    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID.getString());
     if (packetAuthor == NULL) {
         return;
     }

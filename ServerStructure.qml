@@ -55,13 +55,15 @@ Item {
                                 // if its the first load
                                 if (channelLoader.active === false) {
                                     channelLoader.active = true
+                                    channelLoader.item.uuid = channelSelection.channelID
                                 }
                                 else {
                                     // Check if the server selected is diffrent from the current server if so change it
-                                    if (channelLoader.item.uuid !== channelSelection.serverID) {
+                                    if (channelLoader.item.uuid !== channelSelection.channelID) {
                                         channelLoader.active = false
                                         channelLoader.active = true
-                                        channelLoader.item.uuid = channelSelection.serverID
+                                        channelLoader.item.uuid = channelSelection.channelID
+                                        CppInterface.requestChannelInfo(server, channelLoader.item)
                                     }
                                 }
                             }

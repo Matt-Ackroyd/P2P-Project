@@ -29,6 +29,7 @@ Item {
             height: 439
             model: ListModel {}
             delegate: Row {
+                property string uuid: message_id
                 spacing: 5
                 
                 Text {
@@ -38,6 +39,12 @@ Item {
                 Text {
                     text: message
                 }
+            }
+
+            Connections {
+                target: CppInterface
+                function onMessageLoad(fmessage_id, fmessage) {messsageHistoryList.model.append({message_id: fmessage_id,
+                                                                                                    name: "you", message: fmessage})}
             }
         }
     }

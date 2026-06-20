@@ -11,5 +11,5 @@ RemoteUser::~RemoteUser() {
 }
 
 std::string RemoteUser::getID() {
-    return this->id->get();
+    return this->id->getString();
 }

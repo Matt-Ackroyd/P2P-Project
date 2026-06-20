@@ -19,7 +19,7 @@ private:
 public:
     void GenerateNewID();
     void set(unsigned char* existingUUID);
-    std::string get();
+    std::string getString();
     unsigned char* getRaw();
     uint64_t getTimestamp();
 };

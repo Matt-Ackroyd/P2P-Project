@@ -1,12 +1,12 @@
 #include "DataTypes.h"
 
  // Returns the required length of the buffer to hold this structure
-int MessageContainer::createNew(ID* channel, ID* author, char* message, int msgLen) {
+int MessageContainer::createNew(ID* channel, ID* author, std::string message) {
     this->messageID.GenerateNewID();
     this->channelID = channel;
     this->author = author;
     this->message = message;
-    this->messageLength = msgLen;
+    this->messageLength = message.length();
     return UUID_BYTE_SIZE*3 + sizeof(int) + this->messageLength;
 }
 
@@ -30,7 +30,7 @@ void MessageContainer::serialize(unsigned char* serializedData) {
     offset += sizeof(this->messageLength);
 
     // Message
-    memcpy(serializedData+offset, this->message, this->messageLength);
+    memcpy(serializedData+offset, this->message.data(), this->messageLength);
     offset += this->messageLength;
 }
 
@@ -55,8 +55,7 @@ MessageContainer MessageContainer::deserialize(unsigned char* data) {
     offset += sizeof(newMessage.messageLength);
 
     // Message
-    newMessage.message[newMessage.messageLength];
-    memcpy(newMessage.message, data+offset, newMessage.messageLength);
+    memcpy(newMessage.message.data(), data+offset, newMessage.messageLength);
     offset += newMessage.messageLength;
     return newMessage;
 }
@@ -70,6 +69,6 @@ ID* MessageContainer::getChannel() {
 ID* MessageContainer::getAuthor() {
     return this->author;
 }
-char* MessageContainer::getMessage() {
+std::string MessageContainer::getMessage() {
     return this->message;
 }

@@ -19,7 +19,7 @@ void PrimaryClient::init() {
     instancePtr->keyPair = NULL;
     // Load from file later
     instancePtr->clientID.GenerateNewID();
-    std::cout << instancePtr->clientID.get() << "\n";
+    std::cout << instancePtr->clientID.getString() << "\n";
 
     // Socket Compatibility Stuff
     #ifdef _WIN32
@@ -39,21 +39,21 @@ EVP_PKEY* PrimaryClient::getKeyPair() {
     return this->keyPair;
 }
 
-ID PrimaryClient::getClientID() {
-    return this->clientID;
+ID* PrimaryClient::getClientID() {
+    return &this->clientID;
 }
 
 
 int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
     // Guard clause to not add oneself as a new user
-    if (id.get() == this->clientID.get()) {
+    if (id.getString() == this->clientID.getString()) {
         std::cout << "Cannot Register Yourself\n";
         return -1;
     }
     
     // Guard Clause to not overwrite a user
-    if (this->knownConnections[id.get()] != 0) {
-        std::cout << "User " << id.get() << " already Exists\n";
+    if (this->knownConnections[id.getString()] != 0) {
+        std::cout << "User " << id.getString() << " already Exists\n";
         return -1;
     }
 
@@ -62,8 +62,8 @@ int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
     // TODO link remote user connection  
 
     // add to the list of all known connections
-    std::cout << "New User Added: " << id.get() << " \n";
-    this->knownConnections[id.get()] = test;
+    std::cout << "New User Added: " << id.getString() << " \n";
+    this->knownConnections[id.getString()] = test;
     return 1;  // return sucsess 
 }
 
@@ -73,10 +73,9 @@ RemoteUser* PrimaryClient::getUser(std::string userID) {
 }
 
 
-void PrimaryClient::addNewServer(std::string id, Server *server) {
-    this->allServers[id] = server;
-    emit CppInterface::instancePtr->loadServer(server);
-    
+void PrimaryClient::addNewServer(Server *server) {
+    this->allServers[server->getID()->getString()] = server;
+    CppInterface::instancePtr->loadServer(server);
 }
 
 Server* PrimaryClient::getServer(std::string id) {

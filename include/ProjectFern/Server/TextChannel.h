@@ -1,11 +1,12 @@
 #pragma once
-#include <unordered_map>
+#include <vector>
 #include "DataTypes.h"
 
 class TextChannel {
     ID id;
 
 public:
+    std::vector<MessageContainer*> messages;
     TextChannel();
-    std::string getID();
+    ID* getID();
 };

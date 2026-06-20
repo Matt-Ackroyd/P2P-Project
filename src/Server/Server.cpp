@@ -10,8 +10,8 @@ Server::~Server() {
     }
 }
 
-std::string Server::getID() {
-    return id.get();
+ID* Server::getID() {
+    return &id;
 }
 
 int Server::addUser(RemoteUser *user, std::string invitation) {
@@ -33,6 +33,6 @@ std::string Server::createNewInvitation() {
     ID invitation;
     invitation.GenerateNewID();
 
-    this->activeInvitations.insert(invitation.get());
-    return invitation.get();
+    this->activeInvitations.insert(invitation.getString());
+    return invitation.getString();
 }

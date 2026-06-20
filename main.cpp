@@ -33,12 +33,21 @@ int main(int argc, char *argv[])
     PrimaryClient* client = PrimaryClient::getInstance();
     
     Server* test = new Server();
-    client->addNewServer("server id placeholder", test);
-    client->addNewServer("a", new Server());
+    client->addNewServer(test);
+
+    TextChannel* t1 = new TextChannel();
+    TextChannel* t2 = new TextChannel();
+    TextChannel* t3 = new TextChannel();
+    test->knownChannels[t1->getID()->getString()] = t1;
+    test->knownChannels[t2->getID()->getString()] = t2;
+    test->knownChannels[t3->getID()->getString()] = t3;
+
+    Server* test2 = new Server();
+    client->addNewServer(test2);
+
+    TextChannel* t4 = new TextChannel();
+    test2->knownChannels[t4->getID()->getString()] = t4;
 
 
-    CppInterface::instancePtr->loadChannel(new TextChannel());
-    CppInterface::instancePtr->loadChannel(new TextChannel());
-    CppInterface::instancePtr->loadChannel(new TextChannel());
     return QGuiApplication::exec();
 }
