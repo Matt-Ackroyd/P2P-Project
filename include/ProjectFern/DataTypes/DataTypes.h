@@ -11,20 +11,22 @@ enum DataTypes {
 class MessageContainer {
 private:
     ID messageID;
-    ID *channelID;
-    ID *author;
+    ID serverID;
+    ID channelID;
+    ID author;
     std::string message;
     int messageLength;
     
     
 public:
-    int createNew(ID* channel, ID* author, std::string message); // Returns the required length of the buffer to hold this structure
+    int createNew(ID* server, ID* channel, ID* author, std::string message); // Returns the required length of the buffer to hold this structure
 
     void serialize(unsigned char* serializedData);
-    static MessageContainer deserialize(unsigned char* data);
+    static MessageContainer* deserialize(unsigned char* data);
 
     ID* getMessageID();
-    ID* getChannel();
+    ID* getServerID();
+    ID* getChannelID();
     ID* getAuthor();
     std::string getMessage();
 };

@@ -85,11 +85,6 @@ Item {
                     CppInterface.sendMessage(textInput.text, server, channel)
                 }
             }
-            
-            Connections {
-                target: textInput
-                function onAccepted() { messsageHistoryList.model.append({name:  "You: ", message: textInput.text}) }
-            }
         }
         
     }

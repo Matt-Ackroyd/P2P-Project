@@ -35,7 +35,7 @@ private:
     // Private Constructor
     PrimaryClient() {}
 
-    void init();
+    int init();
 
 public:
     // Deleting the copy constructor to prevent copies

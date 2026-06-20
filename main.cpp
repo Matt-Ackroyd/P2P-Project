@@ -5,11 +5,6 @@
 #include "CppInterface.h"
 #include "PrimaryClient.h"
 
-
-void test() {
-    qDebug() << "pressed";
-}
-
 int main(int argc, char *argv[])
 {
     //qmlRegisterType<CppInterface>("", "CppInterface");
@@ -28,7 +23,6 @@ int main(int argc, char *argv[])
     IncomingHandler a;
 
     CppInterface::instancePtr = engine.singletonInstance<CppInterface*>("project_fern", "CppInterface");
-    //a.enableIncomingTraffic(5000);
 
     PrimaryClient* client = PrimaryClient::getInstance();
     
@@ -47,6 +41,11 @@ int main(int argc, char *argv[])
 
     TextChannel* t4 = new TextChannel();
     test2->knownChannels[t4->getID()->getString()] = t4;
+
+    a.enableIncomingTraffic(5000);
+    
+    UDPConnection* greg = new UDPConnection(NULL);
+    greg->sendConnectionRequest();
 
 
     return QGuiApplication::exec();

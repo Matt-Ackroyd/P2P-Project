@@ -9,26 +9,33 @@ PrimaryClient* PrimaryClient::getInstance() {
         std::lock_guard<std::mutex> lock(mtx);
         if (instancePtr == nullptr) {
             instancePtr = new PrimaryClient();
+            instancePtr->init();
         }
     }
     return instancePtr;
 }
 
-void PrimaryClient::init() {
+int PrimaryClient::init() {
     // Innital Values 
     instancePtr->keyPair = NULL;
     // Load from file later
     instancePtr->clientID.GenerateNewID();
-    std::cout << instancePtr->clientID.getString() << "\n";
-
+    std::cout << "Your ID: " << instancePtr->clientID.getString() << "\n";
+    
     // Socket Compatibility Stuff
     #ifdef _WIN32
         WSADATA wsaData;
         WSAStartup(MAKEWORD(2,2), &wsaData);
+        int optVal = 1;
+        setsockopt(instancePtr->socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
     #endif
 
     instancePtr->socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
-    //setsockopt(instancePtr->socketfd, SOL_SOCKET, SO_REUSEADDR, (const char*)1, sizeof(int));
+    
+    
+
+   
+    return 0;
 }
 
 EVP_PKEY* PrimaryClient::getKeyPair() {
@@ -46,10 +53,10 @@ ID* PrimaryClient::getClientID() {
 
 int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
     // Guard clause to not add oneself as a new user
-    if (id.getString() == this->clientID.getString()) {
-        std::cout << "Cannot Register Yourself\n";
-        return -1;
-    }
+    // if (id.getString() == this->clientID.getString()) {
+    //     std::cout << "Cannot Register Yourself\n";
+    //     return -1;
+    // }
     
     // Guard Clause to not overwrite a user
     if (this->knownConnections[id.getString()] != 0) {

@@ -40,6 +40,16 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     int a = bind(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
     std::cout << " Bind Return: " << a << "\n";
 
+    printf("bind failed with error: %d\n", WSAGetLastError());
+
+    if (a == -1) {
+        #ifdef _WIN32
+            closesocket(socketfd);
+            WSACleanup();
+        #endif
+        return;
+    }
+
     this->acceptIncoming = true;
     while (this->acceptIncoming)
     {
@@ -77,6 +87,10 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         delete incomingPacket;
     }
     
+    #ifdef _WIN32
+        closesocket(socketfd);
+        WSACleanup();
+    #endif
 }
 
 void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp) { 
@@ -87,8 +101,8 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
     }
 
     // Temp for testing
-    packetAuthor->connection->SendingPort = temp;
-    packetAuthor->connection->setAddr("192.168.0.17");
+    packetAuthor->connection->SendingPort = 5000;
+    packetAuthor->connection->setAddr("127.0.0.1");
 
 
     
@@ -118,23 +132,30 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
         exit(1);
     }
 
-    std::cout << "Other: ";
-    for (int i = 0; i < datalen; i++) {
-        std::cout << output[i];
-    }
-    std::cout << "\n";
 
     // Get DataType
     DataTypes packetDataType;
+    memcpy(&packetDataType, output, sizeof(DataTypes));
 
     switch (packetDataType) {
         case DataTypes::MESSAGETYPE:
-            break;
+            handleMessage(output);
         case DataTypes::FILETYPE:
             break;
     }
-    
+}
 
+void IncomingHandler::handleMessage(unsigned char* decryptedData) {
+    MessageContainer* msg = MessageContainer::deserialize(decryptedData);
+    
+    PrimaryClient* client = PrimaryClient::getInstance();
+    //Get Server somehow
+    Server* server = client->getServer(msg->getServerID()->getString());
+    TextChannel* channel = server->knownChannels[msg->getChannelID()->getString()];
+
+    channel->messages.push_back(msg);
+    CppInterface::instancePtr->loadMessage(msg);
+    
 }
 
 

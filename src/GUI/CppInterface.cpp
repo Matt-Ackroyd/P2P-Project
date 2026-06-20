@@ -20,10 +20,17 @@ void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qcha
     TextChannel* channel = server->knownChannels[channelid];
 
     MessageContainer* message = new MessageContainer();
-    int len = message->createNew(server->getID(), client->getClientID(), text);
+    int len = message->createNew(server->getID(), channel->getID(), client->getClientID(), text);
 
     channel->messages.emplace_back(message);
     loadMessage(message);
+
+    // REPLACE WITH CHANNEL SPECIFIC RECIPIENTS
+    for (auto& [key, recipient]: client->knownConnections) {
+        unsigned char data[len];
+        message->serialize(data);
+        recipient->connection->send(data, len);
+    }
 
 }
 
