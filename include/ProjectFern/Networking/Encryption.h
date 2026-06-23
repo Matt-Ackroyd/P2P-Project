@@ -9,6 +9,8 @@
 #define AES_256_IV_LENGTH     16
 #define AES_256_GCM_TAG_LENGTH  16
 
+#define SHAW_256_HASH_SIZE 32
+
 // Size of the 
 #define ML_KEM_KEYLENGTH 1568
 #define ML_KEM_HANDSHAKE_RANDSIZE 32

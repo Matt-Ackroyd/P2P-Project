@@ -60,7 +60,7 @@ void UDPConnection::send(unsigned char* data, int datalen) {
 }
 
 void UDPConnection::sendConnectionRequest() {
-    Packet *packet = new Packet(-1, PacketType::CONNECTION_REQUEST);
+    Packet *packet = new Packet(-1, PacketType::HANDSHAKE_REQUEST);
     unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
 
     // Generate Random Number for handshake & store it for later in Primary Client

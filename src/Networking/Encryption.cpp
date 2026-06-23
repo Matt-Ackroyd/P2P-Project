@@ -186,4 +186,3 @@ void handleErrors() {
     std::cout << "We Messed Up\n";
     exit(1);
 }
-

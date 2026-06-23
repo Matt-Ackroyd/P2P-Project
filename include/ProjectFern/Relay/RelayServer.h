@@ -1,5 +1,15 @@
-#include "RelayTypes.h"
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <thread>
 #include "ID.h"
+#include "Encryption.h"
+#include "ML-KEM_Handshake.h"
+#include "socketMacro.h"
+
+#define PATH_TO_USER_FILES "relay_users/"
+#define PASSWORD_SIZE 32
+#define CONNECTION_INFO_SIZE 6
 
 // Adds a user to the data base with a hash of the salted password
 // Requires a Encrypted Connection Beforehand 
@@ -14,4 +24,4 @@ void onUpdateUserConnectionInfo(ID userID, std::string password, bool status);
 void onUserConnectionInfoReqest(ID userID);
 
 
-void handleIncomingRequest();
+void handleIncomingRequest(SOCKTYPE clientSocket, sockaddr_in clientAddress);

@@ -24,13 +24,17 @@ qt_add_executable(app_${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/Server/RemoteUser.cpp
     ${PROJECT_SOURCE_DIR}/src/Server/TextChannel.cpp
     ${PROJECT_SOURCE_DIR}/src/Relay/RelayClient.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/ML-KEM_Handshake.cpp
 )
 target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/DataTypes/)
 target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/Networking/)
 target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/Server/)
 target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/GUI/)
+target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/Relay/)
 
 find_package(OpenSSL)
+
+#add_subdirectory("include/ProjectFern")
 
 qt_add_qml_module(app_${PROJECT_NAME}
     URI ${PROJECT_NAME}
@@ -58,6 +62,7 @@ set_target_properties(app_${PROJECT_NAME} PROPERTIES
 target_link_libraries(app_${PROJECT_NAME}
     PRIVATE Qt6::Quick
     PRIVATE Qt6::Widgets
+    #FernLib
     OpenSSL::Crypto
 )
 
@@ -72,4 +77,49 @@ install(TARGETS app_${PROJECT_NAME}
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+
+#Relay Server Executable THIS NEEDS TO BE CLEANED UP
+add_executable(${PROJECT_NAME}_relay_server 
+    ${PROJECT_SOURCE_DIR}/src/Relay/RelayServer.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/FileContainer.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/MessageContainer.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/FileIndicator.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/ID.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/Encryption.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/Packet.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/UDPConnection.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/IncomingHandler.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/PrimaryClient.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/Server.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/RemoteUser.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/TextChannel.cpp
+    ${PROJECT_SOURCE_DIR}/src/Relay/RelayClient.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/ML-KEM_Handshake.cpp
+    ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp
+)
+target_include_directories(${PROJECT_NAME}_relay_server  
+    PUBLIC include/ProjectFern/DataTypes/
+    PUBLIC include/ProjectFern/Networking/
+    PUBLIC include/ProjectFern/Server/
+    PUBLIC include/ProjectFern/GUI/
+    PUBLIC include/ProjectFern/Relay/
+)
+
+qt_add_qml_module(${PROJECT_NAME}_relay_server 
+    URI ${PROJECT_NAME}_AAAAAAA
+    QML_FILES
+        Main.qml
+        ChannelStructure.qml
+        ServerStructure.qml
+    SOURCES 
+        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h 
+        ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp
+)
+target_link_libraries(${PROJECT_NAME}_relay_server 
+    PRIVATE Qt6::Quick
+    PRIVATE Qt6::Widgets
+    #FernLib
+    OpenSSL::Crypto
 )
