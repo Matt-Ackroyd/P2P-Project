@@ -1,5 +1,6 @@
 #include "UDPConnection.h"
-#include <PrimaryClient.h>
+#include "PrimaryClient.h"
+#include "ML-KEM_Handshake.h"
 
 UDPConnection::UDPConnection(unsigned char* sharedSecret) {
     this->sharedSecret = sharedSecret;
@@ -33,7 +34,7 @@ void UDPConnection::send(unsigned char* data, int datalen) {
 
 
     //Gen IV
-    Packet *packetToSend = new Packet(123, PacketType::PACKET);
+    Packet *packetToSend = new Packet(123, PacketType::PACKET, PrimaryClient::getInstance()->getClientID());
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
@@ -59,23 +60,9 @@ void UDPConnection::send(unsigned char* data, int datalen) {
     delete packetToSend;
 }
 
-void UDPConnection::sendConnectionRequest() {
-    Packet *packet = new Packet(-1, PacketType::HANDSHAKE_REQUEST);
-    unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
-
-    // Generate Random Number for handshake & store it for later in Primary Client
-    RAND_bytes(PrimaryClient::getInstance()->handShakeRand, ML_KEM_HANDSHAKE_RANDSIZE);
-    memcpy(data, PrimaryClient::getInstance()->handShakeRand, ML_KEM_HANDSHAKE_RANDSIZE);
-
-    // Get Public key & place in data(offset by the randsize)
-    size_t publen = ML_KEM_KEYLENGTH;
-    EVP_PKEY_get_raw_public_key(PrimaryClient::getInstance()->getKeyPair(), 
-        data+ML_KEM_HANDSHAKE_RANDSIZE, &publen);
-    
-
-    int packetlen = packet->serialize((char*)data, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
-    sendto(this->sock, packet->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
-    delete packet;
+void UDPConnection::sendHandshakeRequest() {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    ML_KEM_Handshake::startHandshake(client->handShakeRand, client->getKeyPair(), this->sock, &connectionAddr, PrimaryClient::getInstance()->getClientID());
 }
 
 

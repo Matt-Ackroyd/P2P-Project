@@ -4,6 +4,7 @@
 #include <QQuickView>
 #include "CppInterface.h"
 #include "PrimaryClient.h"
+#include "RelayClient.h"
 
 int main(int argc, char *argv[])
 {
@@ -45,7 +46,10 @@ int main(int argc, char *argv[])
     a.enableIncomingTraffic(5000);
     
     UDPConnection* greg = new UDPConnection(NULL);
-    greg->sendConnectionRequest();
+    greg->sendHandshakeRequest();
+
+
+    
 
 
     return QGuiApplication::exec();

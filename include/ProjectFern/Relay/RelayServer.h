@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -8,7 +9,7 @@
 #include "socketMacro.h"
 
 #define PATH_TO_USER_FILES "relay_users/"
-#define PASSWORD_SIZE 32
+#define PASSWORD_BYTE_SIZE 32
 #define CONNECTION_INFO_SIZE 6
 
 // Adds a user to the data base with a hash of the salted password

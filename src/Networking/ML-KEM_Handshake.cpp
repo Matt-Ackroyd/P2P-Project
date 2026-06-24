@@ -1,10 +1,24 @@
 #include "ML-KEM_Handshake.h"
 
-void startHandshake() {
+void ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* keyPair, SOCKTYPE socketfd, sockaddr_in* connectionAddr, ID* yourID) {
+    Packet *packet = new Packet(-1, PacketType::HANDSHAKE_REQUEST, yourID);
+    unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
 
+    // Generate Random Number for handshake & store it for later in Primary Client
+    RAND_bytes(randomBuffer, ML_KEM_HANDSHAKE_RANDSIZE);
+    memcpy(data, randomBuffer, ML_KEM_HANDSHAKE_RANDSIZE);
+
+    // Get Public key & place in data(offset by the randsize)
+    size_t publen = ML_KEM_KEYLENGTH;
+    EVP_PKEY_get_raw_public_key(keyPair, 
+        data+ML_KEM_HANDSHAKE_RANDSIZE, &publen);
+    
+    int packetlen = packet->serialize((char*)data, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
+    sendto(socketfd, packet->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
+    delete packet;
 }
 
-unsigned char* onML_KEM_HandshakeRequest(Packet* packet, SOCKTYPE socketfd, sockaddr_in *returnAdress, socklen_t returnLen) {
+unsigned char* ML_KEM_Handshake::onRequest(Packet* packet, SOCKTYPE socketfd, sockaddr_in *returnAdress, socklen_t returnLen, ID* yourID) {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey;
     size_t secretlen = 0, outlen = 0;
@@ -40,7 +54,7 @@ unsigned char* onML_KEM_HandshakeRequest(Packet* packet, SOCKTYPE socketfd, sock
     memcpy(out, selfRand, ML_KEM_HANDSHAKE_RANDSIZE);
 
     // Create Return Packet
-    Packet *returnPacket = new Packet(-1, PacketType::HANDSHAKE_RESPONSE);
+    Packet *returnPacket = new Packet(-1, PacketType::HANDSHAKE_RESPONSE, yourID);
     int packetlen = returnPacket->serialize((char*)out, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
     sendto(socketfd, returnPacket->getData(), packetlen, 0, (const struct sockaddr *)returnAdress, returnLen);
     delete returnPacket;
@@ -54,7 +68,7 @@ unsigned char* onML_KEM_HandshakeRequest(Packet* packet, SOCKTYPE socketfd, sock
 
 
 
-unsigned char* onML_KEM_HandshakeReply(Packet* packet, EVP_PKEY* KeyPair, unsigned char* random) {
+unsigned char* ML_KEM_Handshake::onReply(Packet* packet, EVP_PKEY* KeyPair, unsigned char* random) {
     EVP_PKEY_CTX *ctx = NULL;
     //PrimaryClient* client = PrimaryClient::getInstance();
     
@@ -74,8 +88,6 @@ unsigned char* onML_KEM_HandshakeReply(Packet* packet, EVP_PKEY* KeyPair, unsign
     unsigned char sharedSecret[sLen];
 
     EVP_PKEY_decapsulate(ctx, sharedSecret, &sLen, out, ML_KEM_KEYLENGTH);
-
-
 
     // Hash the premaster with rand values + a salt
     unsigned char* hashOutput = new unsigned char[32];

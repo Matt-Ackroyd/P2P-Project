@@ -67,6 +67,7 @@ target_link_libraries(app_${PROJECT_NAME}
 )
 
 if(WIN32)
+    target_link_libraries(app_${PROJECT_NAME} PUBLIC wsock32 ws2_32)
     set_target_properties( app_${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY 
         ${CMAKE_BINARY_DIR}/bin )
     set_target_properties( app_${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
@@ -80,46 +81,4 @@ install(TARGETS app_${PROJECT_NAME}
 )
 
 
-#Relay Server Executable THIS NEEDS TO BE CLEANED UP
-add_executable(${PROJECT_NAME}_relay_server 
-    ${PROJECT_SOURCE_DIR}/src/Relay/RelayServer.cpp
-    ${PROJECT_SOURCE_DIR}/src/DataTypes/FileContainer.cpp
-    ${PROJECT_SOURCE_DIR}/src/DataTypes/MessageContainer.cpp
-    ${PROJECT_SOURCE_DIR}/src/DataTypes/FileIndicator.cpp
-    ${PROJECT_SOURCE_DIR}/src/DataTypes/ID.cpp
-    ${PROJECT_SOURCE_DIR}/src/Networking/Encryption.cpp
-    ${PROJECT_SOURCE_DIR}/src/Networking/Packet.cpp
-    ${PROJECT_SOURCE_DIR}/src/Networking/UDPConnection.cpp
-    ${PROJECT_SOURCE_DIR}/src/Networking/IncomingHandler.cpp
-    ${PROJECT_SOURCE_DIR}/src/Server/PrimaryClient.cpp
-    ${PROJECT_SOURCE_DIR}/src/Server/Server.cpp
-    ${PROJECT_SOURCE_DIR}/src/Server/RemoteUser.cpp
-    ${PROJECT_SOURCE_DIR}/src/Server/TextChannel.cpp
-    ${PROJECT_SOURCE_DIR}/src/Relay/RelayClient.cpp
-    ${PROJECT_SOURCE_DIR}/src/Networking/ML-KEM_Handshake.cpp
-    ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp
-)
-target_include_directories(${PROJECT_NAME}_relay_server  
-    PUBLIC include/ProjectFern/DataTypes/
-    PUBLIC include/ProjectFern/Networking/
-    PUBLIC include/ProjectFern/Server/
-    PUBLIC include/ProjectFern/GUI/
-    PUBLIC include/ProjectFern/Relay/
-)
-
-qt_add_qml_module(${PROJECT_NAME}_relay_server 
-    URI ${PROJECT_NAME}_AAAAAAA
-    QML_FILES
-        Main.qml
-        ChannelStructure.qml
-        ServerStructure.qml
-    SOURCES 
-        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h 
-        ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp
-)
-target_link_libraries(${PROJECT_NAME}_relay_server 
-    PRIVATE Qt6::Quick
-    PRIVATE Qt6::Widgets
-    #FernLib
-    OpenSSL::Crypto
-)
+add_subdirectory("src/Relay")

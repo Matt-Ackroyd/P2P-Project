@@ -12,6 +12,7 @@
 #include "Packet.h"
 #include "Encryption.h"
 
+
 class UDPConnection {
 private:
     struct sockaddr_in connectionAddr;
@@ -32,7 +33,7 @@ public:
 
     
 
-    void sendConnectionRequest();
+    void sendHandshakeRequest();
 
     unsigned char* getSharedSecret();
         

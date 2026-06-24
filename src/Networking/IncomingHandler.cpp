@@ -2,12 +2,7 @@
 #include <unordered_set>
 
 void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUser) {
-    packet.getSeqNum();
-    // Create an ack packet and send it back
-    Packet ack(this->nextExpectedSeqNum, PacketType::ACK);
-    ack.serialize(NULL, 0, NULL, NULL);
 
-    //sendto(connectedUser.sock, ack.getData(), MAXLINE, 0, (struct sockaddr*)NULL, sizeof((struct sockaddr*)NULL));
 }
 
 
@@ -62,7 +57,7 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         // TODO REPLACE THIS WITH A DEFINED PORT
         //cliaddr.sin_port = htons(5001);
 
-        Packet *incomingPacket = new Packet(-1, PacketType::NONE);
+        Packet *incomingPacket = new Packet(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
         int datalen = incomingPacket->deserialize(buffer);
 
         
@@ -161,7 +156,7 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
 
 void IncomingHandler::handleConnectionRequest(Packet *packet, SOCKTYPE socketfd, sockaddr_in *returnAdress, socklen_t returnLen) {
     unsigned char* hashOutput;
-    hashOutput = onML_KEM_HandshakeRequest(packet, socketfd, returnAdress, returnLen);
+    hashOutput = ML_KEM_Handshake::onRequest(packet, socketfd, returnAdress, returnLen, PrimaryClient::getInstance()->getClientID());
     
     // User creation
     PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
@@ -171,7 +166,7 @@ void IncomingHandler::handleConnectionResponse(Packet *packet, SOCKTYPE socketfd
     PrimaryClient* client = PrimaryClient::getInstance();
 
     unsigned char* hashOutput;
-    hashOutput = onML_KEM_HandshakeReply(packet, client->getKeyPair(), client->handShakeRand);
+    hashOutput = ML_KEM_Handshake::onReply(packet, client->getKeyPair(), client->handShakeRand);
     
     // User creation
     client->registerNewUser(packet->packetAuthorID, hashOutput);

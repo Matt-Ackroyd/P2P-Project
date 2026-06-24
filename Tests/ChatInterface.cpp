@@ -25,7 +25,7 @@ void ChatInterface() {
     // Setup Connections
     
     //test->SendingPort = sendingPort;
-    test->sendConnectionRequest();
+    test->sendHandshakeRequest();
 
     std::cin.ignore();
     

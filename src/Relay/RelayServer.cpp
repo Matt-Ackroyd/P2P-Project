@@ -2,9 +2,9 @@
 
 // Adds a user to the data base with a hash of the salted password
 // Requires a Encrypted Connection Beforehand 
-void onRegisterUser(ID* userID, unsigned char* data) {
+void onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
     // Data the password
-    std::string password(reinterpret_cast<char const*>(data), PASSWORD_SIZE);
+    std::string password(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);
 
     
     // Make sure that we dont overide an existing entry
@@ -23,7 +23,13 @@ void onRegisterUser(ID* userID, unsigned char* data) {
     if (file.is_open()) {
         // File IO
         file.write((char*)shaw256output, SHAW_256_HASH_SIZE);   // Pass Hash
-        //file.write();                                         // Connection Info
+        
+        // Connection Info
+        char outgoingBuffer[CONNECTION_INFO_SIZE];
+        memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
+        memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
+        file.seekp(SHAW_256_HASH_SIZE);
+        file.write(outgoingBuffer, CONNECTION_INFO_SIZE);
     }
     file.close();
 }
@@ -31,9 +37,9 @@ void onRegisterUser(ID* userID, unsigned char* data) {
 
 // Updates the stored connection info of a given user, as long as the password hash works
 // Requires a Encrypted Connection Beforehand 
-void onUpdateUserConnectionInfo(ID* userID, unsigned char* data) {
+void onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
     // Data contains the password 
-    std::string givenPassword(reinterpret_cast<char const*>(data), PASSWORD_SIZE);
+    std::string givenPassword(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);
 
     // Make sure that this user exists
     if (!std::filesystem::exists(PATH_TO_USER_FILES + userID->getString())) {
@@ -51,10 +57,13 @@ void onUpdateUserConnectionInfo(ID* userID, unsigned char* data) {
         char passwordOnFile[SHAW_256_HASH_SIZE];
         file.read(passwordOnFile, SHAW_256_HASH_SIZE);
         if (strcmp(passwordOnFile, (char*)shaw256output)) {     // if passwords match
-            file.seekp(SHAW_256_HASH_SIZE);                     // move the put pointer to the connection info section of the file
-            //file.write()                                        // Write connection info
+            // Connection Info
+            char outgoingBuffer[CONNECTION_INFO_SIZE];
+            memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
+            memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
+            file.seekp(SHAW_256_HASH_SIZE);     // move the put pointer to the connection info section of the file
+            file.write(outgoingBuffer, CONNECTION_INFO_SIZE);                                              
         }
-        //file.write(); // Connection Info
     }
     file.close();
 
@@ -68,7 +77,7 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     char buffer[1024] = {0};
     recv(clientSocket, buffer, sizeof(buffer), 0);
 
-    Packet *incomingPacket = new Packet(-1, PacketType::NONE);
+    Packet *incomingPacket = new Packet(-1, PacketType::NONE, NULL);
     int datalen = incomingPacket->deserialize(buffer);
 
     // Return if this stream isn't requested to be encrypted
@@ -78,7 +87,7 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     
     // Create Shared Secret for encryption/decryption
     unsigned char* secret;
-    secret = onML_KEM_HandshakeRequest(incomingPacket, clientSocket, &clientAddress, sizeof(clientAddress));
+    secret = ML_KEM_Handshake::onRequest(incomingPacket, clientSocket, &clientAddress, sizeof(clientAddress), NULL);
 
     // Free memory
     delete incomingPacket;
@@ -86,7 +95,7 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     buffer[1024] = {0};
     recv(clientSocket, buffer, sizeof(buffer), 0);
 
-    incomingPacket = new Packet(-1, PacketType::NONE);
+    incomingPacket = new Packet(-1, PacketType::NONE, NULL);
     datalen = incomingPacket->deserialize(buffer);
 
     // DECRYPTION
@@ -105,9 +114,9 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     
     switch(incomingPacket->getPacketType()) {
         case PacketType::RELAY_REQUEST_USER_REGISTRATION:
-            onRegisterUser(&incomingPacket->packetAuthorID, output);
+            onRegisterUser(&incomingPacket->packetAuthorID, output, &clientAddress);
         case PacketType::RELAY_REQUEST_UPDATE_CONNECTION_INFO:
-            onUpdateUserConnectionInfo(&incomingPacket->packetAuthorID, output);
+            onUpdateUserConnectionInfo(&incomingPacket->packetAuthorID, output, &clientAddress);
         default:
             std::cout << "Invalid Request\n";
     }
@@ -157,7 +166,7 @@ void onUserConnectionInfoReqest(char* buffer, SOCKTYPE socketfd, sockaddr_in* cl
 
     char outgoingBuffer[CONNECTION_INFO_SIZE];
     memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
-    memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));          // Copy Port
+    memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
 
     sendto(socketfd, outgoingBuffer, CONNECTION_INFO_SIZE, 0, (struct sockaddr*)&addrToInform, sizeof(addrToInform));
 }
@@ -198,11 +207,12 @@ void UdpHandler(int udpPort) {
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        std::cout << "Incorrect Comand line args: program.exe <tcpPort> <udpPort> \n";
+    int port = 0;
+    if (argc < 2) {
+        port = 7777;
+    } else {
+        port = atoi(argv[1]);
     }
-    int tcpPort = atoi(argv[1]);
-    int udpPort = atoi(argv[2]);
 
     // Windows Startup code
     #ifdef _WIN32
@@ -221,13 +231,13 @@ int main(int argc, char *argv[]) {
     // Bind adress and port
     sockaddr_in tcpServerAddress;
     tcpServerAddress.sin_family = AF_INET;
-    tcpServerAddress.sin_port = htons(tcpPort);
+    tcpServerAddress.sin_port = htons(port);
     tcpServerAddress.sin_addr.s_addr = INADDR_ANY;
 
     bind(tcpsServerSocket, (struct sockaddr*)&tcpServerAddress, sizeof(tcpServerAddress));
 
     //udp
-    std::thread UDPLoop(UdpHandler, udpPort);
+    std::thread UDPLoop(UdpHandler, port);
 
     // Connection loop
     while (true) {

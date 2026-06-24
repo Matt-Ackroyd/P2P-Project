@@ -1,9 +1,8 @@
 #include "Packet.h"
-#include <PrimaryClient.h>
 
 
-Packet::Packet(int seqNum, PacketType packetType) {
-    this->packetAuthorID = *PrimaryClient::getInstance()->getClientID();
+Packet::Packet(int seqNum, PacketType packetType, ID* author) {
+    this->packetAuthorID = *author;
     this->seqNum = seqNum;
     this->packetType = packetType;
     //this->data = new unsigned char[10];

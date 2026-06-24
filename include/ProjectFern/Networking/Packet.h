@@ -14,6 +14,7 @@ enum PacketType
     ACK,
     HANDSHAKE_REQUEST,
     HANDSHAKE_RESPONSE,
+    CONNECTION_REQUEST,
     RELAY_REQUEST_USER_REGISTRATION,
     RELAY_REQUEST_UPDATE_CONNECTION_INFO,
     RELAY_REQUEST_USER_INFO,
@@ -32,7 +33,7 @@ private:
 public:       
     ID packetAuthorID;
 
-    Packet(int seqNum, PacketType packetType);
+    Packet(int seqNum, PacketType packetType, ID* author);
     ~Packet();
 
     int serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
