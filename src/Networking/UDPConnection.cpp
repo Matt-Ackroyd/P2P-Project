@@ -62,7 +62,7 @@ void UDPConnection::send(unsigned char* data, int datalen) {
 
 void UDPConnection::sendHandshakeRequest() {
     PrimaryClient* client = PrimaryClient::getInstance();
-    ML_KEM_Handshake::startHandshake(client->handShakeRand, client->getKeyPair(), this->sock, &connectionAddr, PrimaryClient::getInstance()->getClientID());
+    ML_KEM_Handshake::startHandshake(client->handShakeRand, client->getKeyPair(), client->socketfd, connectionAddr, client->getClientID());
 }
 
 

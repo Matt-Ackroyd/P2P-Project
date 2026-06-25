@@ -15,7 +15,7 @@ Packet::Packet(int seqNum, PacketType packetType, ID* author) {
 
 int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
     unsigned char controlVar = (char)0;
-    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(this->packetAuthorID) + sizeof(dataLen) + dataLen + sizeof(controlVar);
+    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + UUID_BYTE_SIZE + sizeof(dataLen) + dataLen + sizeof(controlVar);
 
     // Control variable to let the reciver know to expect the IV(1), MAC(2) or both(3)
     if (IV != NULL) {

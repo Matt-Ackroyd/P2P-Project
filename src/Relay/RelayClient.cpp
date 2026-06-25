@@ -17,16 +17,16 @@ SOCKTYPE RelayClient::EstablishEncryption(std::string relayAddr, int relayPort, 
 
     // sending data
     unsigned char myRand[ML_KEM_HANDSHAKE_RANDSIZE];
-    ML_KEM_Handshake::startHandshake(myRand, PrimaryClient::getInstance()->getKeyPair(), socketfd, &serverAddress, PrimaryClient::getInstance()->getClientID());
+    ML_KEM_Handshake::startHandshake(myRand, PrimaryClient::getInstance()->getKeyPair(), socketfd, serverAddress, PrimaryClient::getInstance()->getClientID());
 
     // Wait for response
-    char buffer[1024] = {0};
+    char buffer[3000] = {0};
     recv(socketfd, buffer, sizeof(buffer), 0);
 
     Packet incomingPacket(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
     int datalen = incomingPacket.deserialize(buffer);
 
-    sharedSecretBuffer = ML_KEM_Handshake::onReply(&incomingPacket, PrimaryClient::getInstance()->getKeyPair(), myRand);
+    ML_KEM_Handshake::onReply(&incomingPacket, PrimaryClient::getInstance()->getKeyPair(), myRand, sharedSecretBuffer);
     
     return socketfd;
 
@@ -41,8 +41,9 @@ void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType re
         return;
     }
 
-    unsigned char* sharedsecret;
+    unsigned char sharedsecret[SHAW_256_HASH_SIZE];
     SOCKTYPE socketfd = EstablishEncryption(relayAddr, relayPort, sharedsecret);
+
 
     // If a password exists for this relay load it, if not then generate one
     int datalen = PASSWORD_BYTE_SIZE;
@@ -57,7 +58,7 @@ void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType re
     Packet request(-1, requestType, PrimaryClient::getInstance()->getClientID());
 
     // AAD Gen for the senderID and incoming length of the data
-    unsigned char aad[UUID_BYTE_SIZE + sizeof(request)];
+    unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
     memcpy(aad, request.packetAuthorID.getRaw(), UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
@@ -71,7 +72,7 @@ void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType re
     // Encryption
     unsigned char ciphertext[datalen];
     unsigned char tag[AES_256_GCM_TAG_LENGTH];
-    if (!symmetricEncryption((unsigned char*)password, datalen, aad, sizeof(aad), sharedsecret, iv, AES_256_IV_LENGTH, ciphertext, tag)) {
+    if (symmetricEncryption((unsigned char*)password, datalen, aad, sizeof(aad), sharedsecret, iv, AES_256_IV_LENGTH, ciphertext, tag) < 0) {
         // Failed
         return;
     }

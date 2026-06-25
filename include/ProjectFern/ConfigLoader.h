@@ -19,7 +19,7 @@ public:
     ConfigLoader(const ConfigLoader& obj) = delete;
     static ConfigLoader* getInstance();
 
-    int WriteBinaryFile(std::string path, char* data, int datalen);
-    int ReadBinaryFile(std::string path, char* data, int datalen);
+    static int WriteBinaryFile(std::string path, char* data, int datalen);
+    static int ReadBinaryFile(std::string path, char* data, int datalen);
     
 };

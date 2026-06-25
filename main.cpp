@@ -46,7 +46,11 @@ int main(int argc, char *argv[])
     a.enableIncomingTraffic(5000);
     
     UDPConnection* greg = new UDPConnection(NULL);
+    greg->setAddr("192.168.0.17");
     greg->sendHandshakeRequest();
+
+    //int a = ntohs(connectionAddr.sin_port);
+    //char *ip = inet_ntoa(connectionAddr.sin_addr);
 
 
     return QGuiApplication::exec();

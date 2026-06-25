@@ -32,13 +32,13 @@ void onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
     password += "StaltyFern";   // Salt the password
     
     // Hash
-    unsigned char shaw256output[SHAW_256_HASH_SIZE];
-    shaw256Hash((unsigned char*)password.c_str(), password.length()+1, shaw256output);
+    char shaw256output[SHAW_256_HASH_SIZE];
+    shaw256Hash((unsigned char*)password.c_str(), password.length()+1, (unsigned char*)shaw256output);
 
     std::ofstream file(path, std::ios::binary);
     if (file.is_open()) {
         // File IO
-        file.write((char*)shaw256output, SHAW_256_HASH_SIZE);   // Pass Hash
+        file.write(shaw256output, SHAW_256_HASH_SIZE);   // Pass Hash
         
         // Connection Info
         char outgoingBuffer[CONNECTION_INFO_SIZE];
@@ -80,23 +80,22 @@ void onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cl
 
     // Salt & hash the given password
     givenPassword += "StaltyFern";   
-    unsigned char shaw256output[SHAW_256_HASH_SIZE];
-    shaw256Hash((unsigned char*)givenPassword.c_str(), givenPassword.length()+1, shaw256output);
+    char shaw256output[SHAW_256_HASH_SIZE];
+    shaw256Hash((unsigned char*)givenPassword.c_str(), givenPassword.length()+1, (unsigned char*)shaw256output);
 
     std::ifstream readfile(path, std::ios::binary);
     if (readfile.is_open()) {
         // Compare given password hash with hash on record
         char passwordOnFile[SHAW_256_HASH_SIZE];
-        std::cout << "test\n";
         readfile.read(passwordOnFile, SHAW_256_HASH_SIZE);
-        if (!(strcmp(passwordOnFile, (char*)shaw256output) == 0)) {     // if passwords DONT match
+        if (strncmp(passwordOnFile, shaw256output, SHAW_256_HASH_SIZE) != 0) {     // if passwords DONT match
             return;                                               
         }
     }
     readfile.close();
 
     // We will only reach this point if the passwords match
-    std::ofstream writefile(path, std::ios::binary);
+    std::fstream writefile(path, std::ios::binary | std::ios::in | std::ios::out);
     if (writefile.is_open()) {
         char outgoingBuffer[CONNECTION_INFO_SIZE];
         memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
@@ -115,55 +114,60 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     char buffer[3000] = {0};
     recv(clientSocket, buffer, sizeof(buffer), 0);
 
-    Packet *incomingPacket = new Packet(-1, PacketType::NONE, NULL);
-    int datalen = incomingPacket->deserialize(buffer);
+    Packet handshakePacket(-1, PacketType::NONE, NULL);
+    int datalen = handshakePacket.deserialize(buffer);
 
     // Return if this stream isn't requested to be encrypted
-    if (incomingPacket->getPacketType() != PacketType::HANDSHAKE_REQUEST) {
-        delete incomingPacket;
+    if (handshakePacket.getPacketType() != PacketType::HANDSHAKE_REQUEST) {
         closesocket(clientSocket);
         return;
     }
     
     // Create Shared Secret for encryption/decryption
-    unsigned char* secret;
-    secret = ML_KEM_Handshake::onRequest(incomingPacket, clientSocket, &clientAddress, sizeof(clientAddress), NULL);
+    unsigned char secret[SHAW_256_HASH_SIZE];
+    if (ML_KEM_Handshake::onRequest(&handshakePacket, clientSocket, clientAddress, sizeof(clientAddress), NULL, secret) < 1) {
+        return;
+    }
 
-    // Free memory
-    delete incomingPacket;
+    std::ofstream file("secret.bin", std::ios::binary);
+    if (file.is_open()) {
+        file.write((char*)secret, SHAW_256_HASH_SIZE);
+    }
+    file.close();
+
     // Reset the buffer and lisen for the clients real request
     buffer[3000] = {0};
     recv(clientSocket, buffer, sizeof(buffer), 0);
 
-    incomingPacket = new Packet(-1, PacketType::NONE, NULL);
-    datalen = incomingPacket->deserialize(buffer);
+    Packet incomingPacket(-1, PacketType::NONE, NULL);
+    datalen = incomingPacket.deserialize(buffer);
 
     // DECRYPTION
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, incomingPacket->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    memcpy(aad, incomingPacket.packetAuthorID.getRaw(), UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
     // Decrypt Here
     unsigned char output[datalen];
-    if (!symmetricDecryption((unsigned char*)incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
-            secret, incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
-        exit(1);
+    if (symmetricDecryption((unsigned char*)incomingPacket.getData(), datalen, aad, sizeof(aad), incomingPacket.getTag(), 
+            secret, incomingPacket.getIV(), AES_256_IV_LENGTH, output) < 1) {
+        closesocket(clientSocket);
+        return;
     }
     
     
-    switch(incomingPacket->getPacketType()) {
+    switch(incomingPacket.getPacketType()) {
         case PacketType::RELAY_REQUEST_USER_REGISTRATION:
-            onRegisterUser(&incomingPacket->packetAuthorID, output, &clientAddress);
+            onRegisterUser(&incomingPacket.packetAuthorID, output, &clientAddress);
             break;
         case PacketType::RELAY_REQUEST_UPDATE_CONNECTION_INFO:
-            onUpdateUserConnectionInfo(&incomingPacket->packetAuthorID, output, &clientAddress);
+            onUpdateUserConnectionInfo(&incomingPacket.packetAuthorID, output, &clientAddress);
             break;
         default:
             std::cout << "Invalid Request\n";
     }
 
-    delete incomingPacket;
     closesocket(clientSocket);
 }
 

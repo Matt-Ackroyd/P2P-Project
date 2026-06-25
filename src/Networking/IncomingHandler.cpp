@@ -57,29 +57,27 @@ void IncomingHandler::startReceiving(int ReceivingPort)
         // TODO REPLACE THIS WITH A DEFINED PORT
         //cliaddr.sin_port = htons(5001);
 
-        Packet *incomingPacket = new Packet(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
-        int datalen = incomingPacket->deserialize(buffer);
+        Packet incomingPacket(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
+        int datalen = incomingPacket.deserialize(buffer);
 
         
         // Handle Diffrent Packet Types
-        switch(incomingPacket->getPacketType()) {
+        switch(incomingPacket.getPacketType()) {
             case PacketType::ACK:
                 break;
             case PacketType::HANDSHAKE_REQUEST:
-                this->handleConnectionRequest(incomingPacket, socketfd, &cliaddr, clientlen);
+                this->handleConnectionRequest(&incomingPacket, socketfd, cliaddr, clientlen);
                 break;
             case PacketType::HANDSHAKE_RESPONSE:
-                this->handleConnectionResponse(incomingPacket, socketfd, &cliaddr, clientlen);
+                this->handleConnectionResponse(&incomingPacket, socketfd, cliaddr, clientlen);
                 break;
             case PacketType::PACKET:
-                this->handlePacket(incomingPacket, datalen, ntohs(cliaddr.sin_port));
+                this->handlePacket(&incomingPacket, datalen, ntohs(cliaddr.sin_port));
                 break;
             default:
                 std::cout << "Something is not right\n";
                 exit(1);
         }
-        
-        delete incomingPacket;
     }
     
     #ifdef _WIN32
@@ -122,9 +120,9 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
 
     // Decrypt Here
     unsigned char output[datalen];
-    if (!symmetricDecryption((unsigned char*)incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
-            packetAuthor->connection->getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output)) {
-        exit(1);
+    if (symmetricDecryption((unsigned char*)incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
+            packetAuthor->connection->getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output) < 1) {
+        return;
     }
 
 
@@ -154,19 +152,19 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
 }
 
 
-void IncomingHandler::handleConnectionRequest(Packet *packet, SOCKTYPE socketfd, sockaddr_in *returnAdress, socklen_t returnLen) {
-    unsigned char* hashOutput;
-    hashOutput = ML_KEM_Handshake::onRequest(packet, socketfd, returnAdress, returnLen, PrimaryClient::getInstance()->getClientID());
-    
+void IncomingHandler::handleConnectionRequest(Packet *packet, SOCKTYPE socketfd, sockaddr_in returnAdress, socklen_t returnLen) {
+    unsigned char* hashOutput = new unsigned char[SHAW_256_HASH_SIZE];
+    ML_KEM_Handshake::onRequest(packet, socketfd, returnAdress, returnLen, PrimaryClient::getInstance()->getClientID(), hashOutput);
+
     // User creation
     PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
 }
 
-void IncomingHandler::handleConnectionResponse(Packet *packet, SOCKTYPE socketfd, sockaddr_in *returnAdress, socklen_t returnLen) {
+void IncomingHandler::handleConnectionResponse(Packet *packet, SOCKTYPE socketfd, sockaddr_in returnAdress, socklen_t returnLen) {
     PrimaryClient* client = PrimaryClient::getInstance();
 
-    unsigned char* hashOutput;
-    hashOutput = ML_KEM_Handshake::onReply(packet, client->getKeyPair(), client->handShakeRand);
+    unsigned char* hashOutput = new unsigned char[SHAW_256_HASH_SIZE];
+    ML_KEM_Handshake::onReply(packet, client->getKeyPair(), client->handShakeRand, hashOutput);
     
     // User creation
     client->registerNewUser(packet->packetAuthorID, hashOutput);
