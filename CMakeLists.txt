@@ -25,13 +25,16 @@ qt_add_executable(app_${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/Server/TextChannel.cpp
     ${PROJECT_SOURCE_DIR}/src/Relay/RelayClient.cpp
     ${PROJECT_SOURCE_DIR}/src/Networking/ML-KEM_Handshake.cpp
+    src/ConfigLoader.cpp
 )
-target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/DataTypes/)
-target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/Networking/)
-target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/Server/)
-target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/GUI/)
-target_include_directories(app_${PROJECT_NAME} PUBLIC include/ProjectFern/Relay/)
-
+target_include_directories(app_${PROJECT_NAME} 
+    PUBLIC include/ProjectFern/DataTypes/
+    PUBLIC include/ProjectFern/Networking/
+    PUBLIC include/ProjectFern/Server/
+    PUBLIC include/ProjectFern/GUI/
+    PUBLIC include/ProjectFern/Relay/
+    PUBLIC include/ProjectFern/
+)
 find_package(OpenSSL)
 
 #add_subdirectory("include/ProjectFern")

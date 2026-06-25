@@ -1,6 +1,7 @@
 #pragma once
 #include "RelayServer.h"
 #include "PrimaryClient.h"
+#include "ConfigLoader.h"
 
 class RelayClient {
 private:

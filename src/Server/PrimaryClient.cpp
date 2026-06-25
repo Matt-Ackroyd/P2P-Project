@@ -17,9 +17,21 @@ PrimaryClient* PrimaryClient::getInstance() {
 
 int PrimaryClient::init() {
     // Innital Values 
-    instancePtr->keyPair = NULL;
+    this->keyPair = NULL;
     // Load from file later
-    instancePtr->clientID.GenerateNewID();
+
+    
+
+    std::filesystem::path uuidPath("Configs/PrimaryClient/uuid");
+    if (std::filesystem::exists(uuidPath)) {
+        char uuid[UUID_BYTE_SIZE];
+        ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
+        this->clientID.set((unsigned char*)uuid);
+    } else {
+        this->clientID.GenerateNewID();
+        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)this->clientID.getRaw(), UUID_BYTE_SIZE);
+    }
+    
     std::cout << "Your ID: " << instancePtr->clientID.getString() << "\n";
     
     // Socket Compatibility Stuff

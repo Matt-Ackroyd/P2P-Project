@@ -34,13 +34,25 @@ SOCKTYPE RelayClient::EstablishEncryption(std::string relayAddr, int relayPort, 
 }
 
 void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType requestType) {
+
+    // Early return if you have already registered with this relay
+    std::filesystem::path relayPath("Configs/PrimaryClient/KnownRelays/" + relayAddr);
+    if (std::filesystem::exists(relayPath) && requestType == PacketType::RELAY_REQUEST_USER_REGISTRATION) {
+        return;
+    }
+
     unsigned char* sharedsecret;
     SOCKTYPE socketfd = EstablishEncryption(relayAddr, relayPort, sharedsecret);
 
-    //TODO Need to load password for this relay from file when requesting a modification rather than creation
+    // If a password exists for this relay load it, if not then generate one
     int datalen = PASSWORD_BYTE_SIZE;
-    unsigned char password[PASSWORD_BYTE_SIZE];
-    RAND_bytes(password, PASSWORD_BYTE_SIZE);
+    char password[PASSWORD_BYTE_SIZE];
+    if (requestType == PacketType::RELAY_REQUEST_USER_REGISTRATION) {
+        RAND_bytes((unsigned char*)password, PASSWORD_BYTE_SIZE);
+        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/KnownRelays/" + relayAddr, password, PASSWORD_BYTE_SIZE);
+    } else {
+        ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/KnownRelays/" + relayAddr, password, PASSWORD_BYTE_SIZE);
+    }
 
     Packet request(-1, requestType, PrimaryClient::getInstance()->getClientID());
 
@@ -59,7 +71,7 @@ void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType re
     // Encryption
     unsigned char ciphertext[datalen];
     unsigned char tag[AES_256_GCM_TAG_LENGTH];
-    if (!symmetricEncryption(password, datalen, aad, sizeof(aad), sharedsecret, iv, AES_256_IV_LENGTH, ciphertext, tag)) {
+    if (!symmetricEncryption((unsigned char*)password, datalen, aad, sizeof(aad), sharedsecret, iv, AES_256_IV_LENGTH, ciphertext, tag)) {
         // Failed
         return;
     }

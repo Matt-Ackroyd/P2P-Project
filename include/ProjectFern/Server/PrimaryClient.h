@@ -8,6 +8,7 @@
 #include <mutex>
 #include <unordered_map>
 #include "CppInterface.h"
+#include "ConfigLoader.h"
 
 class PrimaryClient {
 private:
