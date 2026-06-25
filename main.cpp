@@ -49,8 +49,5 @@ int main(int argc, char *argv[])
     greg->sendHandshakeRequest();
 
 
-    
-
-
     return QGuiApplication::exec();
 }

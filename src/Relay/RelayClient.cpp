@@ -37,7 +37,7 @@ void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType re
     unsigned char* sharedsecret;
     SOCKTYPE socketfd = EstablishEncryption(relayAddr, relayPort, sharedsecret);
 
-    
+    //TODO Need to load password for this relay from file when requesting a modification rather than creation
     int datalen = PASSWORD_BYTE_SIZE;
     unsigned char password[PASSWORD_BYTE_SIZE];
     RAND_bytes(password, PASSWORD_BYTE_SIZE);

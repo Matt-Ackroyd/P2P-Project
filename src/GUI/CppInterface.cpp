@@ -34,9 +34,13 @@ void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qcha
 
 }
 
+#include "RelayClient.h"
 void CppInterface::requestServerInfo(QString Qid) {
     PrimaryClient* client = PrimaryClient::getInstance();
     std::string id = Qid.toStdString();
+
+    RelayClient::RegisterUser("68.146.39.61", 7777);
+    RelayClient::UpdateUserConnectionInfo("68.146.39.61", 7777);
 
     Server* server = client->getServer(id);
 

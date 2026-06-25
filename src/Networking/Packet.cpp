@@ -2,7 +2,11 @@
 
 
 Packet::Packet(int seqNum, PacketType packetType, ID* author) {
-    this->packetAuthorID = *author;
+    if (author != NULL) {
+        this->packetAuthorID = *author;
+    } else {
+        this->packetAuthorID.GenerateNewID();
+    }
     this->seqNum = seqNum;
     this->packetType = packetType;
     //this->data = new unsigned char[10];
@@ -69,7 +73,6 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
 int Packet::deserialize(char* serializedData) {
     int dataLen;
     long unsigned int offset = 0;
-    this->packetAuthorID.GenerateNewID();
 
     // PacketType
     memcpy(&this->packetType, serializedData+offset, sizeof(this->packetType));

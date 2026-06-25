@@ -4,14 +4,30 @@
 // Requires a Encrypted Connection Beforehand 
 void onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
     // Data the password
-    std::string password(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);
+    std::string password(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);\
 
+    // Create the path to the file
+    std::filesystem::path path = std::filesystem::current_path();
+    path.append(PATH_TO_USER_FILES);
+
+    // If the directory doesn't exist yet create it
+    if (!std::filesystem::exists(PATH_TO_USER_FILES)) {
+        std::filesystem::create_directory(PATH_TO_USER_FILES);
+    }
+
+    // Sanitize the string
+    if (userID->getString().find(".") != std::string::npos) {
+        // Abort, there should never be a . symbol in the userID so its likely they are trying to insert this file outside of the correct dir
+        return;
+    }
+    path.append(userID->getString());
     
     // Make sure that we dont overide an existing entry
-    if (std::filesystem::exists(PATH_TO_USER_FILES + userID->getString())) {
+    if (std::filesystem::exists(path)) {
         std::cout << "User Already exists\n";
         return;
     }    
+
     
     password += "StaltyFern";   // Salt the password
     
@@ -19,7 +35,7 @@ void onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
     unsigned char shaw256output[SHAW_256_HASH_SIZE];
     shaw256Hash((unsigned char*)password.c_str(), password.length()+1, shaw256output);
 
-    std::ofstream file(PATH_TO_USER_FILES + userID->getString(), std::ios::binary);
+    std::ofstream file(path, std::ios::binary);
     if (file.is_open()) {
         // File IO
         file.write((char*)shaw256output, SHAW_256_HASH_SIZE);   // Pass Hash
@@ -41,8 +57,24 @@ void onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cl
     // Data contains the password 
     std::string givenPassword(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);
 
+    // Create the path to the file
+    std::filesystem::path path = std::filesystem::current_path();
+    path.append(PATH_TO_USER_FILES);
+
+    // If the directory doesn't exist yet create it
+    if (!std::filesystem::exists(PATH_TO_USER_FILES)) {
+        std::filesystem::create_directory(PATH_TO_USER_FILES);
+    }
+
+    // Sanitize the string
+    if (userID->getString().find(".") != std::string::npos) {
+        // Abort, there should never be a . symbol in the userID so its likely they are trying to insert this file outside of the correct dir
+        return;
+    }
+    path.append(userID->getString());
+
     // Make sure that this user exists
-    if (!std::filesystem::exists(PATH_TO_USER_FILES + userID->getString())) {
+    if (!std::filesystem::exists(path)) {
         return;
     }    
 
@@ -51,30 +83,36 @@ void onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cl
     unsigned char shaw256output[SHAW_256_HASH_SIZE];
     shaw256Hash((unsigned char*)givenPassword.c_str(), givenPassword.length()+1, shaw256output);
 
-    std::fstream file(PATH_TO_USER_FILES + userID->getString(), std::ios::binary);
-    if (file.is_open()) {
+    std::ifstream readfile(path, std::ios::binary);
+    if (readfile.is_open()) {
         // Compare given password hash with hash on record
         char passwordOnFile[SHAW_256_HASH_SIZE];
-        file.read(passwordOnFile, SHAW_256_HASH_SIZE);
-        if (strcmp(passwordOnFile, (char*)shaw256output)) {     // if passwords match
-            // Connection Info
-            char outgoingBuffer[CONNECTION_INFO_SIZE];
-            memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
-            memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
-            file.seekp(SHAW_256_HASH_SIZE);     // move the put pointer to the connection info section of the file
-            file.write(outgoingBuffer, CONNECTION_INFO_SIZE);                                              
+        std::cout << "test\n";
+        readfile.read(passwordOnFile, SHAW_256_HASH_SIZE);
+        if (!(strcmp(passwordOnFile, (char*)shaw256output) == 0)) {     // if passwords DONT match
+            return;                                               
         }
     }
-    file.close();
+    readfile.close();
+
+    // We will only reach this point if the passwords match
+    std::ofstream writefile(path, std::ios::binary);
+    if (writefile.is_open()) {
+        char outgoingBuffer[CONNECTION_INFO_SIZE];
+        memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
+        memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
+        writefile.seekp(SHAW_256_HASH_SIZE);     // move the put pointer to the connection info section of the file
+        writefile.write(outgoingBuffer, CONNECTION_INFO_SIZE);  
+    }
+    writefile.close();
 
 
-    
 
 }
 
 
 void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
-    char buffer[1024] = {0};
+    char buffer[3000] = {0};
     recv(clientSocket, buffer, sizeof(buffer), 0);
 
     Packet *incomingPacket = new Packet(-1, PacketType::NONE, NULL);
@@ -82,6 +120,8 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
 
     // Return if this stream isn't requested to be encrypted
     if (incomingPacket->getPacketType() != PacketType::HANDSHAKE_REQUEST) {
+        delete incomingPacket;
+        closesocket(clientSocket);
         return;
     }
     
@@ -92,7 +132,7 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     // Free memory
     delete incomingPacket;
     // Reset the buffer and lisen for the clients real request
-    buffer[1024] = {0};
+    buffer[3000] = {0};
     recv(clientSocket, buffer, sizeof(buffer), 0);
 
     incomingPacket = new Packet(-1, PacketType::NONE, NULL);
@@ -115,8 +155,10 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     switch(incomingPacket->getPacketType()) {
         case PacketType::RELAY_REQUEST_USER_REGISTRATION:
             onRegisterUser(&incomingPacket->packetAuthorID, output, &clientAddress);
+            break;
         case PacketType::RELAY_REQUEST_UPDATE_CONNECTION_INFO:
             onUpdateUserConnectionInfo(&incomingPacket->packetAuthorID, output, &clientAddress);
+            break;
         default:
             std::cout << "Invalid Request\n";
     }
@@ -190,7 +232,7 @@ void UdpHandler(int udpPort) {
     
 
     int a = bind(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
-    std::cout << " Bind Return: " << a << "\n";
+    std::cout << "UDP Bind Return: " << a << "\n";
 
     while (true) {
         recvfrom(socketfd, buffer, 32,
@@ -220,12 +262,15 @@ int main(int argc, char *argv[]) {
         WSAStartup(MAKEWORD(2,2), &wsaData);
     #endif
 
-    SOCKTYPE tcpsServerSocket = socket(AF_INET, SOCK_STREAM, 0);  
+    //udp
+    std::thread UDPLoop(UdpHandler, port);
+
+    SOCKTYPE tcpServerSocket = socket(AF_INET, SOCK_STREAM, 0);  
 
     // Reuse socket if on windows
     #ifdef _WIN32
         int optVal = 1;
-        setsockopt(tcpsServerSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
+        setsockopt(tcpServerSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
     #endif
 
     // Bind adress and port
@@ -234,20 +279,18 @@ int main(int argc, char *argv[]) {
     tcpServerAddress.sin_port = htons(port);
     tcpServerAddress.sin_addr.s_addr = INADDR_ANY;
 
-    bind(tcpsServerSocket, (struct sockaddr*)&tcpServerAddress, sizeof(tcpServerAddress));
+    int a = bind(tcpServerSocket, (struct sockaddr*)&tcpServerAddress, sizeof(tcpServerAddress));
+    std::cout << "TCP Bind Return: " << a << "\n";
 
-    //udp
-    std::thread UDPLoop(UdpHandler, port);
-
-    // Connection loop
+    sockaddr_in clientAddress;
+    int len;
+    listen(tcpServerSocket, 10);
+    // TCP Connection loop
     while (true) {
-        listen(tcpsServerSocket, 10);
-
-        sockaddr_in clientAddress;
-        int len;
-        SOCKTYPE clientSocket = accept(tcpsServerSocket, (struct sockaddr*)&clientAddress, &len);
+        SOCKTYPE clientSocket = accept(tcpServerSocket, (struct sockaddr*)&clientAddress, &len);
         
-        std::thread newThread(handleTcpConnection, clientSocket, clientAddress);
+        
+        std::thread* newThread = new std::thread(handleTcpConnection, clientSocket, clientAddress);
     }
 
     UDPLoop.join();
