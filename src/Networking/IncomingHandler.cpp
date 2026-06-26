@@ -71,6 +71,9 @@ void IncomingHandler::startReceiving(int ReceivingPort)
             case PacketType::HANDSHAKE_RESPONSE:
                 this->handleConnectionResponse(&incomingPacket, socketfd, cliaddr, clientlen);
                 break;
+            case PacketType::RELAY_USER_INFO:
+                handleRelayInfoResponse(&incomingPacket, datalen);
+                break;
             case PacketType::PACKET:
                 this->handlePacket(&incomingPacket, datalen, ntohs(cliaddr.sin_port));
                 break;
@@ -169,4 +172,24 @@ void IncomingHandler::handleConnectionResponse(Packet *packet, SOCKTYPE socketfd
     // User creation
     client->registerNewUser(packet->packetAuthorID, hashOutput);
     
+}
+
+void IncomingHandler::handleRelayInfoResponse(Packet* packet, int datalen) {
+    sockaddr_in addr; 
+    addr.sin_port;
+    addr.sin_addr.s_addr;
+
+    // Make sure that this packet has the right size requirements 
+    if (datalen != (sizeof(addr.sin_addr.s_addr) + sizeof(addr.sin_port))) {
+        return;
+    }
+
+    memcpy(&addr.sin_addr.s_addr, packet->getData(), sizeof(addr.sin_addr.s_addr));               // Copy Addr
+    int offset = sizeof(addr.sin_addr.s_addr);
+    memcpy(&addr.sin_port, packet->getData()+offset, sizeof(addr.sin_port));                 // Copy Port
+
+    int port = ntohs(addr.sin_port);
+    char *ip = inet_ntoa(addr.sin_addr);
+
+    std::cout << "AAAAA\n";
 }

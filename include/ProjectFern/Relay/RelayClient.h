@@ -1,7 +1,10 @@
 #pragma once
-#include "RelayServer.h"
+//#include "RelayServer.h"
 #include "PrimaryClient.h"
 #include "ConfigLoader.h"
+
+#define PASSWORD_BYTE_SIZE 32
+#define CONNECTION_INFO_SIZE 6
 
 class RelayClient {
 private:
@@ -18,5 +21,6 @@ public:
 
     // returns a given users connection info
     // Does not require an Encrypted Connection
-    static void UserConnectionInfoReqest(std::string relayAddr, int relayPort, ID userID);
+    static void UserConnectionInfoReqest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, ID requestedUserID, ID* YourID);
+    
 };

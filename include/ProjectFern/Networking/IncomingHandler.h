@@ -33,6 +33,7 @@ class IncomingHandler {
         void handleAck(Packet packet, UDPConnection connectedUser);
         void handleConnectionRequest(Packet *packet, SOCKTYPE returnSock, sockaddr_in returnAdress, socklen_t returnLen);
         void handleConnectionResponse(Packet *packet, SOCKTYPE returnSock, sockaddr_in returnAdress, socklen_t returnLen);
+        void handleRelayInfoResponse(Packet *packet, int datalen);
         void handlePacket(Packet *packet, int datalen, int temp);
 
         void handleMessage(unsigned char* decryptedData);

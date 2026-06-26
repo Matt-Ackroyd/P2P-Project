@@ -5,7 +5,8 @@ Packet::Packet(int seqNum, PacketType packetType, ID* author) {
     if (author != NULL) {
         this->packetAuthorID = *author;
     } else {
-        this->packetAuthorID.GenerateNewID();
+        unsigned char emptyUUID [UUID_BYTE_SIZE] = {0};
+        this->packetAuthorID.set(emptyUUID);
     }
     this->seqNum = seqNum;
     this->packetType = packetType;
@@ -15,7 +16,7 @@ Packet::Packet(int seqNum, PacketType packetType, ID* author) {
 
 int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
     unsigned char controlVar = (char)0;
-    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + UUID_BYTE_SIZE + sizeof(dataLen) + dataLen + sizeof(controlVar);
+    size_t packetLength = Packet::MIN_PACKET_SIZE + dataLen;
 
     // Control variable to let the reciver know to expect the IV(1), MAC(2) or both(3)
     if (IV != NULL) {
@@ -89,6 +90,11 @@ int Packet::deserialize(char* serializedData) {
     // DataLength
     memcpy(&dataLen, serializedData+offset, sizeof(dataLen));
     offset += sizeof(dataLen);
+
+    if (0 > dataLen || dataLen > 3000) {
+        this->data = new char[1];
+        throw std::runtime_error("Bad Packet Buffer\n");
+    }
     
     // Data
     this->data = new char[dataLen];

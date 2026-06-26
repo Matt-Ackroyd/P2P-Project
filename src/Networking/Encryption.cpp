@@ -183,6 +183,5 @@ void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* ra
 
 
 void handleErrors() {
-    std::cout << "We Messed Up\n";
-    exit(1);
+    throw std::runtime_error("Encrypt/Decrypt Failure\n");
 }

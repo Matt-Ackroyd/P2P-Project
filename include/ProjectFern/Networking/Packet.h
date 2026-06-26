@@ -17,7 +17,7 @@ enum PacketType
     CONNECTION_REQUEST,
     RELAY_REQUEST_USER_REGISTRATION,
     RELAY_REQUEST_UPDATE_CONNECTION_INFO,
-    RELAY_REQUEST_USER_INFO,
+    RELAY_USER_INFO,
     NONE
 };
 
@@ -44,4 +44,7 @@ public:
     char* getData();
     unsigned char* getIV();
     unsigned char* getTag();
+
+    // PacketType(4) + SeqNum(4) + UUID(16) + dataLen(4) + ControlVar(1)
+    static int const MIN_PACKET_SIZE = sizeof(packetType) + sizeof(seqNum) + UUID_BYTE_SIZE + sizeof(int) + sizeof(char);
 };

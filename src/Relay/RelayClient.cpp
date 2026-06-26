@@ -99,6 +99,14 @@ void RelayClient::UpdateUserConnectionInfo(std::string relayAddr, int relayPort)
 
 // returns a given users connection info
 // Does not require an Encrypted Connection
-void RelayClient::UserConnectionInfoReqest(std::string relayAddr, int relayPort, ID userID) {
+void RelayClient::UserConnectionInfoReqest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, ID requestedUserID, ID* yourID) {
+    // specifying address
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(relayPort);
+    serverAddress.sin_addr.s_addr = inet_addr(relayAddr.c_str());
 
+    Packet packet(-1, PacketType::RELAY_USER_INFO, yourID);
+    int packetlen = packet.serialize((char*)requestedUserID.getRaw(), UUID_BYTE_SIZE, NULL, NULL);
+    sendto(socketfd, packet.getData(), packetlen, 0, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 }

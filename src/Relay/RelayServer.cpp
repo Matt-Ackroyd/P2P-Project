@@ -2,7 +2,7 @@
 
 // Adds a user to the data base with a hash of the salted password
 // Requires a Encrypted Connection Beforehand 
-void onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
+void RelayServer::onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
     // Data the password
     std::string password(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);\
 
@@ -53,7 +53,7 @@ void onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
 
 // Updates the stored connection info of a given user, as long as the password hash works
 // Requires a Encrypted Connection Beforehand 
-void onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
+void RelayServer::onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
     // Data contains the password 
     std::string givenPassword(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);
 
@@ -109,8 +109,19 @@ void onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cl
 
 }
 
+void RelayServer::catchTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
+    try {
+        RelayServer::handleTcpConnection(clientSocket, clientAddress);
+    } catch (std::runtime_error e) {
+        std::cout << "TCP Exception Caught: " << e.what();
+    }
+    catch (...) // catch-all handler
+	{
+		std::cout << "We caught an exception of an undetermined type\n";
+	}
+}
 
-void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
+void RelayServer::handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
     char buffer[3000] = {0};
     recv(clientSocket, buffer, sizeof(buffer), 0);
 
@@ -172,9 +183,9 @@ void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
 }
 
 
-void onUserConnectionInfoReqest(char* buffer, SOCKTYPE socketfd, sockaddr_in* cliaddr, socklen_t clientlen) {
+void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, sockaddr_in* cliaddr, socklen_t clientlen) {
     ID userID;
-    userID.set((unsigned char*)buffer);
+    userID.set((unsigned char*)packet->getData());
 
     // Check if given ID is in the database
     if (!std::filesystem::exists(PATH_TO_USER_FILES + userID.getString())) {
@@ -193,7 +204,9 @@ void onUserConnectionInfoReqest(char* buffer, SOCKTYPE socketfd, sockaddr_in* cl
     file.close();
 
     // Send the original requester the connection info of the requsted user
-    sendto(socketfd, connection_buffer, CONNECTION_INFO_SIZE, 0, (struct sockaddr*)cliaddr, clientlen);
+    Packet packet1(-1, PacketType::RELAY_USER_INFO, &userID);
+    int packet1Len = packet1.serialize(connection_buffer, CONNECTION_INFO_SIZE, NULL, NULL);
+    sendto(socketfd, packet1.getData(), packet1Len, 0, (struct sockaddr*)cliaddr, clientlen);
 
 
     // Inform the requested user that this one wishes to establish a connection
@@ -214,13 +227,17 @@ void onUserConnectionInfoReqest(char* buffer, SOCKTYPE socketfd, sockaddr_in* cl
     memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
     memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
 
-    sendto(socketfd, outgoingBuffer, CONNECTION_INFO_SIZE, 0, (struct sockaddr*)&addrToInform, sizeof(addrToInform));
+    // Encapsulate the data in a packet, (the author of the packet is the id of the owner of the connection info)
+    Packet packet2(-1, PacketType::RELAY_USER_INFO, &packet->packetAuthorID);
+    int packet2Len = packet2.serialize(outgoingBuffer, CONNECTION_INFO_SIZE, NULL, NULL);
+    sendto(socketfd, packet2.getData(), packet2Len, 0, (struct sockaddr*)&addrToInform, sizeof(addrToInform));
 }
 
 // returns a users connection info & sends them a notification with your connection information
 // Does not require an Encrypted Connection
-void UdpHandler(int udpPort) {
-    char buffer[32]; 
+void RelayServer::UdpHandler(int udpPort) {
+    int expectedPacketSize = Packet::MIN_PACKET_SIZE + UUID_BYTE_SIZE;
+    char buffer[expectedPacketSize]; 
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
 
@@ -239,11 +256,24 @@ void UdpHandler(int udpPort) {
     std::cout << "UDP Bind Return: " << a << "\n";
 
     while (true) {
-        recvfrom(socketfd, buffer, 32,
+        recvfrom(socketfd, buffer, expectedPacketSize,
             0, (struct sockaddr*)&cliaddr, &clientlen);
-            
-        onUserConnectionInfoReqest(buffer, socketfd, &cliaddr, clientlen);
-        
+
+        try {
+            Packet packet(-1, PacketType::NONE, NULL);
+            int datalen = packet.deserialize(buffer);
+
+            // Make sure we are getting the right packet
+            if (packet.getPacketType() == PacketType::RELAY_USER_INFO && datalen == UUID_BYTE_SIZE) {    
+                RelayServer::onUserConnectionInfoReqest(&packet, socketfd, &cliaddr, clientlen);
+            }
+        } catch (std::runtime_error e) {
+            std::cout << "UDP Exception Caught: " << e.what();
+        }
+        catch (...) // catch-all handler
+        {
+            std::cout << "We caught an exception of an undetermined type\n";
+        }
     }
 }
 
@@ -267,15 +297,17 @@ int main(int argc, char *argv[]) {
     #endif
 
     //udp
-    std::thread UDPLoop(UdpHandler, port);
+    std::thread UDPLoop(RelayServer::UdpHandler, port);
 
     SOCKTYPE tcpServerSocket = socket(AF_INET, SOCK_STREAM, 0);  
 
-    // Reuse socket if on windows
-    #ifdef _WIN32
-        int optVal = 1;
-        setsockopt(tcpServerSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
-    #endif
+    
+    int optVal = 1;
+    setsockopt(tcpServerSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
+
+    int timeoutMili = 10000;
+    setsockopt(tcpServerSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutMili, sizeof(timeoutMili));
+    
 
     // Bind adress and port
     sockaddr_in tcpServerAddress;
@@ -294,7 +326,7 @@ int main(int argc, char *argv[]) {
         SOCKTYPE clientSocket = accept(tcpServerSocket, (struct sockaddr*)&clientAddress, &len);
         
         
-        std::thread* newThread = new std::thread(handleTcpConnection, clientSocket, clientAddress);
+        std::thread* newThread = new std::thread(RelayServer::catchTcpConnection, clientSocket, clientAddress);
     }
 
     UDPLoop.join();
