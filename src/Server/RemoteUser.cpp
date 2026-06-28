@@ -1,15 +1,12 @@
 #include "RemoteUser.h"
 
-RemoteUser::RemoteUser(ID id, unsigned char* sharedSecret) {
-    this->id = new ID;
-    this->id->set(id.getRaw());
-    this->connection = new UDPConnection(sharedSecret);
+RemoteUser::RemoteUser(ID* id) {
+    this->id.set(id->getRaw());
 }
 
 RemoteUser::~RemoteUser() {
-    delete this->connection;
 }
 
 std::string RemoteUser::getID() {
-    return this->id->getString();
+    return this->id.getString();
 }

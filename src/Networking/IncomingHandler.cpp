@@ -1,19 +1,12 @@
 #include "IncomingHandler.h"
-#include <unordered_set>
 
-void IncomingHandler::acknowledgePacket(Packet packet, UDPConnection connectedUser) {
-
+IncomingHandler::IncomingHandler(int ReceivingPort) {
+    this->IncomingHandlerThread = std::thread(&IncomingHandler::incomingStartup, this, ReceivingPort);
 }
 
 
-// Starts Up the Reciving Thread
-void IncomingHandler::enableIncomingTraffic(int ReceivingPort) {
-    std::thread t(&IncomingHandler::startReceiving, this, ReceivingPort);
-    this->recvThread = move(t);
-}
-
-// Recive loop
-void IncomingHandler::startReceiving(int ReceivingPort)
+// Setup
+void IncomingHandler::incomingStartup(int ReceivingPort)
 {
     char buffer[MAXLINE]; 
     struct sockaddr_in servaddr, cliaddr; 
@@ -35,7 +28,9 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     int a = bind(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
     std::cout << " Bind Return: " << a << "\n";
 
-    printf("bind failed with error: %d\n", WSAGetLastError());
+    int error = WSAGetLastError();
+
+    printf("bind failed with error: %d\n", error);
 
     if (a == -1) {
         #ifdef _WIN32
@@ -48,45 +43,53 @@ void IncomingHandler::startReceiving(int ReceivingPort)
     this->acceptIncoming = true;
     while (this->acceptIncoming)
     {
-        recvfrom(socketfd, buffer, MAXLINE,
-            0, (struct sockaddr*)&cliaddr, &clientlen);
-
-
-        //cout << "sendback Port:" << ntohs(cliaddr.sin_port) << "\n";
-
-        // TODO REPLACE THIS WITH A DEFINED PORT
-        //cliaddr.sin_port = htons(5001);
-
-        Packet incomingPacket(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
-        int datalen = incomingPacket.deserialize(buffer);
-
-        
-        // Handle Diffrent Packet Types
-        switch(incomingPacket.getPacketType()) {
-            case PacketType::ACK:
-                break;
-            case PacketType::HANDSHAKE_REQUEST:
-                this->handleConnectionRequest(&incomingPacket, socketfd, cliaddr, clientlen);
-                break;
-            case PacketType::HANDSHAKE_RESPONSE:
-                this->handleConnectionResponse(&incomingPacket, socketfd, cliaddr, clientlen);
-                break;
-            case PacketType::RELAY_USER_INFO:
-                handleRelayInfoResponse(&incomingPacket, datalen);
-                break;
-            case PacketType::PACKET:
-                this->handlePacket(&incomingPacket, datalen, ntohs(cliaddr.sin_port));
-                break;
-            default:
-                std::cout << "Something is not right\n";
-                exit(1);
-        }
+        incomingLoop(socketfd, buffer, cliaddr);
     }
     
     #ifdef _WIN32
         closesocket(socketfd);
         WSACleanup();
     #endif
+}
+
+void IncomingHandler::incomingLoop(SOCKTYPE socketfd, char* buffer, sockaddr_in cliaddr) {
+    int clientlen;
+
+    int packetlen = recvfrom(socketfd, buffer, MAXLINE,
+        0, (struct sockaddr*)&cliaddr, &clientlen);
+
+
+    if (packetlen < Packet::MIN_PACKET_SIZE) {
+        return;
+    }
+
+    Packet incomingPacket(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
+    int datalen = incomingPacket.deserialize(buffer);
+
+    
+    // Handle Diffrent Packet Types
+    switch(incomingPacket.getPacketType()) {
+        case PacketType::ACK:
+            break;
+        case PacketType::HANDSHAKE_REQUEST:
+            this->handleConnectionRequest(&incomingPacket, socketfd, cliaddr, clientlen);
+            break;
+        case PacketType::HANDSHAKE_RESPONSE:
+            this->handleConnectionResponse(&incomingPacket, socketfd, cliaddr, clientlen);
+            break;
+        case PacketType::RELAY_USER_INFO:
+            handleRelayInfoResponse(&incomingPacket, datalen);
+            break;
+        case PacketType::PACKET:
+            this->handlePacket(&incomingPacket, datalen, ntohs(cliaddr.sin_port));
+            break;
+        case PacketType::KEEP_ALIVE:
+            //this->handleKeepAlive(&incomingPacket);
+            break;
+        default:
+            std::cout << "Something is not right\n";
+            exit(1);
+    }
 }
 
 void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp) { 
@@ -96,23 +99,6 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
         return;
     }
 
-    // Temp for testing
-    packetAuthor->connection->SendingPort = 5000;
-    packetAuthor->connection->setAddr("127.0.0.1");
-
-
-    
-
-    //RemoteUser connectedUser(incomingPacket->packetAuthorID, NULL);
-    //UDPConnection *connection = connectedUser.connection;
-    // TODO Make sure this is per user
-    //Ignore duplicates
-    //if (this->nextExpectedSeqNum != incomingPacket->getSeqNum()) {
-    //    return;
-    //}
-
-    // Acknowlage the packet 
-    //this->acknowledgePacket(incomingPacket, connection);
 
 
     // AAD Gen for the senderID and incoming length of the data
@@ -124,7 +110,7 @@ void IncomingHandler::handlePacket(Packet *incomingPacket, int datalen, int temp
     // Decrypt Here
     unsigned char output[datalen];
     if (symmetricDecryption((unsigned char*)incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
-            packetAuthor->connection->getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output) < 1) {
+            packetAuthor->connection.getSharedSecret(), incomingPacket->getIV(), AES_256_IV_LENGTH, output) < 1) {
         return;
     }
 
@@ -156,21 +142,32 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
 
 
 void IncomingHandler::handleConnectionRequest(Packet *packet, SOCKTYPE socketfd, sockaddr_in returnAdress, socklen_t returnLen) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+    if (userRequesting == NULL) {
+        return;
+    }
+    
     unsigned char* hashOutput = new unsigned char[SHAW_256_HASH_SIZE];
-    ML_KEM_Handshake::onRequest(packet, socketfd, returnAdress, returnLen, PrimaryClient::getInstance()->getClientID(), hashOutput);
+    ML_KEM_Handshake::onRequest(packet, socketfd, returnAdress, returnLen, client->getClientID(), hashOutput);
 
-    // User creation
-    PrimaryClient::getInstance()->registerNewUser(packet->packetAuthorID, hashOutput);
+    // set shared secret
+    userRequesting->connection.setSharedSecret(hashOutput);
 }
 
 void IncomingHandler::handleConnectionResponse(Packet *packet, SOCKTYPE socketfd, sockaddr_in returnAdress, socklen_t returnLen) {
     PrimaryClient* client = PrimaryClient::getInstance();
 
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+    if (userRequesting == NULL) {
+        return;
+    }
+
     unsigned char* hashOutput = new unsigned char[SHAW_256_HASH_SIZE];
-    ML_KEM_Handshake::onReply(packet, client->getKeyPair(), client->handShakeRand, hashOutput);
+    ML_KEM_Handshake::onReply(packet, client->getKeyPair(), userRequesting->connection.handshakeRandBuffer, hashOutput);
     
-    // User creation
-    client->registerNewUser(packet->packetAuthorID, hashOutput);
+    // set shared secret
+    userRequesting->connection.setSharedSecret(hashOutput);
     
 }
 
@@ -191,5 +188,33 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet, int datalen) {
     int port = ntohs(addr.sin_port);
     char *ip = inet_ntoa(addr.sin_addr);
 
-    std::cout << "AAAAA\n";
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+
+    // if user doesn't exist create one
+    if (userRequesting == nullptr) {
+        if (!client->registerNewUser(&packet->packetAuthorID)) {
+            return;
+        }
+        userRequesting = client->getUser(packet->packetAuthorID.getString());
+    }
+    
+    userRequesting->connection.setAddr(ip, port);
+    client->getOutgoingHandler()->enableConnection(userRequesting);
+    return;
+}
+
+// If this user hasn't been registerd yet, register them ( May not be nessasry if they go through relay)
+void IncomingHandler::handleKeepAlive(Packet* packet) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString())
+    ;
+    // if user doesn't exist create one
+    if (userRequesting == nullptr) {
+        if (!client->registerNewUser(&packet->packetAuthorID)) {
+            return;
+        }
+        userRequesting = client->getUser(packet->packetAuthorID.getString());
+    }
 }

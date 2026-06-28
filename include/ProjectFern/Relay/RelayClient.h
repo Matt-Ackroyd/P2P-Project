@@ -2,6 +2,7 @@
 //#include "RelayServer.h"
 #include "PrimaryClient.h"
 #include "ConfigLoader.h"
+#include "ML-KEM_Handshake.h"
 
 #define PASSWORD_BYTE_SIZE 32
 #define CONNECTION_INFO_SIZE 6

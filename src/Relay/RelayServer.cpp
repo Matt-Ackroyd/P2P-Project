@@ -223,6 +223,9 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
     addrToInform.sin_addr.s_addr = addr;            // IP adress
     addrToInform.sin_port = port;                   // Port
 
+    int a = ntohs(addrToInform.sin_port);
+    char *ip = inet_ntoa(addrToInform.sin_addr);
+
     char outgoingBuffer[CONNECTION_INFO_SIZE];
     memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
     memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
@@ -256,23 +259,25 @@ void RelayServer::UdpHandler(int udpPort) {
     std::cout << "UDP Bind Return: " << a << "\n";
 
     while (true) {
-        recvfrom(socketfd, buffer, expectedPacketSize,
+        int packetlen = recvfrom(socketfd, buffer, expectedPacketSize,
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
-        try {
-            Packet packet(-1, PacketType::NONE, NULL);
-            int datalen = packet.deserialize(buffer);
+        if (packetlen > Packet::MIN_PACKET_SIZE) {
+            try {
+                Packet packet(-1, PacketType::NONE, NULL);
+                int datalen = packet.deserialize(buffer);
 
-            // Make sure we are getting the right packet
-            if (packet.getPacketType() == PacketType::RELAY_USER_INFO && datalen == UUID_BYTE_SIZE) {    
-                RelayServer::onUserConnectionInfoReqest(&packet, socketfd, &cliaddr, clientlen);
+                // Make sure we are getting the right packet
+                if (packet.getPacketType() == PacketType::RELAY_USER_INFO && datalen == UUID_BYTE_SIZE) {    
+                    RelayServer::onUserConnectionInfoReqest(&packet, socketfd, &cliaddr, clientlen);
+                }
+            } catch (std::runtime_error e) {
+                std::cout << "UDP Exception Caught: " << e.what();
             }
-        } catch (std::runtime_error e) {
-            std::cout << "UDP Exception Caught: " << e.what();
-        }
-        catch (...) // catch-all handler
-        {
-            std::cout << "We caught an exception of an undetermined type\n";
+            catch (...) // catch-all handler
+            {
+                std::cout << "We caught an exception of an undetermined type\n";
+            }
         }
     }
 }

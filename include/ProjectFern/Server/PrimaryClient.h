@@ -1,14 +1,18 @@
 // TODO: Needs Better name
 // Acts as class that stores information about this particular client, where user refers to other clients 
 #pragma once
-#include "Server.h"
-#include "IncomingHandler.h"
 #include <vector>
 #include <openssl/evp.h>
 #include <mutex>
 #include <unordered_map>
+
 #include "CppInterface.h"
 #include "ConfigLoader.h"
+
+// Forward Declorations
+class IncomingHandler;
+class OutgoingHandler;
+class Server;
 
 class PrimaryClient {
 private:
@@ -20,11 +24,15 @@ private:
 
     // Every server that this client is a part of
     std::unordered_map<std::string, Server*> allServers;
+    
 
 
     // Specific User profile information
     std::string defaultUsername;
-
+    
+    sockaddr_in preferedRelayAdress;
+    IncomingHandler* incomingHandler;
+    OutgoingHandler* outgoingHandler;
 
     // pointer to public & private keys 
     EVP_PKEY *keyPair;
@@ -41,22 +49,22 @@ private:
 public:
     // Deleting the copy constructor to prevent copies
     PrimaryClient(const PrimaryClient& obj) = delete;
+    ~PrimaryClient();
     static PrimaryClient* getInstance();
-    int registerNewUser(ID id, unsigned char* secret);
     EVP_PKEY* getKeyPair();
 
     ID* getClientID();
 
     RemoteUser* getUser(std::string userID);
-
-    // A Temparary buffer for the current ongoing handshake, TODO allow for multiple handshakes to be ongoing at once
-    unsigned char handShakeRand[ML_KEM_HANDSHAKE_RANDSIZE];
-
-    // MOVE BACK TO PRIVATE AFTER TESTING
-    std::unordered_map<std::string, RemoteUser*> knownConnections;
+    int registerNewUser(ID* id);
+    
     // Clean up
     SOCKTYPE socketfd;
+    std::unordered_map<std::string, RemoteUser*> knownConnections;
 
     void addNewServer(Server *server);
     Server* getServer(std::string id);
+
+    sockaddr_in getPreferedRelay();
+    OutgoingHandler* getOutgoingHandler();
 };

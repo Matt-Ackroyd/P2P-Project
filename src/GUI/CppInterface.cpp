@@ -29,7 +29,7 @@ void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qcha
     for (auto& [key, recipient]: client->knownConnections) {
         unsigned char data[len];
         message->serialize(data);
-        recipient->connection->send(data, len);
+        recipient->connection.sendEncrypted(data, len);
     }
 
 }

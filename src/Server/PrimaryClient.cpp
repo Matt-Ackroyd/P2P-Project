@@ -1,4 +1,7 @@
 #include "PrimaryClient.h"
+#include "IncomingHandler.h"
+#include "OutgoingHandler.h"
+#include "Server.h"
 
 PrimaryClient* PrimaryClient::instancePtr = nullptr;
 std::mutex PrimaryClient::mtx;
@@ -13,6 +16,11 @@ PrimaryClient* PrimaryClient::getInstance() {
         }
     }
     return instancePtr;
+}
+
+PrimaryClient::~PrimaryClient() {
+    delete this->incomingHandler;
+    delete this->outgoingHandler;
 }
 
 int PrimaryClient::init() {
@@ -32,20 +40,26 @@ int PrimaryClient::init() {
         ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)this->clientID.getRaw(), UUID_BYTE_SIZE);
     }
     
-    std::cout << "Your ID: " << instancePtr->clientID.getString() << "\n";
+    std::cout << "Your ID: " << this->clientID.getString() << "\n";
     
     // Socket Compatibility Stuff
     #ifdef _WIN32
         WSADATA wsaData;
         WSAStartup(MAKEWORD(2,2), &wsaData);
         int optVal = 1;
-        setsockopt(instancePtr->socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
+        setsockopt(this->socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
     #endif
 
-    instancePtr->socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
-    
-    
+    this->socketfd = socket(AF_INET, SOCK_DGRAM, 0);  
 
+
+    //Temp Until we load from file
+    this->preferedRelayAdress.sin_family = AF_INET;
+    this->preferedRelayAdress.sin_port = htons(7777);
+    this->preferedRelayAdress.sin_addr.s_addr = inet_addr("68.146.39.61");
+
+    this->incomingHandler = new IncomingHandler(10346);
+    this->outgoingHandler = new OutgoingHandler();
    
     return 0;
 }
@@ -63,7 +77,7 @@ ID* PrimaryClient::getClientID() {
 }
 
 
-int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
+int PrimaryClient::registerNewUser(ID* id) {
     // Guard clause to not add oneself as a new user
     // if (id.getString() == this->clientID.getString()) {
     //     std::cout << "Cannot Register Yourself\n";
@@ -71,23 +85,27 @@ int PrimaryClient::registerNewUser(ID id, unsigned char* secret) {
     // }
     
     // Guard Clause to not overwrite a user
-    if (this->knownConnections[id.getString()] != 0) {
-        std::cout << "User " << id.getString() << " already Exists\n";
+    if (this->knownConnections.contains(id->getString())) {
+        std::cout << "User " << id->getString() << " already Exists\n";
         return -1;
     }
 
     // Create a temperary user to asosiate incoming packets from this user will be lost on reset if not proporly added to a server
-    RemoteUser* test = new RemoteUser(id, secret);
+    RemoteUser* test = new RemoteUser(id);
     // TODO link remote user connection  
 
     // add to the list of all known connections
-    std::cout << "New User Added: " << id.getString() << " \n";
-    this->knownConnections[id.getString()] = test;
+    std::cout << "New User Added: " << id->getString() << " \n";
+    this->knownConnections[id->getString()] = test;
     return 1;  // return sucsess 
 }
 
 RemoteUser* PrimaryClient::getUser(std::string userID) {
-    // NEEDS TO MAKE SURE THE USER EXISTS FIRST
+    // Make sure the user exists
+    if (!allServers.contains(userID)) {
+        return NULL;
+    }
+
     return this->knownConnections[userID];
 }
 
@@ -98,6 +116,18 @@ void PrimaryClient::addNewServer(Server *server) {
 }
 
 Server* PrimaryClient::getServer(std::string id) {
-    // NEEDS TO MAKE SURE THE SERVER EXISTS FIRST
+    // make sure the use exists
+    if (!allServers.contains(id)) {
+        return NULL;
+    }
+
     return this->allServers[id];
+}
+
+sockaddr_in PrimaryClient::getPreferedRelay() {
+    return this->preferedRelayAdress;
+}
+
+OutgoingHandler* PrimaryClient::getOutgoingHandler() {
+    return this->outgoingHandler;
 }

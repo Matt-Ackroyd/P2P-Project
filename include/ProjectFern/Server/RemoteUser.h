@@ -6,11 +6,11 @@
 
 class RemoteUser {
     std::string Username;
-    ID *id;
+    ID id;
 
 public:
-    RemoteUser(ID id, unsigned char* sharedSecret);
+    RemoteUser(ID* id);
     ~RemoteUser();
     std::string getID();
-    UDPConnection* connection;
+    UDPConnection connection;
 };

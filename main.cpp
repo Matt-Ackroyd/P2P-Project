@@ -21,7 +21,6 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
     engine.loadFromModule("project_fern", "Main");
 
-    IncomingHandler a;
 
     CppInterface::instancePtr = engine.singletonInstance<CppInterface*>("project_fern", "CppInterface");
 
@@ -42,11 +41,9 @@ int main(int argc, char *argv[])
 
     TextChannel* t4 = new TextChannel();
     test2->knownChannels[t4->getID()->getString()] = t4;
-
-    a.enableIncomingTraffic(5000);
     
-    UDPConnection* greg = new UDPConnection(NULL);
-    greg->setAddr("192.168.0.17");
+    UDPConnection* greg = new UDPConnection();
+    greg->setAddr("192.168.0.17", 5000);
     greg->sendHandshakeRequest();
 
     //int a = ntohs(connectionAddr.sin_port);
