@@ -17,15 +17,15 @@ Packet::Packet(int seqNum, PacketType packetType, ID* author) {
 int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
     this->dataLen = dataLen;
     unsigned char controlVar = (char)0;
-    size_t packetLength = Packet::MIN_PACKET_SIZE + dataLen;
+    this->packetLength = Packet::MIN_PACKET_SIZE + dataLen;
 
     // Control variable to let the reciver know to expect the IV(1), MAC(2) or both(3)
     if (IV != NULL) {
-        packetLength += AES_256_IV_LENGTH;
+        this->packetLength += AES_256_IV_LENGTH;
         controlVar += (char)1;
     }
     if (MAC != NULL) {
-        packetLength += AES_256_GCM_TAG_LENGTH;
+        this->packetLength += AES_256_GCM_TAG_LENGTH;
         controlVar += (char)2;
     }
 
@@ -68,7 +68,7 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
         memcpy(this->data+offset, MAC, AES_256_GCM_TAG_LENGTH);
     }
 
-    return packetLength;
+    return this->packetLength;
 }
 
 // Returns data length
@@ -139,6 +139,9 @@ unsigned char* Packet::getIV() {
 }
 int Packet::getDataLength() {
     return this->dataLen;
+}
+int Packet::getPacketlength() {
+    return this->packetLength;
 }
 
 

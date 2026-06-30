@@ -62,17 +62,20 @@ void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
     
     
     // Encapsulate in a packet & send
-    int packetlen = packetToSend->serialize((char*)ciphertext, datalen, iv, tag);
-    sendto(this->sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
-    delete packetToSend;
+    packetToSend->serialize((char*)ciphertext, datalen, iv, tag);
+    addPacketToOutgoingQueue(packetToSend);
 }
 
 
 void UDPConnection::sendHandshakeRequest() {
     PrimaryClient* client = PrimaryClient::getInstance();
-    ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->socketfd, connectionAddr, client->getClientID(), newSeqNum());
+    Packet* requestPacket = ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->getClientID(), newSeqNum());
+    addPacketToOutgoingQueue(requestPacket);
 }
 
+void UDPConnection::sendPacket(Packet* packet) {
+    sendto(this->sock, packet->getData(), packet->getPacketlength(), 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
+}
 
 unsigned char* UDPConnection::getSharedSecret() {
     return this->sharedSecret;
@@ -112,9 +115,21 @@ void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
     }
 }
 
+void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) {
+    this->outgoingBuffer.push_back(outgoingPacket);
+}
+
 // Returns a seqnum and increments it by one for the next call
 int UDPConnection::newSeqNum() {
+    // TODO ADD mtuxed Guard to prevent race conditions
     int output = this->outgoingSeqNum;
     this->outgoingSeqNum++;
     return output;
+}
+
+std::deque<Packet*>* UDPConnection::getOutgoingBuffer() {
+    return &this->outgoingBuffer;
+}
+std::deque<Packet*>* UDPConnection::getIncomingBuffer() {
+    return &this->incommingBuffer;
 }

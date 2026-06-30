@@ -17,7 +17,7 @@ SOCKTYPE RelayClient::EstablishEncryption(std::string relayAddr, int relayPort, 
 
     // sending data
     unsigned char myRand[ML_KEM_HANDSHAKE_RANDSIZE];
-    ML_KEM_Handshake::startHandshake(myRand, PrimaryClient::getInstance()->getKeyPair(), socketfd, serverAddress, PrimaryClient::getInstance()->getClientID(), -1);
+    //ML_KEM_Handshake::startHandshake(myRand, PrimaryClient::getInstance()->getKeyPair(), socketfd, serverAddress, PrimaryClient::getInstance()->getClientID(), -1);
 
     // Wait for response
     char buffer[3000] = {0};

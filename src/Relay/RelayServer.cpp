@@ -136,9 +136,9 @@ void RelayServer::handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientA
     
     // Create Shared Secret for encryption/decryption
     unsigned char secret[SHAW_256_HASH_SIZE];
-    if (ML_KEM_Handshake::onRequest(&handshakePacket, clientSocket, clientAddress, NULL, secret, -1) < 1) {
-        return;
-    }
+    // if (ML_KEM_Handshake::onRequest(&handshakePacket, clientSocket, clientAddress, NULL, secret, -1) < 1) {
+    //     return;
+    // }
 
     std::ofstream file("secret.bin", std::ios::binary);
     if (file.is_open()) {

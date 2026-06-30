@@ -19,7 +19,6 @@ enum PacketType
     PACKET,
     HANDSHAKE_REQUEST,
     HANDSHAKE_RESPONSE,
-    CONNECTION_REQUEST,
     RELAY_REQUEST_USER_REGISTRATION,
     RELAY_REQUEST_UPDATE_CONNECTION_INFO,
 };
@@ -33,13 +32,13 @@ private:
     unsigned char MAC[AES_256_GCM_TAG_LENGTH];
     char* data;
     int dataLen;
+    int packetLength;
 
 
     std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> lastSent;
 
 public:       
     ID packetAuthorID;
-    sockaddr_in returnAddr;
 
     Packet(int seqNum, PacketType packetType, ID* author);
     ~Packet();
@@ -51,6 +50,7 @@ public:
     PacketType getPacketType();
     char* getData();
     int getDataLength();
+    int getPacketlength();
     unsigned char* getIV();
     unsigned char* getTag();
 

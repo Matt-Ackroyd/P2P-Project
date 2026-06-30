@@ -15,6 +15,16 @@ void OutgoingHandler::OutgoingLoop() {
 
     char keepAlive[0] = {};
     while (true) {
+        // TODO Replace with online list instead
+        for (auto [id, recipient]: client->knownConnections) {
+            std::deque<Packet*>* packetsToBeSend = recipient->connection.getOutgoingBuffer(); 
+            for (auto packet: *packetsToBeSend) {
+
+                // Add timers for each packet
+                recipient->connection.sendPacket(packet);
+            }
+        }
+
         // Stay Connected to your prefered relay in order to be informed of incoming connections
         int a = sendto(socketfd, keepAlive, 0, 0, (struct sockaddr*)&relay, sizeof(relay));
 

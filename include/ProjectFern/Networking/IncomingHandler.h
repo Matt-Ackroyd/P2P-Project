@@ -31,7 +31,7 @@ class IncomingHandler {
         // Bool to accept Incoming messages from other clients
         bool acceptIncoming;
         void incomingStartup(int ReceivingPort);
-        void IncomingLoop(char* buffer, sockaddr_in cliaddr);
+        void IncomingLoop(char* buffer);
         void handleIncoming(Packet* incomingPacket);
         std::deque<Packet> ReceivingBuffer;
 

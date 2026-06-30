@@ -25,6 +25,7 @@ private:
     int outgoingSeqNum = 1;
     
     std::deque<Packet*> outgoingBuffer;
+    std::deque<Packet*> incommingBuffer; 
     
 public:    
     UDPConnection();
@@ -38,14 +39,17 @@ public:
     void sendEncrypted(unsigned char* data, int datalen);
     void sendKeepAlive();
     void sendAck(int seqNum);
+    void sendPacket(Packet* packet);
     void sendHandshakeRequest();
     unsigned char* getSharedSecret();
     void setSharedSecret(unsigned char* secret);
     void receivedAck(int seqNum);
 
-    
+    void addPacketToOutgoingQueue(Packet* outgoingPacket);
     void addPacketToIncomingQueue(Packet* incomingPacket);
     int newSeqNum();
     int incomingSeqNum = 1;
-    std::deque<Packet*> incommingBuffer; 
+
+    std::deque<Packet*>* getOutgoingBuffer();
+    std::deque<Packet*>* getIncomingBuffer();
 };
