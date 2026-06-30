@@ -172,6 +172,7 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
         case DataTypes::FILETYPE:
             break;
     }
+    packetAuthor->connection.sendAck(incomingPacket->getSeqNum());
 }
 
 void IncomingHandler::handleMessage(unsigned char* decryptedData) {
@@ -200,6 +201,7 @@ void IncomingHandler::handleConnectionRequest(Packet *packet) {
 
     // set shared secret
     userRequesting->connection.setSharedSecret(hashOutput);
+    userRequesting->connection.sendAck(packet->getSeqNum());
 }
 
 void IncomingHandler::handleConnectionResponse(Packet *packet) {
@@ -215,7 +217,7 @@ void IncomingHandler::handleConnectionResponse(Packet *packet) {
     
     // set shared secret
     userRequesting->connection.setSharedSecret(hashOutput);
-    
+    userRequesting->connection.sendAck(packet->getSeqNum());
 }
 
 void IncomingHandler::handleRelayInfoResponse(Packet* packet) {

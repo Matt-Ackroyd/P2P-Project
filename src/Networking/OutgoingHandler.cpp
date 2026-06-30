@@ -1,5 +1,7 @@
 #include "OutgoingHandler.h"
 
+std::mutex OutgoingHandler::mtx;
+
 OutgoingHandler::OutgoingHandler() {
     this->OutgoingHandlerThread = std::thread(&OutgoingHandler::OutgoingLoop, this);
 };
@@ -29,7 +31,7 @@ void OutgoingHandler::OutgoingLoop() {
 
 void OutgoingHandler::enableConnection(RemoteUser* target) {
     mtx.lock();
-    this->keepAliveTargets.insert(target);
+    this->keepAliveTargets.emplace(target);
     mtx.unlock();
 }
 void OutgoingHandler::disableConnection(RemoteUser* target) {

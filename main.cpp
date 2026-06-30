@@ -5,6 +5,7 @@
 #include "CppInterface.h"
 #include "PrimaryClient.h"
 #include "RelayClient.h"
+#include "OutgoingHandler.h"
 
 int main(int argc, char *argv[])
 {
@@ -46,9 +47,11 @@ int main(int argc, char *argv[])
     larryid.GenerateNewID();
     PrimaryClient::getInstance()->registerNewUser(&larryid);
     RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid.getString());
-    larry->connection.setAddr("127.0.0.1", 10346);
+    larry->connection.setAddr("192.168.0.27", 10346);
     larry->connection.sendKeepAlive();
     larry->connection.sendHandshakeRequest();
+
+    client->getOutgoingHandler()->enableConnection(larry);
 
     
 

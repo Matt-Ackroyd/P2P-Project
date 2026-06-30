@@ -6,7 +6,7 @@
 class OutgoingHandler {
 private:
     std::thread OutgoingHandlerThread;
-    std::mutex mtx;
+    static std::mutex mtx;
 
     // Time Between KeepAlive Packets in milli
     int keepAliveInterval = 10000;
