@@ -12,10 +12,26 @@ UDPConnection::~UDPConnection() {
 
 void UDPConnection::setAddr(char const *addr, int port) {
     // clear servaddr
-    //bzero(&this->connectionAddr, sizeof(this->connectionAddr));
+    memset(&this->connectionAddr, 0, sizeof(this->connectionAddr));
     this->connectionAddr.sin_addr.s_addr = inet_addr(addr);
     this->connectionAddr.sin_port = htons(port);
     this->connectionAddr.sin_family = AF_INET;
+}
+
+void UDPConnection::sendAck(int seqNum) {
+    Packet ack(seqNum, PacketType::ACK, PrimaryClient::getInstance()->getClientID());
+
+    int packetlen = ack.serialize(NULL, 0, NULL, NULL);
+    sendto(this->sock, ack.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
+}
+
+// Send an Empty packet in order to keep the connection going 
+void UDPConnection::sendKeepAlive() {
+    unsigned char* keepAlive[0];
+    Packet packet(-1, PacketType::KEEP_ALIVE, PrimaryClient::getInstance()->getClientID());
+
+    int packetlen = packet.serialize((char*)keepAlive, 0, NULL, NULL);
+    sendto(this->sock, packet.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
 }
 
 void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
@@ -25,8 +41,7 @@ void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
         return;
     }
 
-    //Gen IV
-    Packet *packetToSend = new Packet(123, PacketType::PACKET, PrimaryClient::getInstance()->getClientID());
+    Packet *packetToSend = new Packet(newSeqNum(), PacketType::PACKET, PrimaryClient::getInstance()->getClientID());
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
@@ -52,18 +67,10 @@ void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
     delete packetToSend;
 }
 
-// Send an Empty packet in order to keep the connection going 
-void UDPConnection::sendKeepAlive() {
-    unsigned char* keepAlive[0];
-    Packet packet(0, PacketType::KEEP_ALIVE, PrimaryClient::getInstance()->getClientID());
-
-    int packetlen = packet.serialize((char*)keepAlive, 0, NULL, NULL);
-    sendto(this->sock, packet.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
-}
 
 void UDPConnection::sendHandshakeRequest() {
     PrimaryClient* client = PrimaryClient::getInstance();
-    ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->socketfd, connectionAddr, client->getClientID());
+    ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->socketfd, connectionAddr, client->getClientID(), newSeqNum());
 }
 
 
@@ -72,4 +79,42 @@ unsigned char* UDPConnection::getSharedSecret() {
 }
 void UDPConnection::setSharedSecret(unsigned char* secret) {
     this->sharedSecret = secret;
+}
+
+    
+void UDPConnection::receivedAck(int seqNum) {
+    for (auto packet: outgoingBuffer) {
+        if (packet->getSeqNum() > seqNum) {
+            return;
+        }
+        // Get the oldest packet & delete it
+        outgoingBuffer.pop_front();
+        delete packet;
+    }
+}
+
+void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
+    // if the buffer is empty just add the packet to it
+    if (incommingBuffer.empty()) {
+        incommingBuffer.push_back(incomingPacket);
+        return;
+    }
+    // if its not empty then insert it in sorted order
+    // Loop until the new packet's seq num is less than the element that we are looking, we then insert it before that element
+    for (std::deque<Packet*>::iterator it = incommingBuffer.begin(); it != incommingBuffer.end(); ++it){
+        Packet* packetInQueue = *it; 
+        
+        if (packetInQueue->getSeqNum() > incomingPacket->getSeqNum()) {
+            incommingBuffer.insert(it, incomingPacket);
+            return;
+        }
+    
+    }
+}
+
+// Returns a seqnum and increments it by one for the next call
+int UDPConnection::newSeqNum() {
+    int output = this->outgoingSeqNum;
+    this->outgoingSeqNum++;
+    return output;
 }

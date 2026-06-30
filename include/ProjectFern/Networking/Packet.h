@@ -3,25 +3,25 @@
 #include <stdio.h>
 #include <string>
 #include <cstring>
+#include <chrono>
 
+#include "socketMacro.h"
 #include "Encryption.h"
 #include "ID.h"
-//#include "PrimaryClient.h"
 
 enum PacketType
 {
-    PACKET,
+    NONE,
     ACK,
+    KEEP_ALIVE,
+    RELAY_USER_INFO,
+    // Requires acknowledgement 
+    PACKET,
     HANDSHAKE_REQUEST,
     HANDSHAKE_RESPONSE,
     CONNECTION_REQUEST,
     RELAY_REQUEST_USER_REGISTRATION,
     RELAY_REQUEST_UPDATE_CONNECTION_INFO,
-    RELAY_USER_INFO,
-    HELLO,
-    HELLO_REPLY,
-    KEEP_ALIVE,
-    NONE
 };
 
 
@@ -32,9 +32,14 @@ private:
     unsigned char IV[AES_256_IV_LENGTH];
     unsigned char MAC[AES_256_GCM_TAG_LENGTH];
     char* data;
+    int dataLen;
+
+
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> lastSent;
 
 public:       
     ID packetAuthorID;
+    sockaddr_in returnAddr;
 
     Packet(int seqNum, PacketType packetType, ID* author);
     ~Packet();
@@ -45,6 +50,7 @@ public:
     int getSeqNum();
     PacketType getPacketType();
     char* getData();
+    int getDataLength();
     unsigned char* getIV();
     unsigned char* getTag();
 

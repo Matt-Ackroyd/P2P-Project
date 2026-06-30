@@ -21,7 +21,9 @@ void OutgoingHandler::OutgoingLoop() {
             target->connection.sendKeepAlive();
         }
 
+        // Change to comaring time and add section for sending outgoing packets 
         std::this_thread::sleep_for(std::chrono::milliseconds(this->keepAliveInterval));
+        std::chrono::system_clock::now();
     }
 }
 

@@ -17,12 +17,15 @@ class UDPConnection {
 private:
     struct sockaddr_in connectionAddr;
     int sock;
-    int currentSeqNum; 
+     
 
     unsigned char* sharedSecret = NULL;
 
-    std::deque<Packet> sendingBuffer;
-    std::vector<std::string> knownEndpoints;
+    
+    int outgoingSeqNum = 1;
+    
+    std::deque<Packet*> outgoingBuffer;
+    
 public:    
     UDPConnection();
     ~UDPConnection();
@@ -34,10 +37,15 @@ public:
     void setAddr(char const *addr, int port);  
     void sendEncrypted(unsigned char* data, int datalen);
     void sendKeepAlive();
-
+    void sendAck(int seqNum);
     void sendHandshakeRequest();
-
     unsigned char* getSharedSecret();
     void setSharedSecret(unsigned char* secret);
-        
+    void receivedAck(int seqNum);
+
+    
+    void addPacketToIncomingQueue(Packet* incomingPacket);
+    int newSeqNum();
+    int incomingSeqNum = 1;
+    std::deque<Packet*> incommingBuffer; 
 };

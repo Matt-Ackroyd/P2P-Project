@@ -1,7 +1,7 @@
 #include "ML-KEM_Handshake.h"
 
-void ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* keyPair, SOCKTYPE socketfd, sockaddr_in connectionAddr, ID* yourID) {
-    Packet *packet = new Packet(-1, PacketType::HANDSHAKE_REQUEST, yourID);
+void ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* keyPair, SOCKTYPE socketfd, sockaddr_in connectionAddr, ID* yourID, int seqenceNumber) {
+    Packet *packet = new Packet(seqenceNumber, PacketType::HANDSHAKE_REQUEST, yourID);
     unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
 
     // Generate Random Number for handshake & store it for later in Primary Client
@@ -18,7 +18,7 @@ void ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* key
     delete packet;
 }
 
-int ML_KEM_Handshake::onRequest(Packet* packet, SOCKTYPE socketfd, sockaddr_in returnAdress, socklen_t returnLen, ID* yourID, unsigned char* outputedSecret) {
+int ML_KEM_Handshake::onRequest(Packet* packet, SOCKTYPE socketfd, sockaddr_in returnAdress, ID* yourID, unsigned char* outputedSecret, int seqenceNumber) {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey;
     size_t secretlen = 0, outlen = 0;
@@ -54,9 +54,9 @@ int ML_KEM_Handshake::onRequest(Packet* packet, SOCKTYPE socketfd, sockaddr_in r
     memcpy(out, selfRand, ML_KEM_HANDSHAKE_RANDSIZE);
 
     // Create Return Packet
-    Packet returnPacket(-1, PacketType::HANDSHAKE_RESPONSE, yourID);
+    Packet returnPacket(seqenceNumber, PacketType::HANDSHAKE_RESPONSE, yourID);
     int packetlen = returnPacket.serialize((char*)out, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
-    int aasd = sendto(socketfd, returnPacket.getData(), packetlen, 0, (const struct sockaddr *)&returnAdress, returnLen);
+    int aasd = sendto(socketfd, returnPacket.getData(), packetlen, 0, (const struct sockaddr *)&returnAdress, sizeof(returnAdress));
     int a = ntohs(returnAdress.sin_port);
     char *ip = inet_ntoa(returnAdress.sin_addr);
 

@@ -79,15 +79,15 @@ ID* PrimaryClient::getClientID() {
 
 int PrimaryClient::registerNewUser(ID* id) {
     // Guard clause to not add oneself as a new user
-    // if (id.getString() == this->clientID.getString()) {
-    //     std::cout << "Cannot Register Yourself\n";
-    //     return -1;
-    // }
+    if (id->getString() == this->clientID.getString()) {
+        std::cout << "Cannot Register Yourself\n";
+        return 0;
+    }
     
     // Guard Clause to not overwrite a user
     if (this->knownConnections.contains(id->getString())) {
         std::cout << "User " << id->getString() << " already Exists\n";
-        return -1;
+        return 0;
     }
 
     // Create a temperary user to asosiate incoming packets from this user will be lost on reset if not proporly added to a server
@@ -102,7 +102,7 @@ int PrimaryClient::registerNewUser(ID* id) {
 
 RemoteUser* PrimaryClient::getUser(std::string userID) {
     // Make sure the user exists
-    if (!allServers.contains(userID)) {
+    if (knownConnections.contains(userID) == 0) {
         return NULL;
     }
 

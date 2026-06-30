@@ -31,14 +31,15 @@ class IncomingHandler {
         // Bool to accept Incoming messages from other clients
         bool acceptIncoming;
         void incomingStartup(int ReceivingPort);
-        void incomingLoop(SOCKTYPE socketfd, char* buffer, sockaddr_in cliaddr);
+        void IncomingLoop(char* buffer, sockaddr_in cliaddr);
+        void handleIncoming(Packet* incomingPacket);
         std::deque<Packet> ReceivingBuffer;
 
-        void handleAck(Packet packet, UDPConnection connectedUser);
-        void handleConnectionRequest(Packet *packet, SOCKTYPE returnSock, sockaddr_in returnAdress, socklen_t returnLen);
-        void handleConnectionResponse(Packet *packet, SOCKTYPE returnSock, sockaddr_in returnAdress, socklen_t returnLen);
-        void handleRelayInfoResponse(Packet *packet, int datalen);
-        void handlePacket(Packet *packet, int datalen, int temp);
+        void handleAck(Packet* packet);
+        void handleConnectionRequest(Packet *packet);
+        void handleConnectionResponse(Packet *packet);
+        void handleRelayInfoResponse(Packet *packet);
+        void handlePacket(Packet *packet);
         void handleKeepAlive(Packet *packet);
 
         void handleMessage(unsigned char* decryptedData);

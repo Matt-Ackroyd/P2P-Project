@@ -136,7 +136,7 @@ void RelayServer::handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientA
     
     // Create Shared Secret for encryption/decryption
     unsigned char secret[SHAW_256_HASH_SIZE];
-    if (ML_KEM_Handshake::onRequest(&handshakePacket, clientSocket, clientAddress, sizeof(clientAddress), NULL, secret) < 1) {
+    if (ML_KEM_Handshake::onRequest(&handshakePacket, clientSocket, clientAddress, NULL, secret, -1) < 1) {
         return;
     }
 

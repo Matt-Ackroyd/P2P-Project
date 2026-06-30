@@ -10,7 +10,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(app_${PROJECT_NAME}
-    main.cpp 
+    main.cpp
     ${PROJECT_SOURCE_DIR}/src/DataTypes/FileContainer.cpp
     ${PROJECT_SOURCE_DIR}/src/DataTypes/MessageContainer.cpp
     ${PROJECT_SOURCE_DIR}/src/DataTypes/FileIndicator.cpp
@@ -28,7 +28,7 @@ qt_add_executable(app_${PROJECT_NAME}
     src/ConfigLoader.cpp
     src/Networking/OutgoingHandler.cpp
 )
-target_include_directories(app_${PROJECT_NAME} 
+target_include_directories(app_${PROJECT_NAME}
     PUBLIC include/ProjectFern/DataTypes/
     PUBLIC include/ProjectFern/Networking/
     PUBLIC include/ProjectFern/Server/
@@ -46,8 +46,8 @@ qt_add_qml_module(app_${PROJECT_NAME}
         Main.qml
         ChannelStructure.qml
         ServerStructure.qml
-    SOURCES 
-        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h 
+    SOURCES
+        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h
         ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp
 )
 
@@ -72,10 +72,10 @@ target_link_libraries(app_${PROJECT_NAME}
 
 if(WIN32)
     target_link_libraries(app_${PROJECT_NAME} PUBLIC wsock32 ws2_32)
-    set_target_properties( app_${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY 
-        ${CMAKE_BINARY_DIR}/bin )
-    set_target_properties( app_${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-        ${CMAKE_BINARY_DIR}/bin )
+    # set_target_properties( app_${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+    #     ${CMAKE_BINARY_DIR}/bin )
+    # set_target_properties( app_${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+    #     ${CMAKE_BINARY_DIR}/bin )
 endif()
 
 install(TARGETS app_${PROJECT_NAME}

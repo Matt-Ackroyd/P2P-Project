@@ -41,10 +41,16 @@ int main(int argc, char *argv[])
 
     TextChannel* t4 = new TextChannel();
     test2->knownChannels[t4->getID()->getString()] = t4;
+
+    ID larryid;
+    larryid.GenerateNewID();
+    PrimaryClient::getInstance()->registerNewUser(&larryid);
+    RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid.getString());
+    larry->connection.setAddr("127.0.0.1", 10346);
+    larry->connection.sendKeepAlive();
+    larry->connection.sendHandshakeRequest();
+
     
-    UDPConnection* greg = new UDPConnection();
-    greg->setAddr("192.168.0.17", 5000);
-    greg->sendHandshakeRequest();
 
     //int a = ntohs(connectionAddr.sin_port);
     //char *ip = inet_ntoa(connectionAddr.sin_addr);

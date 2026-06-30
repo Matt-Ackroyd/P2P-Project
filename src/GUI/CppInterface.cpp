@@ -39,9 +39,9 @@ void CppInterface::requestServerInfo(QString Qid) {
     PrimaryClient* client = PrimaryClient::getInstance();
     std::string id = Qid.toStdString();
 
-    RelayClient::RegisterUser("68.146.39.61", 7777);
-    RelayClient::UpdateUserConnectionInfo("68.146.39.61", 7777);
-    RelayClient::UserConnectionInfoReqest(client->socketfd, "68.146.39.61", 7777, *client->getClientID(), client->getClientID());
+    // RelayClient::RegisterUser("68.146.39.61", 7777);
+    // RelayClient::UpdateUserConnectionInfo("68.146.39.61", 7777);
+    // RelayClient::UserConnectionInfoReqest(client->socketfd, "68.146.39.61", 7777, *client->getClientID(), client->getClientID());
 
     Server* server = client->getServer(id);
 

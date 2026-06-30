@@ -15,6 +15,7 @@ Packet::Packet(int seqNum, PacketType packetType, ID* author) {
 
 
 int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
+    this->dataLen = dataLen;
     unsigned char controlVar = (char)0;
     size_t packetLength = Packet::MIN_PACKET_SIZE + dataLen;
 
@@ -72,7 +73,6 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
 
 // Returns data length
 int Packet::deserialize(char* serializedData) {
-    int dataLen;
     long unsigned int offset = 0;
 
     // PacketType
@@ -88,17 +88,17 @@ int Packet::deserialize(char* serializedData) {
     offset += UUID_BYTE_SIZE;
 
     // DataLength
-    memcpy(&dataLen, serializedData+offset, sizeof(dataLen));
-    offset += sizeof(dataLen);
+    memcpy(&this->dataLen, serializedData+offset, sizeof(this->dataLen));
+    offset += sizeof(this->dataLen);
 
-    if (0 > dataLen || dataLen > 3000) {
+    if (0 > this->dataLen || this->dataLen > 3000) {
         this->data = new char[1];
         throw std::runtime_error("Bad Packet Buffer\n");
     }
     
     // Data
-    this->data = new char[dataLen];
-    memcpy(this->data, serializedData+offset, dataLen);
+    this->data = new char[this->dataLen];
+    memcpy(this->data, serializedData+offset, this->dataLen);
     offset += dataLen;
 
     // Iv/Mac Control val
@@ -136,6 +136,9 @@ unsigned char* Packet::getTag() {
 }
 unsigned char* Packet::getIV() {
     return this->IV;
+}
+int Packet::getDataLength() {
+    return this->dataLen;
 }
 
 
