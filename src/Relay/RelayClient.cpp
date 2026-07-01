@@ -33,24 +33,15 @@ SOCKTYPE RelayClient::EstablishEncryption(std::string relayAddr, int relayPort, 
 
 }
 
-void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType requestType) {
-
-    // Early return if you have already registered with this relay
-    std::filesystem::path relayPath("Configs/PrimaryClient/KnownRelays/" + relayAddr);
-    if (std::filesystem::exists(relayPath) && requestType == PacketType::RELAY_REQUEST_USER_REGISTRATION) {
-        return;
-    }
-
-    unsigned char sharedsecret[SHAW_256_HASH_SIZE];
-    SOCKTYPE socketfd = EstablishEncryption(relayAddr, relayPort, sharedsecret);
-
+void SendRelayRegisterRequest(std::string relayAddr, int relayPort, PacketType requestType) {
+    std::string path = KNOWN_RELAY_PATH + relayAddr + ":" + (char*)relayPort + "/" + "passwordHash.bin";
 
     // If a password exists for this relay load it, if not then generate one
     int datalen = PASSWORD_BYTE_SIZE;
     char password[PASSWORD_BYTE_SIZE];
-    if (requestType == PacketType::RELAY_REQUEST_USER_REGISTRATION) {
+    if (requestType == PacketType::RELAY_REGISTER) {
         RAND_bytes((unsigned char*)password, PASSWORD_BYTE_SIZE);
-        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/KnownRelays/" + relayAddr, password, PASSWORD_BYTE_SIZE);
+        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/KnownRelays/" + relayAddr , password, PASSWORD_BYTE_SIZE);
     } else {
         ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/KnownRelays/" + relayAddr, password, PASSWORD_BYTE_SIZE);
     }
@@ -85,16 +76,33 @@ void RelayClient::TcpRequest(std::string relayAddr, int relayPort, PacketType re
     closesocket(socketfd);
 }
 
-// Requests this user to be added to the database with a hash of the salted password
-// Requires a Encrypted Connection Beforehand 
-void RelayClient::RegisterUser(std::string relayAddr, int relayPort) {
-    TcpRequest(relayAddr, relayPort, PacketType::RELAY_REQUEST_USER_REGISTRATION);
+
+void RelayClient::StartHandshake(std::string relayAddr, int relayPort) {
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(relayPort);
+    serverAddress.sin_addr.s_addr = inet_addr(relayAddr.c_str());
+
+    unsigned char myRand[ML_KEM_HANDSHAKE_RANDSIZE];
+    Packet* packet = ML_KEM_Handshake::startHandshake(myRand, PrimaryClient::getInstance()->getKeyPair(), PrimaryClient::getInstance()->getClientID(), -1);
+
+    //Save Rand To File
+    ConfigLoader::WriteBinaryFile(KNOWN_RELAY_PATH + relayAddr + ":" + (char*)relayPort + "/" + "random.bin", (char*)myRand, ML_KEM_HANDSHAKE_RANDSIZE);
+
+    sendto(PrimaryClient::getInstance()->socketfd, packet->getData(), packet->getPacketlength(), 0, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+    delete packet;
 }
 
-// Requests to update the database with this users connection infomation
-// Requires a Encrypted Connection Beforehand 
-void RelayClient::UpdateUserConnectionInfo(std::string relayAddr, int relayPort) {
-    TcpRequest(relayAddr, relayPort, PacketType::RELAY_REQUEST_UPDATE_CONNECTION_INFO);
+void onRelayHandshakeResponse(Packet* incomingPacket, sockaddr_in addr) {
+    std::string ip = inet_ntoa(addr.sin_addr);
+    int port = ntohs(addr.sin_port);
+    
+    unsigned char myRand[ML_KEM_HANDSHAKE_RANDSIZE];
+    ConfigLoader::ReadBinaryFile(KNOWN_RELAY_PATH + ip + ":" + (char*)port + "/" + "random.bin", (char*)myRand, ML_KEM_HANDSHAKE_RANDSIZE);
+
+    unsigned char sharedSecretBuffer[SHAW_256_HASH_SIZE];
+    ML_KEM_Handshake::onReply(incomingPacket, PrimaryClient::getInstance()->getKeyPair(), myRand, sharedSecretBuffer);
+
 }
 
 // returns a given users connection info

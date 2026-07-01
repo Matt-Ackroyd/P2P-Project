@@ -17,7 +17,7 @@ Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* 
     return packet;
 }
 
-Packet* ML_KEM_Handshake::onRequest(Packet* packet, ID* yourID, unsigned char* outputedSecret, int seqenceNumber) {
+Packet* ML_KEM_Handshake::onRequest(Packet* packet, ID* yourID, unsigned char* outputedSecret, int seqenceNumber, PacketType type) {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey;
     size_t secretlen = 0, outlen = 0;
@@ -56,7 +56,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, ID* yourID, unsigned char* o
     handshakeHash(secret, secretlen, selfRand, rand, outputedSecret);
 
     // Create Return Packet
-    Packet* returnPacket = new Packet(seqenceNumber, PacketType::HANDSHAKE_RESPONSE, yourID);
+    Packet* returnPacket = new Packet(seqenceNumber, type, yourID);
     returnPacket->serialize((char*)out, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
 
     return returnPacket;

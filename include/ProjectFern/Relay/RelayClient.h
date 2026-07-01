@@ -6,6 +6,7 @@
 
 #define PASSWORD_BYTE_SIZE 32
 #define CONNECTION_INFO_SIZE 6
+#define KNOWN_RELAY_PATH "Configs/PrimaryClient/KnownRelays/"
 
 class RelayClient {
 private:

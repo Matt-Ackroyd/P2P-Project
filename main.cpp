@@ -45,13 +45,14 @@ int main(int argc, char *argv[])
 
     ID larryid;
     larryid.GenerateNewID();
-    PrimaryClient::getInstance()->registerNewUser(&larryid);
-    RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid.getString());
-    larry->connection.setAddr("192.168.0.27", 10346);
-    larry->connection.sendKeepAlive();
-    larry->connection.sendHandshakeRequest();
+    // PrimaryClient::getInstance()->registerNewUser(&larryid);
+    // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid.getString());
+    RemoteUser larry(&larryid);
+    larry.connection.setAddr("192.168.0.27", 10346);
+    larry.connection.sendKeepAlive();
+    larry.connection.sendHandshakeRequest();
 
-    client->getOutgoingHandler()->enableConnection(larry);
+    client->getOutgoingHandler()->enableConnection(&larry);
 
     
 

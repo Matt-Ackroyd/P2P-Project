@@ -31,7 +31,7 @@ void UDPConnection::sendKeepAlive() {
     Packet packet(-1, PacketType::KEEP_ALIVE, PrimaryClient::getInstance()->getClientID());
 
     int packetlen = packet.serialize((char*)keepAlive, 0, NULL, NULL);
-    sendto(this->sock, packet.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
+    int a = sendto(this->sock, packet.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
 }
 
 void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {

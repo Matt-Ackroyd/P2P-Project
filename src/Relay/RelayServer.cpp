@@ -1,186 +1,5 @@
 #include "RelayServer.h"
 
-// Adds a user to the data base with a hash of the salted password
-// Requires a Encrypted Connection Beforehand 
-void RelayServer::onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
-    // Data the password
-    std::string password(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);\
-
-    // Create the path to the file
-    std::filesystem::path path = std::filesystem::current_path();
-    path.append(PATH_TO_USER_FILES);
-
-    // If the directory doesn't exist yet create it
-    if (!std::filesystem::exists(PATH_TO_USER_FILES)) {
-        std::filesystem::create_directory(PATH_TO_USER_FILES);
-    }
-
-    // Sanitize the string
-    if (userID->getString().find(".") != std::string::npos) {
-        // Abort, there should never be a . symbol in the userID so its likely they are trying to insert this file outside of the correct dir
-        return;
-    }
-    path.append(userID->getString());
-    
-    // Make sure that we dont overide an existing entry
-    if (std::filesystem::exists(path)) {
-        std::cout << "User Already exists\n";
-        return;
-    }    
-
-    
-    password += "StaltyFern";   // Salt the password
-    
-    // Hash
-    char shaw256output[SHAW_256_HASH_SIZE];
-    shaw256Hash((unsigned char*)password.c_str(), password.length()+1, (unsigned char*)shaw256output);
-
-    std::ofstream file(path, std::ios::binary);
-    if (file.is_open()) {
-        // File IO
-        file.write(shaw256output, SHAW_256_HASH_SIZE);   // Pass Hash
-        
-        // Connection Info
-        char outgoingBuffer[CONNECTION_INFO_SIZE];
-        memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
-        memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
-        file.seekp(SHAW_256_HASH_SIZE);
-        file.write(outgoingBuffer, CONNECTION_INFO_SIZE);
-    }
-    file.close();
-}
-
-
-// Updates the stored connection info of a given user, as long as the password hash works
-// Requires a Encrypted Connection Beforehand 
-void RelayServer::onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cliaddr) {
-    // Data contains the password 
-    std::string givenPassword(reinterpret_cast<char const*>(data), PASSWORD_BYTE_SIZE);
-
-    // Create the path to the file
-    std::filesystem::path path = std::filesystem::current_path();
-    path.append(PATH_TO_USER_FILES);
-
-    // If the directory doesn't exist yet create it
-    if (!std::filesystem::exists(PATH_TO_USER_FILES)) {
-        std::filesystem::create_directory(PATH_TO_USER_FILES);
-    }
-
-    // Sanitize the string
-    if (userID->getString().find(".") != std::string::npos) {
-        // Abort, there should never be a . symbol in the userID so its likely they are trying to insert this file outside of the correct dir
-        return;
-    }
-    path.append(userID->getString());
-
-    // Make sure that this user exists
-    if (!std::filesystem::exists(path)) {
-        return;
-    }    
-
-    // Salt & hash the given password
-    givenPassword += "StaltyFern";   
-    char shaw256output[SHAW_256_HASH_SIZE];
-    shaw256Hash((unsigned char*)givenPassword.c_str(), givenPassword.length()+1, (unsigned char*)shaw256output);
-
-    std::ifstream readfile(path, std::ios::binary);
-    if (readfile.is_open()) {
-        // Compare given password hash with hash on record
-        char passwordOnFile[SHAW_256_HASH_SIZE];
-        readfile.read(passwordOnFile, SHAW_256_HASH_SIZE);
-        if (strncmp(passwordOnFile, shaw256output, SHAW_256_HASH_SIZE) != 0) {     // if passwords DONT match
-            return;                                               
-        }
-    }
-    readfile.close();
-
-    // We will only reach this point if the passwords match
-    std::fstream writefile(path, std::ios::binary | std::ios::in | std::ios::out);
-    if (writefile.is_open()) {
-        char outgoingBuffer[CONNECTION_INFO_SIZE];
-        memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr
-        memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
-        writefile.seekp(SHAW_256_HASH_SIZE);     // move the put pointer to the connection info section of the file
-        writefile.write(outgoingBuffer, CONNECTION_INFO_SIZE);  
-    }
-    writefile.close();
-
-
-
-}
-
-void RelayServer::catchTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
-    try {
-        RelayServer::handleTcpConnection(clientSocket, clientAddress);
-    } catch (std::runtime_error e) {
-        std::cout << "TCP Exception Caught: " << e.what();
-    }
-    catch (...) // catch-all handler
-	{
-		std::cout << "We caught an exception of an undetermined type\n";
-	}
-}
-
-void RelayServer::handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress) {
-    char buffer[3000] = {0};
-    recv(clientSocket, buffer, sizeof(buffer), 0);
-
-    Packet handshakePacket(-1, PacketType::NONE, NULL);
-    int datalen = handshakePacket.deserialize(buffer);
-
-    // Return if this stream isn't requested to be encrypted
-    if (handshakePacket.getPacketType() != PacketType::HANDSHAKE_REQUEST) {
-        closesocket(clientSocket);
-        return;
-    }
-    
-    // Create Shared Secret for encryption/decryption
-    unsigned char secret[SHAW_256_HASH_SIZE];
-    // if (ML_KEM_Handshake::onRequest(&handshakePacket, clientSocket, clientAddress, NULL, secret, -1) < 1) {
-    //     return;
-    // }
-
-    std::ofstream file("secret.bin", std::ios::binary);
-    if (file.is_open()) {
-        file.write((char*)secret, SHAW_256_HASH_SIZE);
-    }
-    file.close();
-
-    // Reset the buffer and lisen for the clients real request
-    buffer[3000] = {0};
-    recv(clientSocket, buffer, sizeof(buffer), 0);
-
-    Packet incomingPacket(-1, PacketType::NONE, NULL);
-    datalen = incomingPacket.deserialize(buffer);
-
-    // DECRYPTION
-    // AAD Gen for the senderID and incoming length of the data
-    unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, incomingPacket.packetAuthorID.getRaw(), UUID_BYTE_SIZE);
-    memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
-
-    // Decrypt Here
-    unsigned char output[datalen];
-    if (symmetricDecryption((unsigned char*)incomingPacket.getData(), datalen, aad, sizeof(aad), incomingPacket.getTag(), 
-            secret, incomingPacket.getIV(), AES_256_IV_LENGTH, output) < 1) {
-        closesocket(clientSocket);
-        return;
-    }
-    
-    
-    switch(incomingPacket.getPacketType()) {
-        case PacketType::RELAY_REQUEST_USER_REGISTRATION:
-            onRegisterUser(&incomingPacket.packetAuthorID, output, &clientAddress);
-            break;
-        case PacketType::RELAY_REQUEST_UPDATE_CONNECTION_INFO:
-            onUpdateUserConnectionInfo(&incomingPacket.packetAuthorID, output, &clientAddress);
-            break;
-        default:
-            std::cout << "Invalid Request\n";
-    }
-
-    closesocket(clientSocket);
-}
 
 
 void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, sockaddr_in* cliaddr, socklen_t clientlen) {
@@ -236,6 +55,154 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
     sendto(socketfd, packet2.getData(), packet2Len, 0, (struct sockaddr*)&addrToInform, sizeof(addrToInform));
 }
 
+
+
+
+void RelayServer::EstablishSharedSecret(Packet* handshakePacket, SOCKTYPE socketfd, sockaddr_in cliaddr) {
+    unsigned char secret[SHAW_256_HASH_SIZE];
+    Packet* returnPacket = ML_KEM_Handshake::onRequest(handshakePacket, NULL, &RelayServer::RelayID, -1, PacketType::RELAY_HANDSHAKE_RESPONSE);
+
+    // Store Secret
+    std::filesystem::path path = UserPath(&handshakePacket->packetAuthorID);
+    path.append("handshakeHash.bin");
+
+    std::ofstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        return;
+    }
+    file.write((char*)secret, SHAW_256_HASH_SIZE);
+    file.close();
+
+    // Send Return Info
+    sendto(socketfd, returnPacket->getData(), returnPacket->getPacketlength(), 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+    delete returnPacket;
+}
+
+void RelayServer::onRequestRegistration(Packet* incomingPacket, SOCKTYPE socketfd, sockaddr_in cliaddr) {
+    // Read Handshake Secret
+    std::filesystem::path path = UserPath(&incomingPacket->packetAuthorID);
+    std::filesystem::path handshakeHashPath = path;
+    handshakeHashPath.append("handshakeHash.bin");
+
+    std::ifstream file(handshakeHashPath, std::ios::binary);
+    if (!file.is_open()) {
+        return;
+    }
+    unsigned char secret[SHAW_256_HASH_SIZE];
+    file.read((char*)secret, SHAW_256_HASH_SIZE);
+    file.close();
+
+    // AAD Creation
+    int datalen = incomingPacket->getDataLength();
+    unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
+    memcpy(aad, incomingPacket->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
+
+    // Decrypt Here
+    unsigned char output[datalen];
+    if (symmetricDecryption((unsigned char*)incomingPacket->getData(), datalen, aad, sizeof(aad), incomingPacket->getTag(), 
+            secret, incomingPacket->getIV(), AES_256_IV_LENGTH, output) < 1) {
+        return;
+    }
+
+    // chech if this is the first time registering:
+    std::filesystem::path passwordHashPath = path;
+    passwordHashPath.append("passwordHash.bin");
+    if (!std::filesystem::exists(passwordHashPath)) {
+        CreatePasswordHashFile(path, output);
+        UpdateConnectionInfo(path, output, cliaddr);
+    } else {
+        UpdateConnectionInfo(path, output, cliaddr);
+    }
+}
+
+void RelayServer::CreatePasswordHashFile(std::filesystem::path path, unsigned char* passwordData) {
+    // Hash & salt
+    unsigned char shaw256output[SHAW_256_HASH_SIZE];
+    SaltAndHash(passwordData, shaw256output);   
+
+    // Write to file
+    std::filesystem::path passwordHashPath = path;
+    passwordHashPath.append("passwordHash.bin");
+
+    std::ofstream file(passwordHashPath, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("CreatePasswordHashFile: Failed To Open File\n");
+    }
+
+    file.write((char*)shaw256output, SHAW_256_HASH_SIZE);
+    file.close();
+}
+
+void RelayServer::UpdateConnectionInfo(std::filesystem::path path, unsigned char* passwordData, sockaddr_in cliaddr) {
+    std::filesystem::path passwordHashPath = path;
+    std::filesystem::path connectionInfoPath = path;
+    passwordHashPath.append("passwordHash.bin");
+    connectionInfoPath.append("connectionInfo.bin");
+
+    // Hash & salt
+    unsigned char shaw256output[SHAW_256_HASH_SIZE];
+    SaltAndHash(passwordData, shaw256output);  
+
+    // Open and compare Password Hashes
+    std::ifstream readfile(path, std::ios::binary);
+    if (!readfile.is_open()) {
+        throw std::runtime_error("UpdateConnectionInfo: Failed To Open File\n");
+    }
+
+    // Password Match
+    char passwordOnFile[SHAW_256_HASH_SIZE];
+    readfile.read(passwordOnFile, SHAW_256_HASH_SIZE);
+    if (strncmp(passwordOnFile, (char*)shaw256output, SHAW_256_HASH_SIZE) != 0) {     // if passwords DONT match
+        throw std::runtime_error("UpdateConnectionInfo: Passwords Dont Match");      
+        return;                                         
+    }
+    readfile.close();
+
+    // Write Connection Info
+    std::fstream writefile(path, std::ios::binary | std::ios::in | std::ios::out);
+    if (!writefile.is_open()) {
+        throw std::runtime_error("UpdateConnectionInfo: Failed To Open File\n");
+    }
+
+    char outgoingBuffer[CONNECTION_INFO_SIZE];
+    memcpy(outgoingBuffer, &cliaddr.sin_addr.s_addr, sizeof(cliaddr.sin_addr.s_addr));               // Copy Addr
+    memcpy(outgoingBuffer+sizeof(int), &cliaddr.sin_port, sizeof(cliaddr.sin_port));                 // Copy Port
+
+    writefile.write(outgoingBuffer, CONNECTION_INFO_SIZE);  
+    writefile.close();
+}
+
+void RelayServer::SaltAndHash(unsigned char* input, unsigned char* output) {
+    std::string password(reinterpret_cast<char const*>(input), PASSWORD_BYTE_SIZE);
+    password += "StaltyFern";   // Salt the password
+    shaw256Hash((unsigned char*)password.c_str(), password.length()+1, (unsigned char*)output);
+}
+
+std::filesystem::path RelayServer::UserPath(ID* userID) {
+    // Create the path to the file
+    std::filesystem::path path = std::filesystem::current_path();
+    path.append(PATH_TO_USER_FILES);
+
+    // If the directory doesn't exist yet create it
+    if (!std::filesystem::exists(PATH_TO_USER_FILES)) {
+        std::filesystem::create_directories(PATH_TO_USER_FILES);
+    }
+
+    // Sanitize the string
+    if (userID->getString().find(".") != std::string::npos) {
+        // Abort, there should never be a . symbol in the userID so its likely they are trying to insert this file outside of the correct dir
+        throw std::runtime_error("Impossible UserID");
+    }
+    path.append(userID->getString() + "/");
+
+    if (!std::filesystem::exists(path)) {
+        std::filesystem::create_directories(path);
+    }
+    return path;
+}
+
+
 // returns a users connection info & sends them a notification with your connection information
 // Does not require an Encrypted Connection
 void RelayServer::UdpHandler(int udpPort) {
@@ -267,8 +234,15 @@ void RelayServer::UdpHandler(int udpPort) {
                 Packet packet(-1, PacketType::NONE, NULL);
                 int datalen = packet.deserialize(buffer);
 
+                if (packet.getPacketType() == PacketType::RELAY_REGISTER) {
+                    onRequestRegistration(&packet, socketfd, cliaddr);
+
+                } else if (packet.getPacketType() == PacketType::HANDSHAKE_REQUEST) {
+                    EstablishSharedSecret(&packet, socketfd, cliaddr);
+                }
+
                 // Make sure we are getting the right packet
-                if (packet.getPacketType() == PacketType::RELAY_USER_INFO && datalen == UUID_BYTE_SIZE) {    
+                else if (packet.getPacketType() == PacketType::RELAY_USER_INFO && datalen == UUID_BYTE_SIZE) {    
                     RelayServer::onUserConnectionInfoReqest(&packet, socketfd, &cliaddr, clientlen);
                 }
             } catch (std::runtime_error e) {
@@ -281,10 +255,6 @@ void RelayServer::UdpHandler(int udpPort) {
         }
     }
 }
-
-
-
-
 
 
 int main(int argc, char *argv[]) {
@@ -301,38 +271,18 @@ int main(int argc, char *argv[]) {
         WSAStartup(MAKEWORD(2,2), &wsaData);
     #endif
 
-    //udp
-    std::thread UDPLoop(RelayServer::UdpHandler, port);
+    std::filesystem::path uuidPath = std::filesystem::current_path();
+    uuidPath.append("relay/relay_id.bin");
 
-    SOCKTYPE tcpServerSocket = socket(AF_INET, SOCK_STREAM, 0);  
-
-    
-    int optVal = 1;
-    setsockopt(tcpServerSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optVal, sizeof(optVal));
-
-    int timeoutMili = 10000;
-    setsockopt(tcpServerSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutMili, sizeof(timeoutMili));
-    
-
-    // Bind adress and port
-    sockaddr_in tcpServerAddress;
-    tcpServerAddress.sin_family = AF_INET;
-    tcpServerAddress.sin_port = htons(port);
-    tcpServerAddress.sin_addr.s_addr = INADDR_ANY;
-
-    int a = bind(tcpServerSocket, (struct sockaddr*)&tcpServerAddress, sizeof(tcpServerAddress));
-    std::cout << "TCP Bind Return: " << a << "\n";
-
-    sockaddr_in clientAddress;
-    int len;
-    listen(tcpServerSocket, 10);
-    // TCP Connection loop
-    while (true) {
-        SOCKTYPE clientSocket = accept(tcpServerSocket, (struct sockaddr*)&clientAddress, &len);
-        
-        
-        std::thread* newThread = new std::thread(RelayServer::catchTcpConnection, clientSocket, clientAddress);
+    if (std::filesystem::exists(uuidPath)) {
+        char uuid[UUID_BYTE_SIZE];
+        ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
+        RelayServer::relayID.set((unsigned char*)uuid);
+    } else {
+        RelayServer::relayID.GenerateNewID();
+        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)RelayServer::relayID.getRaw(), UUID_BYTE_SIZE);
     }
 
-    UDPLoop.join();
+    
+    RelayServer::UdpHandler(port);
 }

@@ -7,29 +7,28 @@
 #include "Encryption.h"
 #include "ML-KEM_Handshake.h"
 #include "socketMacro.h"
+#include "ConfigLoader.h"
 
-#define PATH_TO_USER_FILES "relay_users/"
+#define PATH_TO_USER_FILES "relay/users/"
 #define PASSWORD_BYTE_SIZE 32
 #define CONNECTION_INFO_SIZE 6
 
 class RelayServer {
-public:
-    // Adds a user to the data base with a hash of the salted password
-    // Requires a Encrypted Connection Beforehand 
-    static void onRegisterUser(ID* userID, unsigned char* data, sockaddr_in* cliaddr);
-
-    // Updates the stored connection info of a given user, as long as the password hash works
-    // Requires a Encrypted Connection Beforehand 
-    static void onUpdateUserConnectionInfo(ID* userID, unsigned char* data, sockaddr_in* cliaddr);
+    // Helper functions
+    static void SaltAndHash(unsigned char* input, unsigned char* output);
+    static std::filesystem::path UserPath(ID* userID);
 
     // returns a users connection info
     // Does not require an Encrypted Connection
     static void onUserConnectionInfoReqest(Packet *packet, SOCKTYPE socketfd, sockaddr_in* cliaddr, socklen_t clientlen);
+    static void EstablishSharedSecret(Packet* handshakePacket, SOCKTYPE socketfd, sockaddr_in cliaddr);
 
-    static void catchTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress);
-    static void handleTcpConnection(SOCKTYPE clientSocket, sockaddr_in clientAddress);
-
-    static void handleIncomingRequest(SOCKTYPE clientSocket, sockaddr_in clientAddress);
-
+    // Requires a SharedSecret/Encrypted Connection
+    static void onRequestRegistration(Packet* incomingPacket, SOCKTYPE socketfd, sockaddr_in cliaddr);
+    static void CreatePasswordHashFile(std::filesystem::path path, unsigned char* passwordData);
+    static void UpdateConnectionInfo(std::filesystem::path path, unsigned char* passwordData, sockaddr_in cliaddr);
+    
+public:
+    static ID relayID;
     static void UdpHandler(int udpPort);
 };
