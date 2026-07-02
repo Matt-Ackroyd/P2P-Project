@@ -44,15 +44,15 @@ int main(int argc, char *argv[])
     test2->knownChannels[t4->getID()->getString()] = t4;
 
     ID larryid;
-    larryid.GenerateNewID();
+    
     // PrimaryClient::getInstance()->registerNewUser(&larryid);
     // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid.getString());
-    RemoteUser larry(&larryid);
-    larry.connection.setAddr("192.168.0.27", 10346);
-    larry.connection.sendKeepAlive();
-    larry.connection.sendHandshakeRequest();
+    // RemoteUser larry(&larryid);
+    // larry.connection.setAddr("68.146.39.61", 1024);
+    // larry.connection.sendKeepAlive();
+    // larry.connection.sendHandshakeRequest();
 
-    client->getOutgoingHandler()->enableConnection(&larry);
+    // client->getOutgoingHandler()->enableConnection(&larry);
 
     
 

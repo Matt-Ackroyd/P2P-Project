@@ -34,9 +34,8 @@ int PrimaryClient::init() {
     if (std::filesystem::exists(uuidPath)) {
         char uuid[UUID_BYTE_SIZE];
         ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
-        this->clientID.set((unsigned char*)uuid);
+        this->clientID = ID::fromBytes((unsigned char*)uuid);
     } else {
-        this->clientID.GenerateNewID();
         ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)this->clientID.getRaw(), UUID_BYTE_SIZE);
     }
     

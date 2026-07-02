@@ -36,7 +36,7 @@ FileContainer FileContainer::deserialize(unsigned char* serializedata) {
     int offset = 0;
 
     // ID
-    newFile.fileID.set(serializedata+offset);
+    newFile.fileID = ID::fromBytes(serializedata+offset);
     offset += UUID_BYTE_SIZE;
 
     // ByteLocation

@@ -4,7 +4,7 @@ ID relayID;
 
 void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, sockaddr_in* cliaddr, socklen_t clientlen) {
     ID userID;
-    userID.set((unsigned char*)packet->getData());
+    userID = ID::fromBytes((unsigned char*)packet->getData());
 
     std::filesystem::path path = UserPath(&userID);
     path.append("connectionInfo.bin");
@@ -75,7 +75,7 @@ void RelayServer::EstablishSharedSecret(Packet* handshakePacket, SOCKTYPE socket
     file.close();
 
     // Send Return Info
-    sendto(socketfd, returnPacket->getData(), returnPacket->getPacketlength(), 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+    int a = sendto(socketfd, returnPacket->getData(), returnPacket->getPacketlength(), 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
     delete returnPacket;
 }
 
@@ -277,9 +277,8 @@ int main(int argc, char *argv[]) {
     if (std::filesystem::exists(uuidPath)) {
         char uuid[UUID_BYTE_SIZE];
         ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
-        relayID.set((unsigned char*)uuid);
+        relayID = ID::fromBytes((unsigned char*)uuid);
     } else {
-        relayID.GenerateNewID();
         ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)relayID.getRaw(), UUID_BYTE_SIZE);
     }
 

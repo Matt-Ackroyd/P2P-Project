@@ -227,6 +227,7 @@ void IncomingHandler::handleConnectionResponse(Packet *packet) {
 
 void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
     sockaddr_in addr; 
+    addr.sin_family = AF_INET;
     addr.sin_port;
     addr.sin_addr.s_addr;
 
@@ -256,6 +257,9 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
     
     userRequesting->connection.setAddr(ip, port);
     client->getOutgoingHandler()->enableConnection(userRequesting);
+
+    int a = sendto(PrimaryClient::getInstance()->socketfd, "AAAA", sizeof("AAAA"), 0, (struct sockaddr*)&addr, sizeof(addr));
+    int error = WSAGetLastError();
     return;
 }
 

@@ -6,7 +6,7 @@ Packet::Packet(int seqNum, PacketType packetType, ID* author) {
         this->packetAuthorID = *author;
     } else {
         unsigned char emptyUUID [UUID_BYTE_SIZE] = {0};
-        this->packetAuthorID.set(emptyUUID);
+        this->packetAuthorID = ID::fromBytes(emptyUUID);
     }
     this->seqNum = seqNum;
     this->packetType = packetType;
@@ -84,7 +84,7 @@ int Packet::deserialize(char* serializedData) {
     offset += sizeof(this->seqNum);
 
     // Sender Id
-    this->packetAuthorID.set((unsigned char*)serializedData+offset);
+    this->packetAuthorID = ID::fromBytes((unsigned char*)serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // DataLength

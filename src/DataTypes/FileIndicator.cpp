@@ -33,7 +33,7 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     int offset = 0;
 
     // ID
-    newIndicator.fileID.set(serializedData+offset);
+    newIndicator.fileID = ID::fromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // File Size

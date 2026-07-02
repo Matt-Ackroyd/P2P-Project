@@ -40,7 +40,6 @@ void CppInterface::requestServerInfo(QString Qid) {
     std::string id = Qid.toStdString();
 
     RelayClient::RegisterUser("68.146.39.61", 7777);
-    RelayClient::UserConnectionInfoReqest(client->socketfd, "68.146.39.61", 7777, *client->getClientID(), client->getClientID());
 
     Server* server = client->getServer(id);
 
@@ -55,6 +54,8 @@ void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
     PrimaryClient* client = PrimaryClient::getInstance();
     std::string serverid = qserver->property("uuid").toString().toStdString();
     std::string channelid = qchannel->property("uuid").toString().toStdString();
+
+    RelayClient::UserConnectionInfoReqest(client->socketfd, "68.146.39.61", 7777, *client->getClientID(), client->getClientID());
 
     Server* server = client->getServer(serverid);
     TextChannel* channel = server->knownChannels[channelid];

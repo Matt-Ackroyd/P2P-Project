@@ -1,8 +1,6 @@
 #include "Server.h"
 
 Server::Server() {
-    //TEMP
-    this->id.GenerateNewID();
 }
 Server::~Server() {
     for (auto user : knownUsers) {
@@ -31,7 +29,6 @@ int Server::addUser(RemoteUser *user, std::string invitation) {
 std::string Server::createNewInvitation() {
     // TODO change to a more in depth method
     ID invitation;
-    invitation.GenerateNewID();
 
     this->activeInvitations.insert(invitation.getString());
     return invitation.getString();

@@ -2,7 +2,6 @@
 
  // Returns the required length of the buffer to hold this structure
 int MessageContainer::createNew(ID* server, ID* channel, ID* author, std::string message) {
-    this->messageID.GenerateNewID();
     this->serverID = *server;
     this->channelID = *channel;
     this->author = *author;
@@ -52,19 +51,19 @@ MessageContainer* MessageContainer::deserialize(unsigned char* data) {
     int offset = sizeof(DataTypes);
 
     // MessageID
-    newMessage->messageID.set(data+offset);
+    newMessage->messageID = ID::fromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // ServerID
-    newMessage->serverID.set(data+offset);
+    newMessage->serverID = ID::fromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // ChannelID
-    newMessage->channelID.set(data+offset);
+    newMessage->channelID = ID::fromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // Author
-    newMessage->author.set(data+offset);
+    newMessage->author = ID::fromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // Message Length

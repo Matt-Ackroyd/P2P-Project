@@ -1,12 +1,23 @@
 #include "ID.h"
 //64bit timestamp in nanoseconds & 64bits of random
 
-void ID::set(unsigned char* existingUUID) {
-    memcpy(this->rawID, existingUUID, UUID_BYTE_SIZE);
-    this->timestamp = 0;
+ID::ID(std::string uuidString) {
+    if (uuidString == "NULL") {
+        this->GenerateNewID();
+    } else {
+        this->idString = uuidString;
+        this->toBytes();
+    }    
+}
+
+ID ID::fromBytes(unsigned char* existingUUID) {
+    ID temp;
+    memcpy(temp.rawID, existingUUID, UUID_BYTE_SIZE);
+    temp.timestamp = 0;
 
     // Create New String
-    this->toString();
+    temp.toString();
+    return temp;
 }
 
 void ID::toString() {
@@ -16,7 +27,7 @@ void ID::toString() {
     for (int i = 0; i < UUID_BYTE_SIZE; i++) {
         stringS << std::setw(2) << static_cast<int>(rawID[i]);
     }
-    this->ID = stringS.str();
+    this->idString = stringS.str();
 }
 
 void ID::GenerateNewID() {
@@ -46,7 +57,7 @@ uint64_t ID::getTimestamp() {
         // Grab the substring with the two hex values that represent this byte
         // i is multiplyed by two beacuse hex is represented by 2 values and our loop is counting up by one
         // so each incremint of the loop means we move over two in the substring
-        std::string byteStr = ID.substr(i*2, 2);
+        std::string byteStr = idString.substr(i*2, 2);
         unsigned char byte = static_cast<unsigned char>(std::stoul(byteStr, nullptr, 16));
         temp_buffer[i] = byte;
     }
@@ -56,9 +67,19 @@ uint64_t ID::getTimestamp() {
 }
 
 std::string ID::getString() {
-    return this->ID;
+    return this->idString;
 }
 
 unsigned char* ID::getRaw() {
     return this->rawID;
+}
+
+unsigned char* ID::toBytes() {
+  for (unsigned int i = 0; i < idString.length(); i += 2) {
+    std::string byteString = idString.substr(i, 2);
+    char byte = (char) strtol(byteString.c_str(), NULL, 16);
+    this->rawID[i/2] = byte;
+  }
+
+  return rawID;
 }

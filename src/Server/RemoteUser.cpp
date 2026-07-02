@@ -1,7 +1,7 @@
 #include "RemoteUser.h"
 
 RemoteUser::RemoteUser(ID* id) {
-    this->id.set(id->getRaw());
+    this->id = ID::fromBytes(id->getRaw());
 }
 
 RemoteUser::~RemoteUser() {

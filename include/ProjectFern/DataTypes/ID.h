@@ -12,13 +12,15 @@
 //Second set of 8 bytes is random
 class ID {
 private:
-    std::string ID;
+    std::string idString;
     unsigned char rawID[UUID_BYTE_SIZE];
     uint64_t timestamp = 0;
     void toString();
-public:
+    unsigned char* toBytes();
     void GenerateNewID();
-    void set(unsigned char* existingUUID);
+public:
+    ID(std::string uuidString = "NULL");
+    static ID fromBytes(unsigned char* existingUUID);
     std::string getString();
     unsigned char* getRaw();
     uint64_t getTimestamp();
