@@ -1,21 +1,22 @@
 #include "RelayServer.h"
 
-
+ID relayID;
 
 void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, sockaddr_in* cliaddr, socklen_t clientlen) {
     ID userID;
     userID.set((unsigned char*)packet->getData());
 
+    std::filesystem::path path = UserPath(&userID);
+    path.append("connectionInfo.bin");
+
     // Check if given ID is in the database
-    if (!std::filesystem::exists(PATH_TO_USER_FILES + userID.getString())) {
-        sendto(socketfd, "No User Found", sizeof("No User Found"), 0, (struct sockaddr*)cliaddr, clientlen);
-        return;
+    if (!std::filesystem::exists(path)) {
+        throw std::runtime_error("User Isn't Registered\n");
     }   
 
     char connection_buffer[CONNECTION_INFO_SIZE];
-    std::ifstream file(PATH_TO_USER_FILES + userID.getString(), std::ios::binary);
+    std::ifstream file(path, std::ios::binary);
     if (file.is_open()) {
-        file.seekg(SHAW_256_HASH_SIZE); // Look at the connection info after the password hash
         file.read(connection_buffer, CONNECTION_INFO_SIZE);
     } else {
         return;
@@ -60,7 +61,7 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
 
 void RelayServer::EstablishSharedSecret(Packet* handshakePacket, SOCKTYPE socketfd, sockaddr_in cliaddr) {
     unsigned char secret[SHAW_256_HASH_SIZE];
-    Packet* returnPacket = ML_KEM_Handshake::onRequest(handshakePacket, NULL, &RelayServer::RelayID, -1, PacketType::RELAY_HANDSHAKE_RESPONSE);
+    Packet* returnPacket = ML_KEM_Handshake::onRequest(handshakePacket, &relayID, secret, -1, PacketType::RELAY_HANDSHAKE_RESPONSE);
 
     // Store Secret
     std::filesystem::path path = UserPath(&handshakePacket->packetAuthorID);
@@ -145,9 +146,9 @@ void RelayServer::UpdateConnectionInfo(std::filesystem::path path, unsigned char
     SaltAndHash(passwordData, shaw256output);  
 
     // Open and compare Password Hashes
-    std::ifstream readfile(path, std::ios::binary);
+    std::ifstream readfile(passwordHashPath, std::ios::binary | std::ios::in);
     if (!readfile.is_open()) {
-        throw std::runtime_error("UpdateConnectionInfo: Failed To Open File\n");
+        throw std::runtime_error("UpdateConnectionInfo: Failed To Open PasswordHash\n");
     }
 
     // Password Match
@@ -160,9 +161,9 @@ void RelayServer::UpdateConnectionInfo(std::filesystem::path path, unsigned char
     readfile.close();
 
     // Write Connection Info
-    std::fstream writefile(path, std::ios::binary | std::ios::in | std::ios::out);
+    std::fstream writefile(connectionInfoPath, std::ios::binary | std::ios::out);
     if (!writefile.is_open()) {
-        throw std::runtime_error("UpdateConnectionInfo: Failed To Open File\n");
+        throw std::runtime_error("UpdateConnectionInfo: Failed To Open ConectionInfo\n");
     }
 
     char outgoingBuffer[CONNECTION_INFO_SIZE];
@@ -206,8 +207,7 @@ std::filesystem::path RelayServer::UserPath(ID* userID) {
 // returns a users connection info & sends them a notification with your connection information
 // Does not require an Encrypted Connection
 void RelayServer::UdpHandler(int udpPort) {
-    int expectedPacketSize = Packet::MIN_PACKET_SIZE + UUID_BYTE_SIZE;
-    char buffer[expectedPacketSize]; 
+    char buffer[3000]; 
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
 
@@ -226,7 +226,7 @@ void RelayServer::UdpHandler(int udpPort) {
     std::cout << "UDP Bind Return: " << a << "\n";
 
     while (true) {
-        int packetlen = recvfrom(socketfd, buffer, expectedPacketSize,
+        int packetlen = recvfrom(socketfd, buffer, 3000,
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
         if (packetlen > Packet::MIN_PACKET_SIZE) {
@@ -234,7 +234,7 @@ void RelayServer::UdpHandler(int udpPort) {
                 Packet packet(-1, PacketType::NONE, NULL);
                 int datalen = packet.deserialize(buffer);
 
-                if (packet.getPacketType() == PacketType::RELAY_REGISTER) {
+                if (packet.getPacketType() == PacketType::RELAY_REGISTER_REQUEST) {
                     onRequestRegistration(&packet, socketfd, cliaddr);
 
                 } else if (packet.getPacketType() == PacketType::HANDSHAKE_REQUEST) {
@@ -277,10 +277,10 @@ int main(int argc, char *argv[]) {
     if (std::filesystem::exists(uuidPath)) {
         char uuid[UUID_BYTE_SIZE];
         ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
-        RelayServer::relayID.set((unsigned char*)uuid);
+        relayID.set((unsigned char*)uuid);
     } else {
-        RelayServer::relayID.GenerateNewID();
-        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)RelayServer::relayID.getRaw(), UUID_BYTE_SIZE);
+        relayID.GenerateNewID();
+        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)relayID.getRaw(), UUID_BYTE_SIZE);
     }
 
     

@@ -29,6 +29,5 @@ class RelayServer {
     static void UpdateConnectionInfo(std::filesystem::path path, unsigned char* passwordData, sockaddr_in cliaddr);
     
 public:
-    static ID relayID;
     static void UdpHandler(int udpPort);
 };

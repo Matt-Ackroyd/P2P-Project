@@ -79,10 +79,10 @@ ID* PrimaryClient::getClientID() {
 
 int PrimaryClient::registerNewUser(ID* id) {
     // Guard clause to not add oneself as a new user
-    if (id->getString() == this->clientID.getString()) {
-        std::cout << "Cannot Register Yourself\n";
-        return 0;
-    }
+    // if (id->getString() == this->clientID.getString()) {
+    //     std::cout << "Cannot Register Yourself\n";
+    //     return 0;
+    // }
     
     // Guard Clause to not overwrite a user
     if (this->knownConnections.contains(id->getString())) {

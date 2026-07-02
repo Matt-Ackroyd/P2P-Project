@@ -81,8 +81,8 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     }
 
     // If this packet doesn't need an acknowledgement just handle and dont worry about any queues
-    if (incomingPacket->getPacketType() <= 3) {
-        handleIncoming(incomingPacket);
+    if (incomingPacket->getPacketType() <= 3 || incomingPacket->getSeqNum() == -1) {
+        handleIncoming(incomingPacket, cliaddr);
         return;
     }
 
@@ -107,14 +107,14 @@ void IncomingHandler::IncomingLoop(char* buffer) {
         }
         userConnection->sendAck(incomingPacket->getSeqNum());   // Send Ack
         userConnection->getIncomingBuffer()->pop_front();
-        this->handleIncoming(front);
+        this->handleIncoming(front, cliaddr);
         userConnection->incomingSeqNum++;
         
     }
 }
 
 
-void IncomingHandler::handleIncoming(Packet* incomingPacket) {
+void IncomingHandler::handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr) {
     // Handle Diffrent Packet Types
     switch(incomingPacket->getPacketType()) {
         case PacketType::KEEP_ALIVE:
@@ -131,6 +131,9 @@ void IncomingHandler::handleIncoming(Packet* incomingPacket) {
             break;
         case PacketType::HANDSHAKE_RESPONSE:
             this->handleConnectionResponse(incomingPacket);
+            break;
+        case PacketType::RELAY_HANDSHAKE_RESPONSE:
+            RelayClient::onRelayHandshakeResponse(incomingPacket, cliaddr);
             break;
         case PacketType::PACKET:
             this->handlePacket(incomingPacket);

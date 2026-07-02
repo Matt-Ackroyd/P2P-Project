@@ -17,6 +17,7 @@
 #include "DataTypes.h"
 #include "ML-KEM_Handshake.h"
 #include "OutgoingHandler.h"
+#include "RelayClient.h"
 
 #define MAXLINE 3000
 
@@ -32,7 +33,7 @@ class IncomingHandler {
         bool acceptIncoming;
         void incomingStartup(int ReceivingPort);
         void IncomingLoop(char* buffer);
-        void handleIncoming(Packet* incomingPacket);
+        void handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr);
         std::deque<Packet> ReceivingBuffer;
 
         void handleAck(Packet* packet);
