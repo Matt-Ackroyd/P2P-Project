@@ -1,6 +1,7 @@
 #include "Server.h"
 
-Server::Server() {
+Server::Server(std::string id) {
+    this->id = ID(id);
 }
 Server::~Server() {
     for (auto user : knownUsers) {
@@ -32,4 +33,20 @@ std::string Server::createNewInvitation() {
 
     this->activeInvitations.insert(invitation.getString());
     return invitation.getString();
+}
+
+void Server::loadAllChannels() {
+    std::filesystem::path path(SERVER_PATH + this->id.getString() + "/TextChannels/");
+
+    for (const auto & entry : std::filesystem::directory_iterator(path)) {
+        loadChannel(entry.path().filename().string());
+    }
+}
+
+void Server::loadChannel(std::string id) {
+    std::filesystem::path path(SERVER_PATH + this->id.getString() + "/TextChannels/" + id);
+
+    TextChannel* channel = new TextChannel(id);
+
+    channel
 }

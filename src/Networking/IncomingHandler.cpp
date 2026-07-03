@@ -62,6 +62,8 @@ void IncomingHandler::IncomingLoop(char* buffer) {
         0, (struct sockaddr*)&cliaddr, &clientlen);
 
     int error = WSAGetLastError();
+    std::string ipa = inet_ntoa(cliaddr.sin_addr);
+    int porta = ntohs(cliaddr.sin_port);
 
     if (packetlen < Packet::MIN_PACKET_SIZE) {
         throw std::runtime_error("Invalid Packet");

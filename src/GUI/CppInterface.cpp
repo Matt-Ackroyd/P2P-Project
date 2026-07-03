@@ -39,7 +39,7 @@ void CppInterface::requestServerInfo(QString Qid) {
     PrimaryClient* client = PrimaryClient::getInstance();
     std::string id = Qid.toStdString();
 
-    RelayClient::RegisterUser("68.146.39.61", 7777);
+    RelayClient::RegisterUser("192.168.0.17", 7777);
 
     Server* server = client->getServer(id);
 
@@ -55,7 +55,18 @@ void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
     std::string serverid = qserver->property("uuid").toString().toStdString();
     std::string channelid = qchannel->property("uuid").toString().toStdString();
 
-    RelayClient::UserConnectionInfoReqest(client->socketfd, "68.146.39.61", 7777, *client->getClientID(), client->getClientID());
+
+    ID tempID("58adb05c6196be187e44c75248057edd");
+    RemoteUser *tempuser = PrimaryClient::getInstance()->getUser(tempID.getString());
+    if (tempuser == NULL) {
+        if (!PrimaryClient::getInstance()->registerNewUser(&tempID)) {
+            throw std::runtime_error("User Not Registered");
+        }
+        tempuser = PrimaryClient::getInstance()->getUser(tempID.getString());
+    }
+
+    RelayClient::UserConnectionInfoReqest(client->socketfd, "192.168.0.17", 7777, tempID, client->getClientID());
+    tempuser->connection.sendHandshakeRequest();
 
     Server* server = client->getServer(serverid);
     TextChannel* channel = server->knownChannels[channelid];

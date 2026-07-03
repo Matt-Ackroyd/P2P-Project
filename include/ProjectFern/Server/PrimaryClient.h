@@ -9,6 +9,8 @@
 #include "CppInterface.h"
 #include "ConfigLoader.h"
 
+#define SHARED_SECRET_PATH "/data/sharedSecrets/"
+
 // Forward Declorations
 class IncomingHandler;
 class OutgoingHandler;
@@ -63,6 +65,14 @@ public:
     std::unordered_map<std::string, RemoteUser*> knownConnections;
 
     void addNewServer(Server *server);
+
+    // Loads all servers
+    void loadAllServers();
+    // loads a server from file
+    void loadServer(std::string id);
+    // Makes a brand new server 
+    void createNewServer(std::string id);
+
     Server* getServer(std::string id);
 
     sockaddr_in getPreferedRelay();
