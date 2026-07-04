@@ -27,6 +27,7 @@ qt_add_executable(app_${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/Networking/ML-KEM_Handshake.cpp
     src/ConfigLoader.cpp
     src/Networking/OutgoingHandler.cpp
+    src/DatabaseConnection.cpp
 )
 target_include_directories(app_${PROJECT_NAME}
     PUBLIC include/ProjectFern/DataTypes/

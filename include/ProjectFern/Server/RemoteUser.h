@@ -4,13 +4,17 @@
 #include "UDPConnection.h"
 
 
-class RemoteUser {
-    std::string Username;
+class RemoteUser {  
     ID id;
-
+    
 public:
     RemoteUser(ID* id);
     ~RemoteUser();
-    std::string getID();
+    ID* getID();
     UDPConnection connection;
+
+    std::string Username;
+    boolean requiresRelay;
+    std::string contactAdress;
+    int contactPort;
 };

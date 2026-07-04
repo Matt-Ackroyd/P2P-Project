@@ -18,7 +18,7 @@ int Server::addUser(RemoteUser *user, std::string invitation) {
 
     // Make sure the request has a valid invitation
     if (this->activeInvitations.count(invitation)) {
-        this->knownUsers[user->getID()] = user;
+        this->knownUsers[user->getID()->getString()] = user;
     }
 
     // Broadcast to the network about the new addition TODO

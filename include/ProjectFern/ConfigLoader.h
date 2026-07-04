@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sqlite3.h>
 
+#define DATABASE_NAME "Fern.db"
 
 class ConfigLoader {
 private:
@@ -24,5 +25,5 @@ public:
     static int WriteBinaryFile(std::string path, char* data, int datalen);
     static int ReadBinaryFile(std::string path, char* data, int datalen);
     
-    static void sqlitetest();
+    
 };

@@ -58,6 +58,8 @@ public:
     ID* getClientID();
 
     RemoteUser* getUser(std::string userID);
+    void loadUser(RemoteUser* user);
+
     int registerNewUser(ID* id);
     
     // Clean up

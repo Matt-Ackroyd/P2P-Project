@@ -6,6 +6,7 @@
 #include "PrimaryClient.h"
 #include "RelayClient.h"
 #include "OutgoingHandler.h"
+#include "DatabaseConnection.h"
 
 int main(int argc, char *argv[])
 {
@@ -45,16 +46,24 @@ int main(int argc, char *argv[])
 
     ID larryid;
     
+
+    DatabaseConnection::sqlitetest();
     // PrimaryClient::getInstance()->registerNewUser(&larryid);
     // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid.getString());
-    // RemoteUser larry(&larryid);
+    RemoteUser larry(&larryid);
+    unsigned char aaa[SHAW_256_HASH_SIZE] = {3};
+    larry.connection.setSharedSecret(aaa);
+    DatabaseConnection::addUserToDB(&larry);
+    DatabaseConnection::getUsersFromDB();
+    
+    PrimaryClient* aasda = PrimaryClient::getInstance();
     // larry.connection.setAddr("68.146.39.61", 1024);
     // larry.connection.sendKeepAlive();
     // larry.connection.sendHandshakeRequest();
 
     // client->getOutgoingHandler()->enableConnection(&larry);
 
-    ConfigLoader::sqlitetest();
+    
 
     
 

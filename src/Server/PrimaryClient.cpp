@@ -123,6 +123,17 @@ Server* PrimaryClient::getServer(std::string id) {
     return this->allServers[id];
 }
 
+void PrimaryClient::loadUser(RemoteUser* user) {
+    if (this->knownConnections.contains(user->getID()->getString())) {
+        std::cout << "User " << user->getID()->getString() << " already Exists\n";
+        delete user;
+        return;
+    }
+
+    // add to the list of all known connections
+    this->knownConnections[user->getID()->getString()] = user;
+}
+
 // loads a server from file
 void PrimaryClient::loadServer(std::string id) {
 

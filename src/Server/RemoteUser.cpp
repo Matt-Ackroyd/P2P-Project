@@ -7,6 +7,6 @@ RemoteUser::RemoteUser(ID* id) {
 RemoteUser::~RemoteUser() {
 }
 
-std::string RemoteUser::getID() {
-    return this->id.getString();
+ID* RemoteUser::getID() {
+    return &this->id;
 }
