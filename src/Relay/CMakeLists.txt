@@ -18,9 +18,11 @@ target_include_directories(${PROJECT_NAME}_relay_server
     PUBLIC ${PROJECT_SOURCE_DIR}/include/ProjectFern/Relay/
     PUBLIC ${PROJECT_SOURCE_DIR}/include/ProjectFern/
 )
-find_package(OpenSSL)
+find_package(OpenSSL REQUIRED)
+find_package(SQLite3 REQUIRED)
 target_link_libraries(${PROJECT_NAME}_relay_server 
-    PUBLIC OpenSSL::Crypto
+    PRIVATE OpenSSL::Crypto
+    PRIVATE SQLite3::SQLite3
 )
 if(WIN32)
     target_link_libraries(${PROJECT_NAME}_relay_server PUBLIC wsock32 ws2_32)

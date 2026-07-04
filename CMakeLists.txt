@@ -36,7 +36,6 @@ target_include_directories(app_${PROJECT_NAME}
     PUBLIC include/ProjectFern/Relay/
     PUBLIC include/ProjectFern/
 )
-find_package(OpenSSL)
 
 #add_subdirectory("include/ProjectFern")
 
@@ -63,11 +62,14 @@ set_target_properties(app_${PROJECT_NAME} PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+find_package(OpenSSL REQUIRED)
+find_package(SQLite3 REQUIRED)
 target_link_libraries(app_${PROJECT_NAME}
     PRIVATE Qt6::Quick
     PRIVATE Qt6::Widgets
     #FernLib
-    OpenSSL::Crypto
+    PRIVATE OpenSSL::Crypto
+    PRIVATE SQLite3::SQLite3
 )
 
 if(WIN32)

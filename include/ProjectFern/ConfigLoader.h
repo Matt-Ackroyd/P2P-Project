@@ -5,6 +5,8 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <sqlite3.h>
+
 
 class ConfigLoader {
 private:
@@ -22,4 +24,5 @@ public:
     static int WriteBinaryFile(std::string path, char* data, int datalen);
     static int ReadBinaryFile(std::string path, char* data, int datalen);
     
+    static void sqlitetest();
 };

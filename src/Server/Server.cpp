@@ -43,10 +43,9 @@ void Server::loadAllChannels() {
     }
 }
 
-void Server::loadChannel(std::string id) {
-    std::filesystem::path path(SERVER_PATH + this->id.getString() + "/TextChannels/" + id);
+void Server::loadChannel(std::string idString) {
+    std::filesystem::path path(SERVER_PATH + this->id.getString() + "/TextChannels/" + idString);
 
-    TextChannel* channel = new TextChannel(id);
+    TextChannel* channel = new TextChannel(this, idString);
 
-    channel
 }

@@ -25,23 +25,23 @@ int main(int argc, char *argv[])
 
     CppInterface::instancePtr = engine.singletonInstance<CppInterface*>("project_fern", "CppInterface");
 
-    PrimaryClient* client = PrimaryClient::getInstance();
+    // PrimaryClient* client = PrimaryClient::getInstance();
     
-    Server* test = new Server();
-    client->addNewServer(test);
+    // Server* test = new Server();
+    // client->addNewServer(test);
 
-    TextChannel* t1 = new TextChannel();
-    TextChannel* t2 = new TextChannel();
-    TextChannel* t3 = new TextChannel();
-    test->knownChannels[t1->getID()->getString()] = t1;
-    test->knownChannels[t2->getID()->getString()] = t2;
-    test->knownChannels[t3->getID()->getString()] = t3;
+    // TextChannel* t1 = new TextChannel();
+    // TextChannel* t2 = new TextChannel();
+    // TextChannel* t3 = new TextChannel();
+    // test->knownChannels[t1->getID()->getString()] = t1;
+    // test->knownChannels[t2->getID()->getString()] = t2;
+    // test->knownChannels[t3->getID()->getString()] = t3;
 
-    Server* test2 = new Server();
-    client->addNewServer(test2);
+    // Server* test2 = new Server();
+    // client->addNewServer(test2);
 
-    TextChannel* t4 = new TextChannel();
-    test2->knownChannels[t4->getID()->getString()] = t4;
+    // TextChannel* t4 = new TextChannel();
+    // test2->knownChannels[t4->getID()->getString()] = t4;
 
     ID larryid;
     
@@ -53,6 +53,8 @@ int main(int argc, char *argv[])
     // larry.connection.sendHandshakeRequest();
 
     // client->getOutgoingHandler()->enableConnection(&larry);
+
+    ConfigLoader::sqlitetest();
 
     
 
