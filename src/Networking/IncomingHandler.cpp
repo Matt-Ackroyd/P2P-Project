@@ -73,12 +73,12 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     incomingPacket->deserialize(buffer);
 
     // Get The User who Sent it, if they dont exist then create them
-    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID.getString());
+    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
     if (packetAuthor == NULL) {
-        if (!PrimaryClient::getInstance()->registerNewUser(&incomingPacket->packetAuthorID)) {
+        if (!PrimaryClient::getInstance()->registerNewUser(incomingPacket->packetAuthorID)) {
             throw std::runtime_error("User Not Registered");
         }
-        packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID.getString());
+        packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
         packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
     }
 
@@ -149,7 +149,7 @@ void IncomingHandler::handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr
 
 void IncomingHandler::handlePacket(Packet *incomingPacket) { 
     //Remove the UserID here
-    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID.getString());
+    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
     if (packetAuthor == NULL) {
         return;
     }
@@ -159,7 +159,9 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
     // AAD Gen for the senderID and incoming length of the data
     int datalen = incomingPacket->getDataLength();
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, incomingPacket->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(incomingPacket->packetAuthorID, uuid);
+    memcpy(aad, uuid, UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
 
@@ -188,8 +190,8 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
     
     PrimaryClient* client = PrimaryClient::getInstance();
     //Get Server somehow
-    Server* server = client->getServer(msg->getServerID()->getString());
-    TextChannel* channel = server->knownChannels[msg->getChannelID()->getString()];
+    Server* server = client->getServer(*msg->getServerID());
+    TextChannel* channel = server->knownChannels[*msg->getChannelID()];
 
     channel->messages.push_back(msg);
     CppInterface::instancePtr->loadMessage(msg);
@@ -199,7 +201,7 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
 
 void IncomingHandler::handleConnectionRequest(Packet *packet) {
     PrimaryClient* client = PrimaryClient::getInstance();
-    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID);
     if (userRequesting == NULL) {
         return;
     }
@@ -215,7 +217,7 @@ void IncomingHandler::handleConnectionRequest(Packet *packet) {
 void IncomingHandler::handleConnectionResponse(Packet *packet) {
     PrimaryClient* client = PrimaryClient::getInstance();
 
-    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID);
     if (userRequesting == NULL) {
         return;
     }
@@ -247,14 +249,14 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
 
     PrimaryClient* client = PrimaryClient::getInstance();
 
-    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID);
 
     // if user doesn't exist create one
     if (userRequesting == nullptr) {
-        if (!client->registerNewUser(&packet->packetAuthorID)) {
+        if (!client->registerNewUser(packet->packetAuthorID)) {
             return;
         }
-        userRequesting = client->getUser(packet->packetAuthorID.getString());
+        userRequesting = client->getUser(packet->packetAuthorID);
     }
     
     userRequesting->connection.setAddr(ip, port);
@@ -268,21 +270,21 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
 // If this user hasn't been registerd yet, register them ( May not be nessasry if they go through relay)
 void IncomingHandler::handleKeepAlive(Packet* packet) {
     PrimaryClient* client = PrimaryClient::getInstance();
-    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID);
 
     // if user doesn't exist create one
     if (userRequesting == NULL) {
-        if (!client->registerNewUser(&packet->packetAuthorID)) {
+        if (!client->registerNewUser(packet->packetAuthorID)) {
             return;
         }
-        userRequesting = client->getUser(packet->packetAuthorID.getString());
+        userRequesting = client->getUser(packet->packetAuthorID);
     }
 }
 
 
 void IncomingHandler::handleAck(Packet* packet) {
     PrimaryClient* client = PrimaryClient::getInstance();
-    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID.getString());
+    RemoteUser* userRequesting = client->getUser(packet->packetAuthorID);
 
     userRequesting->connection.receivedAck(packet->getSeqNum());
 }

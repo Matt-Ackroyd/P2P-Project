@@ -1,6 +1,6 @@
 #include "ML-KEM_Handshake.h"
 
-Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* keyPair, ID* yourID, int seqenceNumber) {
+Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* keyPair, std::string* yourID, int seqenceNumber) {
     Packet *packet = new Packet(seqenceNumber, PacketType::HANDSHAKE_REQUEST, yourID);
     unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
 
@@ -17,7 +17,7 @@ Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* 
     return packet;
 }
 
-Packet* ML_KEM_Handshake::onRequest(Packet* packet, ID* yourID, unsigned char* outputedSecret, int seqenceNumber, PacketType type) {
+Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigned char* outputedSecret, int seqenceNumber, PacketType type) {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey;
     size_t secretlen = 0, outlen = 0;

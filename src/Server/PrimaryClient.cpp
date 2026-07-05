@@ -34,12 +34,14 @@ int PrimaryClient::init() {
     if (std::filesystem::exists(uuidPath)) {
         char uuid[UUID_BYTE_SIZE];
         ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
-        this->clientID = ID::fromBytes((unsigned char*)uuid);
+        this->clientID = ID::stringFromBytes((unsigned char*)uuid);
     } else {
-        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)this->clientID.getRaw(), UUID_BYTE_SIZE);
+        char uuid[UUID_BYTE_SIZE];
+        ID::BytesFromString(ID::GenerateNewID(), (unsigned char*)uuid);
+        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
     }
     
-    std::cout << "Your ID: " << this->clientID.getString() << "\n";
+    std::cout << "Your ID: " << this->clientID << "\n";
     
     // Socket Compatibility Stuff
     #ifdef _WIN32
@@ -71,21 +73,21 @@ EVP_PKEY* PrimaryClient::getKeyPair() {
     return this->keyPair;
 }
 
-ID* PrimaryClient::getClientID() {
+std::string* PrimaryClient::getClientID() {
     return &this->clientID;
 }
 
 
-int PrimaryClient::registerNewUser(ID* id) {
+int PrimaryClient::registerNewUser(std::string id) {
     // Guard clause to not add oneself as a new user
-    // if (id->getString() == this->clientID.getString()) {
+    // if (id == this->clientID) {
     //     std::cout << "Cannot Register Yourself\n";
     //     return 0;
     // }
     
     // Guard Clause to not overwrite a user
-    if (this->knownConnections.contains(id->getString())) {
-        std::cout << "User " << id->getString() << " already Exists\n";
+    if (this->knownConnections.contains(id)) {
+        std::cout << "User " << id << " already Exists\n";
         return 0;
     }
 
@@ -94,8 +96,8 @@ int PrimaryClient::registerNewUser(ID* id) {
     // TODO link remote user connection  
 
     // add to the list of all known connections
-    std::cout << "New User Added: " << id->getString() << " \n";
-    this->knownConnections[id->getString()] = test;
+    std::cout << "New User Added: " << id << " \n";
+    this->knownConnections[id] = test;
     return 1;  // return sucsess 
 }
 
@@ -110,7 +112,7 @@ RemoteUser* PrimaryClient::getUser(std::string userID) {
 
 
 void PrimaryClient::addNewServer(Server *server) {
-    this->allServers[server->getID()->getString()] = server;
+    this->allServers[*server->getID()] = server;
     CppInterface::instancePtr->loadServer(server);
 }
 
@@ -124,14 +126,14 @@ Server* PrimaryClient::getServer(std::string id) {
 }
 
 void PrimaryClient::loadUser(RemoteUser* user) {
-    if (this->knownConnections.contains(user->getID()->getString())) {
-        std::cout << "User " << user->getID()->getString() << " already Exists\n";
+    if (this->knownConnections.contains(*user->getID())) {
+        std::cout << "User " << user->getID() << " already Exists\n";
         delete user;
         return;
     }
 
     // add to the list of all known connections
-    this->knownConnections[user->getID()->getString()] = user;
+    this->knownConnections[*user->getID()] = user;
 }
 
 // loads a server from file
@@ -139,7 +141,7 @@ void PrimaryClient::loadServer(std::string id) {
 
     Server* server = new Server(id);
 
-    server->loadAllChannels();
+    //server->loadAllChannels();
     
     addNewServer(server);
 }

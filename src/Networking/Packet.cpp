@@ -1,13 +1,8 @@
 #include "Packet.h"
 
 
-Packet::Packet(int seqNum, PacketType packetType, ID* author) {
-    if (author != NULL) {
-        this->packetAuthorID = *author;
-    } else {
-        unsigned char emptyUUID [UUID_BYTE_SIZE] = {0};
-        this->packetAuthorID = ID::fromBytes(emptyUUID);
-    }
+Packet::Packet(int seqNum, PacketType packetType, std::string* author) {
+    this->packetAuthorID = *author;
     this->seqNum = seqNum;
     this->packetType = packetType;
     //this->data = new unsigned char[10];
@@ -29,7 +24,8 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
         controlVar += (char)2;
     }
 
-    this->data = new char[packetLength];    
+    this->data = new char[packetLength]; 
+    memset(this->data, 0, packetLength);
     
     long unsigned int offset = 0;
 
@@ -42,7 +38,9 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
     offset += sizeof(this->seqNum);
 
     // Sender Id
-    memcpy(this->data+offset, this->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(this->packetAuthorID, uuid);
+    memcpy(this->data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Add Data Length to Output
@@ -84,7 +82,7 @@ int Packet::deserialize(char* serializedData) {
     offset += sizeof(this->seqNum);
 
     // Sender Id
-    this->packetAuthorID = ID::fromBytes((unsigned char*)serializedData+offset);
+    this->packetAuthorID = ID::stringFromBytes((unsigned char*)serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // DataLength

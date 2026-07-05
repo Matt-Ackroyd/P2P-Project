@@ -1,17 +1,20 @@
 #include "DataTypes.h"
 
-int FileIndicator::createNew(ID id, int fileSize, std::string path) {
-     this->fileID = id;
-     this->fileSize = fileSize;
-     this->relativeFileLocation = path;
-     return UUID_BYTE_SIZE + sizeof(int) + sizeof(int) + relativeFileLocation.length();
+int FileIndicator::createNew(std::string id, int fileSize, std::string path) {
+    this->fileID = ID::clean(id);
+    this->fileID = id;
+    this->fileSize = fileSize;
+    this->relativeFileLocation = path;
+    return UUID_BYTE_SIZE + sizeof(int) + sizeof(int) + relativeFileLocation.length();
 }
 
 void FileIndicator::serialize(unsigned char* serializedData) {
+    unsigned char uuid[UUID_BYTE_SIZE];
     int offset = 0;
 
     // ID
-    memcpy(serializedData+offset, this->fileID.getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->fileID, uuid);
+    memcpy(serializedData+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // FileSize
@@ -33,7 +36,7 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     int offset = 0;
 
     // ID
-    newIndicator.fileID = ID::fromBytes(serializedData+offset);
+    newIndicator.fileID = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // File Size

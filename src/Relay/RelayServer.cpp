@@ -1,12 +1,11 @@
 #include "RelayServer.h"
 
-ID relayID;
 
 void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, sockaddr_in* cliaddr, socklen_t clientlen) {
-    ID userID;
-    userID = ID::fromBytes((unsigned char*)packet->getData());
+    std::string userID;
+    userID = ID::stringFromBytes((unsigned char*)packet->getData());
 
-    std::filesystem::path path = UserPath(&userID);
+    std::filesystem::path path = UserPath(userID);
     path.append("connectionInfo.bin");
 
     // Check if given ID is in the database
@@ -61,10 +60,10 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
 
 void RelayServer::EstablishSharedSecret(Packet* handshakePacket, SOCKTYPE socketfd, sockaddr_in cliaddr) {
     unsigned char secret[SHAW_256_HASH_SIZE];
-    Packet* returnPacket = ML_KEM_Handshake::onRequest(handshakePacket, &relayID, secret, -1, PacketType::RELAY_HANDSHAKE_RESPONSE);
+    Packet* returnPacket = ML_KEM_Handshake::onRequest(handshakePacket, NULL, secret, -1, PacketType::RELAY_HANDSHAKE_RESPONSE);
 
     // Store Secret
-    std::filesystem::path path = UserPath(&handshakePacket->packetAuthorID);
+    std::filesystem::path path = UserPath(handshakePacket->packetAuthorID);
     path.append("handshakeHash.bin");
 
     std::ofstream file(path, std::ios::binary);
@@ -81,7 +80,7 @@ void RelayServer::EstablishSharedSecret(Packet* handshakePacket, SOCKTYPE socket
 
 void RelayServer::onRequestRegistration(Packet* incomingPacket, SOCKTYPE socketfd, sockaddr_in cliaddr) {
     // Read Handshake Secret
-    std::filesystem::path path = UserPath(&incomingPacket->packetAuthorID);
+    std::filesystem::path path = UserPath(incomingPacket->packetAuthorID);
     std::filesystem::path handshakeHashPath = path;
     handshakeHashPath.append("handshakeHash.bin");
 
@@ -96,7 +95,9 @@ void RelayServer::onRequestRegistration(Packet* incomingPacket, SOCKTYPE socketf
     // AAD Creation
     int datalen = incomingPacket->getDataLength();
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, incomingPacket->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(incomingPacket->packetAuthorID, uuid);
+    memcpy(aad, uuid, UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
     // Decrypt Here
@@ -180,7 +181,7 @@ void RelayServer::SaltAndHash(unsigned char* input, unsigned char* output) {
     shaw256Hash((unsigned char*)password.c_str(), password.length()+1, (unsigned char*)output);
 }
 
-std::filesystem::path RelayServer::UserPath(ID* userID) {
+std::filesystem::path RelayServer::UserPath(std::string userID) {
     // Create the path to the file
     std::filesystem::path path = std::filesystem::current_path();
     path.append(PATH_TO_USER_FILES);
@@ -191,11 +192,11 @@ std::filesystem::path RelayServer::UserPath(ID* userID) {
     }
 
     // Sanitize the string
-    if (userID->getString().find(".") != std::string::npos) {
+    if (userID.find(".") != std::string::npos) {
         // Abort, there should never be a . symbol in the userID so its likely they are trying to insert this file outside of the correct dir
         throw std::runtime_error("Impossible UserID");
     }
-    path.append(userID->getString() + "/");
+    path.append(userID + "/");
 
     if (!std::filesystem::exists(path)) {
         std::filesystem::create_directories(path);
@@ -270,17 +271,6 @@ int main(int argc, char *argv[]) {
         WSADATA wsaData;
         WSAStartup(MAKEWORD(2,2), &wsaData);
     #endif
-
-    std::filesystem::path uuidPath = std::filesystem::current_path();
-    uuidPath.append("relay/relay_id.bin");
-
-    if (std::filesystem::exists(uuidPath)) {
-        char uuid[UUID_BYTE_SIZE];
-        ConfigLoader::getInstance()->ReadBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
-        relayID = ID::fromBytes((unsigned char*)uuid);
-    } else {
-        ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", (char*)relayID.getRaw(), UUID_BYTE_SIZE);
-    }
 
     
     RelayServer::UdpHandler(port);

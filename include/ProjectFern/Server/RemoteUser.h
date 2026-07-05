@@ -5,12 +5,12 @@
 
 
 class RemoteUser {  
-    ID id;
+    std::string id;
     
 public:
-    RemoteUser(ID* id);
+    RemoteUser(std::string id);
     ~RemoteUser();
-    ID* getID();
+    std::string* getID();
     UDPConnection connection;
 
     std::string Username;

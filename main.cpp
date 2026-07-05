@@ -34,23 +34,23 @@ int main(int argc, char *argv[])
     // TextChannel* t1 = new TextChannel();
     // TextChannel* t2 = new TextChannel();
     // TextChannel* t3 = new TextChannel();
-    // test->knownChannels[t1->getID()->getString()] = t1;
-    // test->knownChannels[t2->getID()->getString()] = t2;
-    // test->knownChannels[t3->getID()->getString()] = t3;
+    // test->knownChannels[t1->getID()] = t1;
+    // test->knownChannels[t2->getID()] = t2;
+    // test->knownChannels[t3->getID()] = t3;
 
     // Server* test2 = new Server();
     // client->addNewServer(test2);
 
     // TextChannel* t4 = new TextChannel();
-    // test2->knownChannels[t4->getID()->getString()] = t4;
+    // test2->knownChannels[t4->getID()] = t4;
 
-    ID larryid;
+    std::string larryid;
     
 
     DatabaseConnection::sqlitetest();
     // PrimaryClient::getInstance()->registerNewUser(&larryid);
-    // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid.getString());
-    RemoteUser larry(&larryid);
+    // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid);
+    RemoteUser larry(larryid);
     unsigned char aaa[SHAW_256_HASH_SIZE] = {3};
     larry.connection.setSharedSecret(aaa);
     DatabaseConnection::addUserToDB(&larry);

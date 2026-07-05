@@ -45,7 +45,9 @@ void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, packetToSend->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(packetToSend->packetAuthorID, uuid);
+    memcpy(aad, uuid, UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
 

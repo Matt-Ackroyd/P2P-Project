@@ -20,7 +20,7 @@ void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qcha
     TextChannel* channel = server->knownChannels[channelid];
 
     MessageContainer* message = new MessageContainer();
-    int len = message->createNew(server->getID(), channel->getID(), client->getClientID(), text);
+    int len = message->createNew(*server->getID(), *channel->getID(), *client->getClientID(), text);
 
     channel->messages.emplace_back(message);
     loadMessage(message);
@@ -56,13 +56,13 @@ void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
     std::string channelid = qchannel->property("uuid").toString().toStdString();
 
 
-    ID tempID("58adb05c6196be187e44c75248057edd");
-    RemoteUser *tempuser = PrimaryClient::getInstance()->getUser(tempID.getString());
+    std::string tempID = "58adb05c6196be187e44c75248057edd";
+    RemoteUser *tempuser = PrimaryClient::getInstance()->getUser(tempID);
     if (tempuser == NULL) {
-        if (!PrimaryClient::getInstance()->registerNewUser(&tempID)) {
+        if (!PrimaryClient::getInstance()->registerNewUser(tempID)) {
             throw std::runtime_error("User Not Registered");
         }
-        tempuser = PrimaryClient::getInstance()->getUser(tempID.getString());
+        tempuser = PrimaryClient::getInstance()->getUser(tempID);
     }
 
     RelayClient::UserConnectionInfoReqest(client->socketfd, "192.168.0.17", 7777, tempID, client->getClientID());
@@ -80,21 +80,21 @@ void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
 
 // C++ side interface to add a server to the GUI
 void CppInterface::loadServer(Server* server) {
-    QString id = QString::fromStdString(server->getID()->getString());
+    QString id = QString::fromStdString(*server->getID());
     
     emit serverLoad(id);
 }
 
 // C++ Side Interface to load a channel into the current server on the GUI
 void CppInterface::loadChannel(TextChannel* channel) {
-    QString id = QString::fromStdString(channel->getID()->getString());
+    QString id = QString::fromStdString(*channel->getID());
     
     emit channelLoad(id);
 }
 
 // C++ side interface to load a message into the current channel on the GUI
 void CppInterface::loadMessage(MessageContainer* message) {
-    QString id = QString::fromStdString(message->getMessageID()->getString());
+    QString id = QString::fromStdString(*message->getMessageID());
     QString message_text = QString::fromStdString(message->getMessage());
 
     emit messageLoad(id, message_text);

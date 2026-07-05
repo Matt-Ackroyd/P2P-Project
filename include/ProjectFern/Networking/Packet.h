@@ -38,9 +38,9 @@ private:
     std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> lastSent;
 
 public:       
-    ID packetAuthorID;
+    std::string packetAuthorID;
 
-    Packet(int seqNum, PacketType packetType, ID* author);
+    Packet(int seqNum, PacketType packetType, std::string* author);
     ~Packet();
 
     int serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  

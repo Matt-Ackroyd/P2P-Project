@@ -1,17 +1,21 @@
 #include "DataTypes.h"
 
  // Returns the required length of the buffer to hold this structure
-int MessageContainer::createNew(ID* server, ID* channel, ID* author, std::string message) {
-    this->serverID = *server;
-    this->channelID = *channel;
-    this->author = *author;
+int MessageContainer::createNew(std::string server, std::string channel, std::string author, std::string message, std::string messageid) {
+    this->serverID = server;
+    this->channelID = channel;
+    this->author = author;
     this->message = message;
     // +1 for null terminator
     this->messageLength = message.length();
+
+    this->messageID = ID::clean(messageid);
+    
     return sizeof(DataTypes) + UUID_BYTE_SIZE*4 + sizeof(int) + this->messageLength;
 }
 
 void MessageContainer::serialize(unsigned char* serializedData) {
+    unsigned char uuid[UUID_BYTE_SIZE];
     int offset = 0;
 
     // DataType
@@ -20,19 +24,23 @@ void MessageContainer::serialize(unsigned char* serializedData) {
     offset += sizeof(DataTypes);
 
     // MessageID
-    memcpy(serializedData+offset, this->messageID.getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->messageID, uuid);
+    memcpy(serializedData+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // ServerID
-    memcpy(serializedData+offset, this->serverID.getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->serverID, uuid);
+    memcpy(serializedData+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // ChannelID
-    memcpy(serializedData+offset, this->channelID.getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->channelID, uuid);
+    memcpy(serializedData+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Author
-    memcpy(serializedData+offset, this->author.getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->author, uuid);
+    memcpy(serializedData+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Message Length
@@ -51,19 +59,19 @@ MessageContainer* MessageContainer::deserialize(unsigned char* data) {
     int offset = sizeof(DataTypes);
 
     // MessageID
-    newMessage->messageID = ID::fromBytes(data+offset);
+    newMessage->messageID = ID::stringFromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // ServerID
-    newMessage->serverID = ID::fromBytes(data+offset);
+    newMessage->serverID = ID::stringFromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // ChannelID
-    newMessage->channelID = ID::fromBytes(data+offset);
+    newMessage->channelID = ID::stringFromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // Author
-    newMessage->author = ID::fromBytes(data+offset);
+    newMessage->author = ID::stringFromBytes(data+offset);
     offset += UUID_BYTE_SIZE;
 
     // Message Length
@@ -77,18 +85,17 @@ MessageContainer* MessageContainer::deserialize(unsigned char* data) {
     return newMessage;
 }
 
-ID* MessageContainer::getMessageID() {
+std::string* MessageContainer::getMessageID() {
     return &this->messageID;
 }
 
-ID* MessageContainer::getServerID() {
+std::string* MessageContainer::getServerID() {
     return &this->serverID;
 }
-
-ID* MessageContainer::getChannelID() {
+std::string* MessageContainer::getChannelID() {
     return &this->channelID;
 }
-ID* MessageContainer::getAuthor() {
+std::string* MessageContainer::getAuthor() {
     return &this->author;
 }
 std::string MessageContainer::getMessage() {

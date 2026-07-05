@@ -1,7 +1,7 @@
 #include "Server.h"
 
 Server::Server(std::string id) {
-    this->id = ID(id);
+    this->id = ID::clean(id);
 }
 Server::~Server() {
     for (auto user : knownUsers) {
@@ -9,7 +9,7 @@ Server::~Server() {
     }
 }
 
-ID* Server::getID() {
+std::string* Server::getID() {
     return &id;
 }
 
@@ -18,7 +18,7 @@ int Server::addUser(RemoteUser *user, std::string invitation) {
 
     // Make sure the request has a valid invitation
     if (this->activeInvitations.count(invitation)) {
-        this->knownUsers[user->getID()->getString()] = user;
+        this->knownUsers[*user->getID()] = user;
     }
 
     // Broadcast to the network about the new addition TODO
@@ -29,23 +29,14 @@ int Server::addUser(RemoteUser *user, std::string invitation) {
 
 std::string Server::createNewInvitation() {
     // TODO change to a more in depth method
-    ID invitation;
+    std::string invitation = ID::GenerateNewID();
 
-    this->activeInvitations.insert(invitation.getString());
-    return invitation.getString();
+    this->activeInvitations.insert(invitation);
+    return invitation;
 }
 
-void Server::loadAllChannels() {
-    std::filesystem::path path(SERVER_PATH + this->id.getString() + "/TextChannels/");
 
-    for (const auto & entry : std::filesystem::directory_iterator(path)) {
-        loadChannel(entry.path().filename().string());
-    }
-}
 
-void Server::loadChannel(std::string idString) {
-    std::filesystem::path path(SERVER_PATH + this->id.getString() + "/TextChannels/" + idString);
-
-    TextChannel* channel = new TextChannel(this, idString);
-
+void Server::loadChannel(TextChannel* channel) {
+    this->knownChannels[*channel->getID()] = channel;
 }

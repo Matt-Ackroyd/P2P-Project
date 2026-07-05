@@ -1,12 +1,12 @@
 #include "RemoteUser.h"
 
-RemoteUser::RemoteUser(ID* id) {
-    this->id = ID::fromBytes(id->getRaw());
+RemoteUser::RemoteUser(std::string id) {
+    this->id = id;
 }
 
 RemoteUser::~RemoteUser() {
 }
 
-ID* RemoteUser::getID() {
+std::string* RemoteUser::getID() {
     return &this->id;
 }

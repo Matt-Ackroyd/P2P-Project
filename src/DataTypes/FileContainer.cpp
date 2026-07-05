@@ -1,8 +1,8 @@
 #include "DataTypes.h"
 
 
-int FileContainer::createNew(ID id, int byteLocation, unsigned char* data, int datalenth) {
-    this->fileID = id;
+int FileContainer::createNew(std::string id, int byteLocation, unsigned char* data, int datalenth) {
+    this->fileID = ID::clean(id);
     this->byteLocation = byteLocation;
     this->data = data;
     this->datalen = datalen;
@@ -14,7 +14,9 @@ void FileContainer::serialize(unsigned char* serializedData) {
     int offset = 0;
 
     // File ID
-    memcpy(serializedData+offset, this->fileID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(this->fileID, uuid);
+    memcpy(serializedData+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Byte Location
@@ -36,7 +38,7 @@ FileContainer FileContainer::deserialize(unsigned char* serializedata) {
     int offset = 0;
 
     // ID
-    newFile.fileID = ID::fromBytes(serializedata+offset);
+    newFile.fileID = ID::stringFromBytes(serializedata+offset);
     offset += UUID_BYTE_SIZE;
 
     // ByteLocation

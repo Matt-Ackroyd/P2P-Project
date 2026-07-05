@@ -16,7 +16,7 @@
 class RelayServer {
     // Helper functions
     static void SaltAndHash(unsigned char* input, unsigned char* output);
-    static std::filesystem::path UserPath(ID* userID);
+    static std::filesystem::path UserPath(std::string userID);
 
     // returns a users connection info
     // Does not require an Encrypted Connection

@@ -24,7 +24,9 @@ void RelayClient::SendRelayRegisterRequest(std::string relayAddr, int relayPort,
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, request.packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(request.packetAuthorID, uuid);
+    memcpy(aad, uuid, UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
 
@@ -82,7 +84,7 @@ void RelayClient::onRelayHandshakeResponse(Packet* incomingPacket, sockaddr_in a
 
 // returns a given users connection info
 // Does not require an Encrypted Connection
-void RelayClient::UserConnectionInfoReqest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, ID requestedUserID, ID* yourID) {
+void RelayClient::UserConnectionInfoReqest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, std::string requestedUserID, std::string* yourID) {
     // specifying address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
@@ -90,6 +92,8 @@ void RelayClient::UserConnectionInfoReqest(SOCKTYPE socketfd, std::string relayA
     serverAddress.sin_addr.s_addr = inet_addr(relayAddr.c_str());
 
     Packet packet(-1, PacketType::RELAY_USER_INFO, yourID);
-    int packetlen = packet.serialize((char*)requestedUserID.getRaw(), UUID_BYTE_SIZE, NULL, NULL);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(requestedUserID, uuid);
+    int packetlen = packet.serialize((char*)uuid, UUID_BYTE_SIZE, NULL, NULL);
     sendto(socketfd, packet.getData(), packetlen, 0, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 }

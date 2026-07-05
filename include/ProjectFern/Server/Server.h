@@ -12,7 +12,7 @@
 #define SERVER_PATH "/data/servers/"
 
 class Server {
-    ID id;
+    std::string id;
     std::unordered_map<std::string, RemoteUser*> knownUsers;
     std::unordered_set<std::string> onlineUsers;
 
@@ -28,7 +28,7 @@ class Server {
 public: 
     Server(std::string id = "NULL");
     ~Server();
-    ID* getID();
+    std::string* getID();
     int addUser(RemoteUser *user, std::string invitation);
     int removeUser(RemoteUser *user);
     
@@ -36,9 +36,7 @@ public:
 
     int createNewChannel();
     //loads a channel from file
-    void loadChannel(std::string id);
-    //loads ALL channel from file
-    void loadAllChannels();
+    void loadChannel(TextChannel* );
 
     // All known TextChannels within this server 
     std::unordered_map<std::string, TextChannel*> knownChannels;
