@@ -2,21 +2,24 @@
 #include "PrimaryClient.h"
 
 class DatabaseConnection {
+private:
+    static std::mutex mtx;
+    static sqlite3* db;
 public:
-    static void sqlitetest();
+    static void startup();
     static void addUserToDB(RemoteUser* user);
     static void getUsersFromDB();
 
-    void addServerToDB(Server *server);
-    void getServersFromDB();
+    static void addServerToDB(Server *server);
+    static void getServersFromDB();
 
-    void addTextChannelToDB(Server *server, TextChannel *channel);
-    void getTextChannelsFromDB(Server *server);
+    static void addTextChannelToDB(Server *server, TextChannel *channel);
+    static void getTextChannelsFromDB(Server *server);
 
-    void addMessageToDB(TextChannel *channel, MessageContainer *message);
-    void getMessagesFromDB(TextChannel *channel, int amount);
+    static void addMessageToDB(TextChannel *channel, MessageContainer *message);
+    static void getMessagesFromDB(TextChannel *channel, int amount);
 
-    void addUserToServerDB(RemoteUser * user, Server * server);
+    static void addUserToServerDB(RemoteUser * user, Server * server);
 
     DatabaseConnection() = delete;
 };

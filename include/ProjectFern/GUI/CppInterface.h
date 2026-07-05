@@ -27,11 +27,13 @@ public:
     Q_INVOKABLE void sendMessage(QString message, QObject* server, QObject* channel);
     Q_INVOKABLE void requestServerInfo(QString Qid);
     Q_INVOKABLE void requestChannelInfo(QObject* server, QObject* channel);
+    Q_INVOKABLE void createNewServer();
+    Q_INVOKABLE void createNewTextChannel(QString serverid);
 
 
     void loadServer(Server* server);
     void loadChannel(TextChannel* channel);
-    void loadMessage(MessageContainer* message);
+    void loadGUIMessage(MessageContainer* message);
 signals:
     void serverLoad(QString signal_param);
     void channelLoad(QString channel_id);

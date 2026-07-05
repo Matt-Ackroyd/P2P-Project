@@ -22,15 +22,9 @@ void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qcha
     MessageContainer* message = new MessageContainer();
     int len = message->createNew(*server->getID(), *channel->getID(), *client->getClientID(), text);
 
-    channel->messages.emplace_back(message);
-    loadMessage(message);
+    loadGUIMessage(message);
 
-    // REPLACE WITH CHANNEL SPECIFIC RECIPIENTS
-    for (auto& [key, recipient]: client->knownConnections) {
-        unsigned char data[len];
-        message->serialize(data);
-        recipient->connection.sendEncrypted(data, len);
-    }
+    channel->sendMessage(message, len);
 
 }
 
@@ -72,10 +66,18 @@ void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
     TextChannel* channel = server->knownChannels[channelid];
 
     for (auto& message: channel->messages) { 
-        loadMessage(message);
+        loadGUIMessage(message);
     }
 }
 
+// Q_INVOKABLE 
+void CppInterface::createNewServer() {
+    PrimaryClient::getInstance()->createNewServer();
+}
+// Q_INVOKABLE 
+void CppInterface::createNewTextChannel(QString serverid) {
+    PrimaryClient::getInstance()->getServer(serverid.toStdString())->createNewTextChannel();
+}
 
 
 // C++ side interface to add a server to the GUI
@@ -93,7 +95,7 @@ void CppInterface::loadChannel(TextChannel* channel) {
 }
 
 // C++ side interface to load a message into the current channel on the GUI
-void CppInterface::loadMessage(MessageContainer* message) {
+void CppInterface::loadGUIMessage(MessageContainer* message) {
     QString id = QString::fromStdString(*message->getMessageID());
     QString message_text = QString::fromStdString(message->getMessage());
 

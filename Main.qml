@@ -5,8 +5,8 @@ import QtQuick.Layouts
 
 Window {
     id: mainWindow
-    width: 640
-    height: 480
+    width: 740
+    height: 580
     visible: true
     modality: Qt.ApplicationModal
     title: qsTr("Project Fern")
@@ -14,16 +14,16 @@ Window {
     Frame {
         id: serverList
         x: 0
-        y: 0
+        y: 35
         width: 54
-        height: 480
+        height: 445
 
         Rectangle {
             id: rectangle
             x: 0
             y: 0
             width: 52
-            height: 480
+            height: 545
             color: "#e0c8c8"
         }
 
@@ -32,7 +32,7 @@ Window {
             x: 0
             y: 5
             width: 52
-            height: 475
+            height: 540
             model: ListModel {
             }
             delegate: Item {
@@ -108,11 +108,55 @@ Window {
     Loader {
         id: serverLoader
         x: 52
-        y: 0
-        width: 588
-        height: 480
+        y: 35
+        width: 688
+        height: 545
         source: "ServerStructure.qml"
         active: false
+    }
+
+    ToolBar {
+        id: toolBar
+        x: 0
+        y: 0
+        width: 640
+        height: 21
+
+        ToolSeparator {
+            id: toolSeparator
+            x: 112
+            y: 0
+            width: 13
+            height: 13
+
+            ToolButton {
+                id: toolButton
+                x: -108
+                y: 0
+                width: 115
+                height: 18
+                text: "Create Server"
+
+                Connections {
+                    target: toolButton
+                    function onClicked() { CppInterface.createNewServer() }
+                }
+            }
+
+            ToolButton {
+                id: toolButton1
+                x: 6
+                y: 0
+                width: 103
+                height: 18
+                text: " Create Channel"
+
+                Connections {
+                    target: toolButton1
+                    function onClicked() { CppInterface.createNewTextChannel(serverLoader.item.uuid) }
+                }
+            }
+        }
     }
 }
 

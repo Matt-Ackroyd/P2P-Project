@@ -15,7 +15,7 @@ std::string ID::GenerateNewID() {
     unsigned char rawID[UUID_BYTE_SIZE];
 
     const auto p1 = std::chrono::system_clock::now();
-    auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    uint64_t timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
                    p1.time_since_epoch()).count();
  
     // Copy Timestamp into ID
@@ -31,16 +31,10 @@ uint64_t ID::getTimestamp(std::string id) {
     uint64_t timestamp;
 
     // Converting first 8 Hex bytes to timestamp
-    unsigned char temp_buffer[sizeof(timestamp)];
-    for (int i = 0; i < sizeof(timestamp); i++) {
-        // Grab the substring with the two hex values that represent this byte
-        // i is multiplyed by two beacuse hex is represented by 2 values and our loop is counting up by one
-        // so each incremint of the loop means we move over two in the substring
-        std::string byteStr = id.substr(i*2, 2);
-        unsigned char byte = static_cast<unsigned char>(std::stoul(byteStr, nullptr, 16));
-        temp_buffer[i] = byte;
-    }
-    // Save the timestamp value & return it
+    unsigned char bytes[UUID_BYTE_SIZE];
+    BytesFromString(id, bytes);
+
+    memcpy(&timestamp, bytes, 8);
 
     return timestamp;
 }
@@ -48,7 +42,7 @@ uint64_t ID::getTimestamp(std::string id) {
 
 void ID::BytesFromString(std::string id, unsigned char* buffer) {
     // If the string isn't correct size abort
-    if (id.length() != UUID_BYTE_SIZE) {
+    if (id.empty()) {
         memset(buffer, 0, UUID_BYTE_SIZE);
         return;
     }

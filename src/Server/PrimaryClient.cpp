@@ -2,6 +2,7 @@
 #include "IncomingHandler.h"
 #include "OutgoingHandler.h"
 #include "Server.h"
+#include "DatabaseConnection.h"
 
 PrimaryClient* PrimaryClient::instancePtr = nullptr;
 std::mutex PrimaryClient::mtx;
@@ -111,9 +112,17 @@ RemoteUser* PrimaryClient::getUser(std::string userID) {
 }
 
 
-void PrimaryClient::addNewServer(Server *server) {
+void PrimaryClient::loadServer(Server *server) {
     this->allServers[*server->getID()] = server;
     CppInterface::instancePtr->loadServer(server);
+}
+
+void PrimaryClient::createNewServer(std::string id) {
+    std::string serverid = ID::clean(id);
+    Server* server = new Server(serverid);
+
+    DatabaseConnection::addServerToDB(server);
+    loadServer(server);
 }
 
 Server* PrimaryClient::getServer(std::string id) {
@@ -140,83 +149,13 @@ void PrimaryClient::loadUser(RemoteUser* user) {
 void PrimaryClient::loadServer(std::string id) {
 
     Server* server = new Server(id);
-
-    //server->loadAllChannels();
     
-    addNewServer(server);
+    loadServer(server);
 }
 //loads all servers
 void PrimaryClient::loadAllServers() {
-    std::filesystem::path path(SERVER_PATH);
-
-    for (const auto & entry : std::filesystem::directory_iterator(path))
-        loadServer(entry.path().filename().string());
+    DatabaseConnection::getServersFromDB();
 }
-
-// Makes a brand new server 
-void PrimaryClient::createNewServer(std::string id) {
-    std::filesystem::path path(SERVER_PATH + id + "/");
-    std::filesystem::path settingsPath(path.string() + "serverSettings.txt");
-    std::filesystem::path rolesPath(path.string() + "serverRoles.txt");
-    std::filesystem::path invitationsPath(path.string() + "serverInvitations.txt");
-    std::filesystem::path membersPath(path.string() + "memberList.txt");
-    std::filesystem::path voicePath(path.string() + "voiceChannels.txt");
-    std::filesystem::path channelPath(path.string() + "TextChannels/");
-
-    // Attempt to create the path to this server if it doesn't exist yet
-    if (!std::filesystem::exists(path)) {
-        if (!std::filesystem::create_directories(path)) {
-            return;
-        }
-    }
-    
-    // Attempt to make the Channel folder
-    if (!std::filesystem::exists(channelPath)) {
-        if (!std::filesystem::create_directories(channelPath)) {
-            return;
-        }
-    }
-
-    // Base Text For each File;
-    std::string memberString = "#(ID) RelayIP RelayPort RequiresRelay(1/0) Roles\n";
-    std::string settingsString = "#IDK YET\n";
-    std::string roleString = "#Role-Name perms . . .\n";
-    std::string voiceString = "#UUID channelsettings\n";
-
-
-    // Make the Rest of the files with their default text
-    std::ofstream memberFile(membersPath);
-    if (!memberFile.is_open()) {
-        return;
-    }
-    memberFile << memberString;
-    memberFile.close();
-
-    // Make the Rest of the files with their default text
-    std::ofstream settingsFile(settingsPath);
-    if (!settingsFile.is_open()) {
-        return;
-    }
-    settingsFile << settingsString;
-    settingsFile.close();
-
-    // Make the Rest of the files with their default text
-    std::ofstream roleFile(rolesPath);
-    if (!roleFile.is_open()) {
-        return;
-    }
-    roleFile << roleString;
-    roleFile.close();
-    
-    // Make the Rest of the files with their default text
-    std::ofstream voiceFile(voicePath);
-    if (!voiceFile.is_open()) {
-        return;
-    }
-    voiceFile << voiceString;
-    voiceFile.close();
-}
-
 
 
 sockaddr_in PrimaryClient::getPreferedRelay() {

@@ -14,7 +14,7 @@
 class Server {
     std::string id;
     std::unordered_map<std::string, RemoteUser*> knownUsers;
-    std::unordered_set<std::string> onlineUsers;
+    
 
     // All Active invitations to this server 
     std::unordered_set<std::string> activeInvitations;
@@ -26,7 +26,7 @@ class Server {
     // My Role?
 
 public: 
-    Server(std::string id = "NULL");
+    Server(std::string id = "");
     ~Server();
     std::string* getID();
     int addUser(RemoteUser *user, std::string invitation);
@@ -34,10 +34,12 @@ public:
     
     std::string createNewInvitation();
 
-    int createNewChannel();
-    //loads a channel from file
-    void loadChannel(TextChannel* );
+    void createNewTextChannel(std::string id = "");
+    
+    void loadChannel(TextChannel* channel);
 
     // All known TextChannels within this server 
     std::unordered_map<std::string, TextChannel*> knownChannels;
+    std::unordered_set<std::string> onlineUsers;
+    
 };

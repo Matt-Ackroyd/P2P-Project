@@ -1,8 +1,11 @@
 #include "Server.h"
+#include "DatabaseConnection.h"
 
 Server::Server(std::string id) {
     this->id = ID::clean(id);
+    DatabaseConnection::getTextChannelsFromDB(this);
 }
+
 Server::~Server() {
     for (auto user : knownUsers) {
         delete user.second;
@@ -35,7 +38,13 @@ std::string Server::createNewInvitation() {
     return invitation;
 }
 
+void Server::createNewTextChannel(std::string id) {
+    TextChannel* channel = new TextChannel(this, ID::clean(id));
+    DatabaseConnection::addTextChannelToDB(this, channel);
 
+    loadChannel(channel);
+    CppInterface::instancePtr->loadChannel(channel);
+}
 
 void Server::loadChannel(TextChannel* channel) {
     this->knownChannels[*channel->getID()] = channel;

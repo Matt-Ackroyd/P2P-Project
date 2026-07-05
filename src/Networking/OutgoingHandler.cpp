@@ -40,12 +40,10 @@ void OutgoingHandler::OutgoingLoop() {
 }
 
 void OutgoingHandler::enableConnection(RemoteUser* target) {
-    mtx.lock();
+    std::lock_guard<std::mutex> lock(mtx);
     this->keepAliveTargets.emplace(target);
-    mtx.unlock();
 }
 void OutgoingHandler::disableConnection(RemoteUser* target) {
-    mtx.lock();
+    std::lock_guard<std::mutex> lock(mtx);
     this->keepAliveTargets.erase(target);
-    mtx.unlock();
 }

@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     // PrimaryClient* client = PrimaryClient::getInstance();
     
     // Server* test = new Server();
-    // client->addNewServer(test);
+    // client->loadServer(test);
 
     // TextChannel* t1 = new TextChannel();
     // TextChannel* t2 = new TextChannel();
@@ -39,15 +39,15 @@ int main(int argc, char *argv[])
     // test->knownChannels[t3->getID()] = t3;
 
     // Server* test2 = new Server();
-    // client->addNewServer(test2);
+    // client->loadServer(test2);
 
     // TextChannel* t4 = new TextChannel();
     // test2->knownChannels[t4->getID()] = t4;
 
-    std::string larryid;
+    std::string larryid = ID::GenerateNewID();
     
 
-    DatabaseConnection::sqlitetest();
+    DatabaseConnection::startup();
     // PrimaryClient::getInstance()->registerNewUser(&larryid);
     // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid);
     RemoteUser larry(larryid);
@@ -62,6 +62,9 @@ int main(int argc, char *argv[])
     // larry.connection.sendHandshakeRequest();
 
     // client->getOutgoingHandler()->enableConnection(&larry);
+
+    DatabaseConnection::getServersFromDB();
+    //aasda->createNewServer();
 
     
 

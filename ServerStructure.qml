@@ -56,6 +56,7 @@ Item {
                                 if (channelLoader.active === false) {
                                     channelLoader.active = true
                                     channelLoader.item.uuid = channelSelection.channelID
+                                    CppInterface.requestChannelInfo(server, channelLoader.item)
                                 }
                                 else {
                                     // Check if the server selected is diffrent from the current server if so change it

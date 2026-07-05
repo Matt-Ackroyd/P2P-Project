@@ -194,7 +194,7 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
     TextChannel* channel = server->knownChannels[*msg->getChannelID()];
 
     channel->messages.push_back(msg);
-    CppInterface::instancePtr->loadMessage(msg);
+    CppInterface::instancePtr->loadGUIMessage(msg);
     
 }
 

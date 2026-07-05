@@ -59,3 +59,9 @@ public:
     void serialize(unsigned char* serializedData);
     static FileIndicator deserialize(unsigned char* serializedData);
 };
+
+
+
+class ServerContainer {
+    
+};

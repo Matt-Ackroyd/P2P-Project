@@ -4,6 +4,7 @@ import QtQuick.Controls 2.15
 Item {
     id: channel
     property string uuid: "This is NOT string"
+    width: 643
     
     Frame {
         id: channelHistory
@@ -56,6 +57,7 @@ Item {
         width: 304
         height: 35
         
+
         Rectangle {
             id: rectangle3
             x: 0
@@ -65,6 +67,7 @@ Item {
             color: "#f7cfcf"
         }
         
+
         TextInput {
             id: textInput
             x: 0
@@ -73,12 +76,12 @@ Item {
             height: 35
             text: "Test"
             font.pixelSize: 12
-            
+
             Connections {
                 target: textInput
                 function onAccepted() { textInput.clear() }
             }
-            
+
             Connections {
                 target: textInput
                 function onAccepted() {
@@ -86,6 +89,5 @@ Item {
                 }
             }
         }
-        
     }
 }
