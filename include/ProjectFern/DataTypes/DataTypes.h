@@ -1,14 +1,55 @@
 #pragma once
 #include "ID.h"
 
+class Server;
+class TextChannel;
+class RemoteUser;
+
 enum DataTypes {
+    EMPTY,
     MESSAGETYPE,
     FILETYPE,
-    FILEINDICATOR
+    FILEINDICATOR,
+    NEW_SERVER,
+    NEW_TEXT_CHANNEL,
+    JOIN_REQUEST,
+    ADD_USER_TO_SERVER,
+    MODIFY_USER_PROFILE
 };
 
+class Container {
+protected: 
+    DataTypes datatype;
+    int offset = sizeof(DataTypes);
+    int datalen;
+    unsigned char* data;
+
+public:
+    Container(DataTypes datatype, int datalen) {
+        this->datatype = datatype;
+
+        if (datatype != DataTypes::EMPTY) {
+            this->datalen = sizeof(DataTypes) + datalen;
+            this->data = new unsigned char[datalen];
+            // DataType
+            memcpy(data, &datatype, sizeof(DataTypes));
+        }
+    }
+    ~Container() { 
+        if (datatype != DataTypes::EMPTY) {
+            delete[] data;
+        }
+    }
+
+    unsigned char* getData() {return data;}
+    int getDataLen() {return datalen;}
+};
+
+
+
+
 // class to contain infomation about a message as well as the message itself
-class MessageContainer {
+class MessageContainer : public Container{
 private:
     std::string messageID;
     std::string serverID;
@@ -16,12 +57,10 @@ private:
     std::string author;
     std::string message;
     int messageLength;
-    
+    void serialize();
     
 public:
-    int createNew(std::string server, std::string channel, std::string author, std::string message, std::string messageID = ""); // Returns the required length of the buffer to hold this structure
-
-    void serialize(unsigned char* serializedData);
+    MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageID = ""); 
     static MessageContainer* deserialize(unsigned char* data);
 
     std::string* getMessageID();
@@ -61,7 +100,62 @@ public:
 };
 
 
+class JoinRequest : public Container{
+    std::string invitation;
+    void serialize();
 
-class ServerContainer {
+public:
+    JoinRequest(DataTypes datatype, std::string invitation);
+    static std::string deserialize(unsigned char* serializedData);
+};
+
+
+class ServerContainer : public Container {
+    std::string serverID;
+    void serialize();
+    // MoreToCome
+    ServerContainer(std::string id);
+public:
+    ServerContainer(DataTypes datatype, Server* server);
+    static ServerContainer deserialize(unsigned char* serializedData);
+
+    std::string getServerID();
+};
+
+
+class TextChannelContainer : public Container {
+    std::string serverID;
+    std::string channelID;
+    // MoreToCome
+    TextChannelContainer(std::string serverid, std::string channelid);
+    void serialize();
+public:
+
+    TextChannelContainer(DataTypes datatype, TextChannel* channel);
     
+    static TextChannelContainer deserialize(unsigned char* serializedData);
+
+    std::string getServerID();
+    std::string getChannelID();
+};
+
+
+class AddUserToServerRequest : public Container{
+    std::string userID;
+    std::string serverID;
+    int contactAdress;
+    short int contactPort;
+    bool requiresRelay;
+
+    void serialize();
+    AddUserToServerRequest(std::string userID, std::string serverID, int contactAdress, short int contactPort, bool requiresRelay);
+public:
+    AddUserToServerRequest(DataTypes datatype, RemoteUser* user, Server* server);
+    static AddUserToServerRequest deserialize(unsigned char* serializedData);
+
+    std::string getUserID();
+    std::string getServerID();
+    int getContactAdress();
+    short int getContactPort();
+    bool getRelayRequired();
 };

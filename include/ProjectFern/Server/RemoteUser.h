@@ -14,7 +14,7 @@ public:
     UDPConnection connection;
 
     std::string Username;
-    boolean requiresRelay;
-    std::string contactAdress;
-    int contactPort;
+    bool requiresRelay;
+    int contactAdress;
+    short int contactPort;
 };

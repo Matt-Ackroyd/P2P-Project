@@ -12,6 +12,9 @@
 #include "Packet.h"
 #include "Encryption.h"
 
+class Server;
+class TextChannel;
+class RemoteUser;
 
 class UDPConnection {
 private:
@@ -52,4 +55,8 @@ public:
 
     std::deque<Packet*>* getOutgoingBuffer();
     std::deque<Packet*>* getIncomingBuffer();
+    void sendServer(Server *server);
+    void sendTextChannel(TextChannel *channel);
+    void sendJoinRequest(std::string invitationCode);
+    void sendAddUserToServerRequest(RemoteUser *user, Server *server);
 };

@@ -19,12 +19,10 @@ void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qcha
     Server* server = client->getServer(serverid);
     TextChannel* channel = server->knownChannels[channelid];
 
-    MessageContainer* message = new MessageContainer();
-    int len = message->createNew(*server->getID(), *channel->getID(), *client->getClientID(), text);
+    MessageContainer* message = new MessageContainer(DataTypes::MESSAGETYPE, *server->getID(), *channel->getID(), *client->getClientID(), text);
 
     loadGUIMessage(message);
-
-    channel->sendMessage(message, len);
+    channel->sendMessage(message);
 
 }
 

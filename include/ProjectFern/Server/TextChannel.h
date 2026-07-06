@@ -15,7 +15,7 @@ public:
     std::string* getID();
 
     void loadMessage(MessageContainer* message);
-    void sendMessage(MessageContainer* message, int len);
+    void sendMessage(MessageContainer* message);
     
     Server* getServer();
 };

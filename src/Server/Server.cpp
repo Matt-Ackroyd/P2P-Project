@@ -4,6 +4,7 @@
 Server::Server(std::string id) {
     this->id = ID::clean(id);
     DatabaseConnection::getTextChannelsFromDB(this);
+    DatabaseConnection::getUsersInServerFromDB(this);
 }
 
 Server::~Server() {
@@ -16,25 +17,29 @@ std::string* Server::getID() {
     return &id;
 }
 
-int Server::addUser(RemoteUser *user, std::string invitation) {
-    // Client Side Check for perms TODO
-
-    // Make sure the request has a valid invitation
-    if (this->activeInvitations.count(invitation)) {
-        this->knownUsers[*user->getID()] = user;
+void Server::addNewUser(RemoteUser *user) {
+    // If the User is already in this server abort
+    if (this->knownUsers.contains(*user->getID())) {
+        return;
     }
 
-    // Broadcast to the network about the new addition TODO
-
-    return 1;
+    DatabaseConnection::addUserToServerDB(user, this);
+    loadUser(user);
 }
 
+void Server::loadUser(RemoteUser *user) {
+    if (user == nullptr) {
+        return;
+    }
+
+    this->knownUsers[*user->getID()] = user;
+}
 
 std::string Server::createNewInvitation() {
     // TODO change to a more in depth method
     std::string invitation = ID::GenerateNewID();
 
-    this->activeInvitations.insert(invitation);
+    DatabaseConnection::addServerInvitationToDB(invitation, this);
     return invitation;
 }
 

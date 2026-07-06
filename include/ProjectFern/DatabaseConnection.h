@@ -21,5 +21,11 @@ public:
 
     static void addUserToServerDB(RemoteUser * user, Server * server);
 
+    static void getUsersInServerFromDB(Server *server);
+
+    static void addServerInvitationToDB(std::string invitation, Server *server);
+
+    static std::string getInvitationsServerFromDB(std::string invitationCode);
+
     DatabaseConnection() = delete;
 };

@@ -16,16 +16,14 @@ void TextChannel::loadMessage(MessageContainer* message) {
     this->messages.push_back(message);
 }
 
-void TextChannel::sendMessage(MessageContainer* message, int len) {
+void TextChannel::sendMessage(MessageContainer* message) {
     this->messages.push_back(message);
     DatabaseConnection::addMessageToDB(this, message);
 
     // REPLACE WITH CHANNEL SPECIFIC RECIPIENTS CHECK ROLE PERMS WHEN THATS ADDED
     for (auto& recipientID: this->getServer()->onlineUsers) {
         RemoteUser* recipient = PrimaryClient::getInstance()->getUser(recipientID);
-        unsigned char data[len];
-        message->serialize(data);
-        recipient->connection.sendEncrypted(data, len);
+        recipient->connection.sendEncrypted(message->getData(), message->getDataLen());
     }
 }
 

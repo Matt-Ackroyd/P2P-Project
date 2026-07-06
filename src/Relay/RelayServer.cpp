@@ -42,8 +42,8 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
     addrToInform.sin_addr.s_addr = addr;            // IP adress
     addrToInform.sin_port = port;                   // Port
 
-    int a = ntohs(addrToInform.sin_port);
-    char *ip = inet_ntoa(addrToInform.sin_addr);
+    // int a = ntohs(addrToInform.sin_port);
+    // char *ip = inet_ntoa(addrToInform.sin_addr);
 
     char outgoingBuffer[CONNECTION_INFO_SIZE];
     memcpy(outgoingBuffer, &cliaddr->sin_addr.s_addr, sizeof(cliaddr->sin_addr.s_addr));               // Copy Addr

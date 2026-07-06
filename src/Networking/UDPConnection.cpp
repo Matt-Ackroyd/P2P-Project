@@ -135,3 +135,27 @@ std::deque<Packet*>* UDPConnection::getOutgoingBuffer() {
 std::deque<Packet*>* UDPConnection::getIncomingBuffer() {
     return &this->incommingBuffer;
 }
+
+void UDPConnection::sendServer(Server* server) {
+    ServerContainer container(DataTypes::NEW_SERVER, server);
+
+    this->sendEncrypted(container.getData(), container.getDataLen());
+}
+
+void UDPConnection::sendTextChannel(TextChannel* channel) {
+    TextChannelContainer container(DataTypes::NEW_TEXT_CHANNEL, channel);
+
+    this->sendEncrypted(container.getData(), container.getDataLen());
+}
+
+void UDPConnection::sendJoinRequest(std::string invitationCode) {
+    JoinRequest request(DataTypes::JOIN_REQUEST, invitationCode);
+
+    this->sendEncrypted(request.getData(), request.getDataLen());
+}
+
+void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server) {
+    AddUserToServerRequest request(DataTypes::JOIN_REQUEST, user, server);
+
+    this->sendEncrypted(request.getData(), request.getDataLen());
+}

@@ -66,12 +66,13 @@ public:
     SOCKTYPE socketfd;
     std::unordered_map<std::string, RemoteUser*> knownConnections;
 
-    void loadServer(Server *server);
+    
 
     // Loads all servers
     void loadAllServers();
     // loads a server from file
     void loadServer(std::string id);
+    void loadServer(Server *server);
     // Makes a brand new server 
     void createNewServer(std::string id = "");
 

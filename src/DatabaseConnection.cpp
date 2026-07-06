@@ -11,10 +11,11 @@ void DatabaseConnection::startup() {
     std::string sql = "CREATE TABLE Users("
                       "userID BLOB(16) PRIMARY KEY    NOT NULL, "
                       "username        TEXT,"
-                      "contactAddress  TEXT         NOT NULL, "
-                      "contactPort     INT          NOT NULL, "
-                      "relay           BOOLEAN      NOT NULL, "
-                      "secret          BLOB(32));";
+                      "contactAddress  INT(4)       NOT NULL, "
+                      "contactPort     INT(2)       NOT NULL, "
+                      "relayRequired   BOOLEAN      NOT NULL, "
+                      "secret          BLOB(32),"
+                      "UNIQUE(userID));";
     char* messaggeError;
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
@@ -26,7 +27,7 @@ void DatabaseConnection::startup() {
     sql = "CREATE TABLE TextChannels("
             "channelID BLOB(16) PRIMARY KEY        NOT NULL, "
             "serverID  BLOB(16) NOT NULL,"
-            "FOREIGN KEY(serverID) REFERENCES Servers(ServerID)"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
             ");";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
@@ -43,14 +44,21 @@ void DatabaseConnection::startup() {
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
     sql = "CREATE TABLE ServerUsers("
-            "ServerId BLOB(16), "
-            "UserId BLOB(16)," 
-            "FOREIGN KEY(ServerId) REFERENCES Servers(ServerId),"
-            "FOREIGN KEY(UserId) REFERENCES Users(UserId)"
+            "serverID BLOB(16), "
+            "userID BLOB(16)," 
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID),"
+            "FOREIGN KEY(userID) REFERENCES Users(userID)"
         ");";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
-    // Foren key table for invitations & Roles & User Role Links to servers
+    sql = "CREATE TABLE Invitations("
+            "invitationCode BLOB(16) PRIMARY KEY        NOT NULL, "
+            "serverID  BLOB(16) NOT NULL,"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
+            ");";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
+    // Foren key table for Roles & User Role Links to servers
 
 }
 
@@ -71,7 +79,7 @@ void DatabaseConnection::addUserToDB(RemoteUser* user) {
     ID::BytesFromString(*user->getID(), uuid);
     sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
     sqlite3_bind_text(stmt, 2, user->Username.c_str(), user->Username.length(), SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, user->contactAdress.c_str(), user->contactAdress.length(), SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 3, user->contactAdress);
     sqlite3_bind_int(stmt, 4, user->contactPort);
     sqlite3_bind_int(stmt, 5, user->requiresRelay);
     sqlite3_bind_blob(stmt, 6, user->connection.getSharedSecret(), SHAW_256_HASH_SIZE, nullptr);
@@ -96,7 +104,7 @@ void DatabaseConnection::getUsersFromDB() {
 
         RemoteUser* user = new RemoteUser(id);
         user->Username = (char*)sqlite3_column_text(stmt, 1);
-        user->contactAdress = (char*)sqlite3_column_text(stmt, 2);
+        user->contactAdress = sqlite3_column_int(stmt, 2);
         user->contactPort = sqlite3_column_int(stmt, 3);
         user->requiresRelay = sqlite3_column_int(stmt, 4);
 
@@ -256,8 +264,7 @@ void DatabaseConnection::getMessagesFromDB(TextChannel* channel, int amount) {
         std::string author = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 2));
         std::string contents = (char*)sqlite3_column_text(stmt, 3);
 
-        MessageContainer* message = new MessageContainer();
-        message->createNew(*channel->getServer()->getID(), *channel->getID(), author, contents, id);
+        MessageContainer* message = new MessageContainer(DataTypes::EMPTY, *channel->getServer()->getID(), *channel->getID(), author, contents, id);
 
         channel->loadMessage(message);
     }
@@ -265,5 +272,87 @@ void DatabaseConnection::getMessagesFromDB(TextChannel* channel, int amount) {
 }
 
 void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
+    int exit = 0;
+    char* errMsg;
+    std::string sql = "INSERT INTO ServerUsers (serverID, userID) VALUES (?, ?);";
 
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char useruuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*user->getID(), useruuid);
+    sqlite3_bind_blob(stmt, 1, (char*)useruuid, UUID_BYTE_SIZE, nullptr);      // UserID
+
+    unsigned char serveruuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), serveruuid);
+    sqlite3_bind_blob(stmt, 2, (char*)serveruuid, UUID_BYTE_SIZE, nullptr);      // ServerID
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+}
+
+void DatabaseConnection::getUsersInServerFromDB(Server* server) {
+    int exit = 0;
+    char* errMsg;
+    std::string sql("SELECT userID FROM ServerUsers WHERE channelID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only users in this server
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string userid = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+
+        server->loadUser(PrimaryClient::getInstance()->getUser(userid));
+    }
+    sqlite3_finalize(stmt);
+}
+
+void DatabaseConnection::addServerInvitationToDB(std::string invitation, Server* server) {
+    int exit = 0;
+    char* errMsg;
+    std::string sql = "INSERT INTO Invitations (invitationCode, serverID) VALUES (?, ?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char inviationCode[UUID_BYTE_SIZE];
+    ID::BytesFromString(invitation, inviationCode);
+    sqlite3_bind_blob(stmt, 1, (char*)inviationCode, UUID_BYTE_SIZE, nullptr);      
+
+    unsigned char serverid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), serverid);
+    sqlite3_bind_blob(stmt, 2, (char*)serverid, UUID_BYTE_SIZE, nullptr);
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+}
+
+std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitationCode) {
+    int exit = 0;
+    char* errMsg;
+    std::string sql("SELECT serverID FROM Invitations WHERE invitationCode = ? LIMIT 1;");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only messages assosiated with this channel
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(invitationCode, uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string serverid = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+        return serverid;
+    }
+
+    return "";
 }

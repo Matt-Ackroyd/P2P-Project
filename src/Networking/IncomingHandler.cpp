@@ -1,4 +1,6 @@
 #include "IncomingHandler.h"
+#include "DatabaseConnection.h"
+
 
 IncomingHandler::IncomingHandler(int ReceivingPort) {
     this->IncomingHandlerThread = std::thread(&IncomingHandler::incomingStartup, this, ReceivingPort);
@@ -180,23 +182,18 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
     switch (packetDataType) {
         case DataTypes::MESSAGETYPE:
             handleMessage(output);
+            break;
         case DataTypes::FILETYPE:
+            break;
+        case DataTypes::NEW_SERVER:
+            handleNewServer(output);
+            break;
+        case DataTypes::NEW_TEXT_CHANNEL:
+            handleNewTextChannel(output);
             break;
     }
 }
 
-void IncomingHandler::handleMessage(unsigned char* decryptedData) {
-    MessageContainer* msg = MessageContainer::deserialize(decryptedData);
-    
-    PrimaryClient* client = PrimaryClient::getInstance();
-    //Get Server somehow
-    Server* server = client->getServer(*msg->getServerID());
-    TextChannel* channel = server->knownChannels[*msg->getChannelID()];
-
-    channel->messages.push_back(msg);
-    CppInterface::instancePtr->loadGUIMessage(msg);
-    
-}
 
 
 void IncomingHandler::handleConnectionRequest(Packet *packet) {
@@ -261,9 +258,6 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
     
     userRequesting->connection.setAddr(ip, port);
     client->getOutgoingHandler()->enableConnection(userRequesting);
-
-    int a = sendto(PrimaryClient::getInstance()->socketfd, "AAAA", sizeof("AAAA"), 0, (struct sockaddr*)&addr, sizeof(addr));
-    int error = WSAGetLastError();
     return;
 }
 
@@ -288,3 +282,80 @@ void IncomingHandler::handleAck(Packet* packet) {
 
     userRequesting->connection.receivedAck(packet->getSeqNum());
 }
+
+
+void IncomingHandler::handleMessage(unsigned char* decryptedData) {
+    MessageContainer* msg = MessageContainer::deserialize(decryptedData);
+    
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    Server* server = client->getServer(*msg->getServerID());
+    TextChannel* channel = server->knownChannels[*msg->getChannelID()];
+
+    channel->messages.push_back(msg);
+    CppInterface::instancePtr->loadGUIMessage(msg);
+    
+}
+
+void IncomingHandler::handleNewServer(unsigned char* decryptedData) {
+    // Add some sort of check to ensure that we asked to join this server before making it
+
+    ServerContainer server = ServerContainer::deserialize(decryptedData);
+
+    PrimaryClient::getInstance()->createNewServer(server.getServerID());
+}
+
+void IncomingHandler::handleNewTextChannel(unsigned char* decryptedData) {
+    // Add check that the user creating this channel has the permision to do so
+    TextChannelContainer channel = TextChannelContainer::deserialize(decryptedData);
+
+    PrimaryClient* client = PrimaryClient::getInstance();
+    client->getServer(channel.getServerID())->createNewTextChannel(channel.getChannelID());
+}
+
+void IncomingHandler::handleAddNewUserToServerRequest(unsigned char* decryptedData) {
+    // Add check that the user creating this channel has the permision to do so
+    AddUserToServerRequest request = AddUserToServerRequest::deserialize(decryptedData);
+
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    client->registerNewUser(request.getUserID());
+    RemoteUser* newUser = client->getUser(request.getUserID());
+
+    client->getServer(request.getServerID())->addNewUser(newUser);
+}
+
+void IncomingHandler::handleJoinRequest(unsigned char* decryptedData, RemoteUser* requestee) {
+    // Add check to make sure we have the permission to accept invitations
+
+    std::string invitation = JoinRequest::deserialize(decryptedData);
+
+    std::string serverid = DatabaseConnection::getInvitationsServerFromDB(invitation);
+    Server* server = PrimaryClient::getInstance()->getServer(serverid);
+
+    // If there is no server asosiated with this invitation code bail
+    if (server == nullptr) {
+        return;
+    }
+
+    // Send Other Users this persons connecton info
+    for (auto [id, user]: server->knownUsers) {
+        user->connection.sendAddUserToServerRequest(requestee, server);
+    }
+
+    // Send Server Info
+    requestee->connection.sendServer(server);
+
+    // Send TextChannel Info
+    for (auto [id, channel]: server->knownChannels) {
+        requestee->connection.sendTextChannel(channel);
+    }
+
+    // Send Server Members to the new member
+    for (auto [id, user]: server->knownUsers) {
+        requestee->connection.sendAddUserToServerRequest(user, server);
+    }
+}
+
+
+
