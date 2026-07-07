@@ -48,7 +48,7 @@ void Server::createNewTextChannel(std::string id) {
     DatabaseConnection::addTextChannelToDB(this, channel);
 
     loadChannel(channel);
-    CppInterface::instancePtr->loadChannel(channel);
+    CppInterface::instancePtr->GUIloadChannel(channel);
 }
 
 void Server::loadChannel(TextChannel* channel) {

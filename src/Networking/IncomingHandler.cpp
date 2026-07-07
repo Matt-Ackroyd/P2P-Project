@@ -74,6 +74,12 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     Packet* incomingPacket = new Packet(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
     incomingPacket->deserialize(buffer);
 
+    // Relays dont have a userID so we need to handle the packet early 
+    if (incomingPacket->getPacketType() == PacketType::RELAY_USER_INFO) {
+        handleIncoming(incomingPacket, cliaddr);
+        return;
+    }
+
     // Get The User who Sent it, if they dont exist then create them
     RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
     if (packetAuthor == NULL) {
@@ -224,6 +230,11 @@ void IncomingHandler::handleConnectionResponse(Packet *packet) {
     
     // set shared secret
     userRequesting->connection.setSharedSecret(hashOutput);
+
+    // if there is a buffered invitation send it
+    if (!userRequesting->connection.bufferedServerInvitation.empty()) {
+        userRequesting->connection.sendJoinRequest(userRequesting->connection.bufferedServerInvitation);
+    }
 }
 
 void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
@@ -273,6 +284,15 @@ void IncomingHandler::handleKeepAlive(Packet* packet) {
         }
         userRequesting = client->getUser(packet->packetAuthorID);
     }
+
+    // If there is any buffered actions then do them
+    if (userRequesting->connection.requestHandshakeOnceConnected) {
+        userRequesting->connection.sendHandshakeRequest();
+        userRequesting->connection.requestHandshakeOnceConnected = false;
+    } else if (!userRequesting->connection.bufferedServerInvitation.empty()) {
+        // if there is a buffered invitation send it
+        userRequesting->connection.sendJoinRequest(userRequesting->connection.bufferedServerInvitation);
+    }
 }
 
 
@@ -293,7 +313,7 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
     TextChannel* channel = server->knownChannels[*msg->getChannelID()];
 
     channel->messages.push_back(msg);
-    CppInterface::instancePtr->loadGUIMessage(msg);
+    CppInterface::instancePtr->GUIloadMessage(msg);
     
 }
 

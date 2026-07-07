@@ -7,7 +7,9 @@ UDPConnection::UDPConnection() {
 }
 
 UDPConnection::~UDPConnection() {
-    delete[] this->sharedSecret;
+    if (this->sharedSecret != NULL) {
+        delete[] this->sharedSecret;
+    }
 }
 
 void UDPConnection::setAddr(char const *addr, int port) {

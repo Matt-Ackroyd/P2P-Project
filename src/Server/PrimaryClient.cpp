@@ -114,7 +114,7 @@ RemoteUser* PrimaryClient::getUser(std::string userID) {
 
 void PrimaryClient::loadServer(Server *server) {
     this->allServers[*server->getID()] = server;
-    CppInterface::instancePtr->loadServer(server);
+    CppInterface::instancePtr->GUIloadServer(server);
 }
 
 void PrimaryClient::createNewServer(std::string id) {

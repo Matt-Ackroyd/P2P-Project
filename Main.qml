@@ -11,6 +11,7 @@ Window {
     modality: Qt.ApplicationModal
     title: qsTr("Project Fern")
 
+
     Frame {
         id: serverList
         x: 0
@@ -105,6 +106,218 @@ Window {
         }
     }
 
+    Item {
+        id: addServerMenu
+        x: 262
+        y: 110
+        width: 201
+        height: 275
+
+        Rectangle {
+            id: rectangle1
+            color: "#decfcf"
+            anchors.fill: parent
+        }
+
+        Text {
+            id: text1
+            x: 0
+            y: 0
+            width: 113
+            height: 20
+            text: "Contact Adress"
+            font.pixelSize: 12
+        }
+
+        Item {
+            id: contactAdress
+            x: 0
+            y: 21
+            width: 113
+            height: 21
+
+            Rectangle {
+                id: rectangle2
+                x: 28
+                y: 85
+                color: "#a9a9a9"
+                border.color: "#a69d9d"
+                anchors.fill: parent
+            }
+
+            TextInput {
+                id: ip
+                x: 0
+                y: 0
+                anchors.fill: parent
+                font.pixelSize: 12
+            }
+        }
+
+        Item {
+            id: contactPort
+            x: 0
+            y: 73
+            width: 113
+            height: 21
+            Rectangle {
+                id: rectangle3
+                x: 28
+                y: 85
+                color: "#a9a9a9"
+                border.color: "#a69d9d"
+                anchors.fill: parent
+            }
+
+            TextInput {
+                id: port
+                x: 0
+                y: 0
+                text: ""
+                anchors.fill: parent
+                font.pixelSize: 12
+            }
+        }
+
+        Text {
+            id: text2
+            x: 0
+            y: 48
+            width: 113
+            height: 20
+            text: "Contact Port"
+            font.pixelSize: 12
+        }
+
+        Item {
+            id: invitation
+            x: 0
+            y: 188
+            width: 113
+            height: 21
+            Rectangle {
+                id: rectangle4
+                x: 28
+                y: 85
+                color: "#a9a9a9"
+                border.color: "#a69d9d"
+                anchors.fill: parent
+            }
+
+            TextInput {
+                id: code
+                x: 0
+                y: 0
+                anchors.fill: parent
+                anchors.leftMargin: -1
+                anchors.rightMargin: 1
+                anchors.topMargin: 0
+                anchors.bottomMargin: 0
+                font.pixelSize: 12
+            }
+        }
+
+        Text {
+            id: text3
+            x: 0
+            y: 162
+            width: 113
+            height: 20
+            text: "Invitation"
+            font.pixelSize: 12
+        }
+
+        Item {
+            id: item1
+            x: 1
+            y: 235
+            width: 200
+            height: 40
+
+
+            Rectangle {
+                id: rectangle5
+                x: 46
+                y: 155
+                color: "#e48989"
+                anchors.fill: parent
+            }
+            Button {
+                id: button1
+                text: "Join"
+                anchors.fill: parent
+
+                Connections {
+                    target: button1
+                    function onClicked() { CppInterface.joinServer(ip.text, port.text, userid.text, code.text) }
+                }
+            }
+        }
+
+        Item {
+            id: item2
+            x: 160
+            y: 0
+            width: 40
+            height: 42
+
+            Rectangle {
+                id: rectangle6
+                color: "#9c9393"
+                anchors.fill: parent
+            }
+
+            Button {
+                id: button2
+                text: "Close"
+                anchors.fill: parent
+
+                Connections {
+                    target: button2
+                    function onClicked() { addServerMenu.visible = false }
+                }
+            }
+        }
+
+        Item {
+            id: idEntry
+            x: 0
+            y: 127
+            width: 113
+            height: 21
+            Rectangle {
+                id: rectangle7
+                x: 28
+                y: 85
+                color: "#a9a9a9"
+                border.color: "#a69d9d"
+                anchors.fill: parent
+            }
+
+            TextInput {
+                id: userid
+                x: 0
+                y: 0
+                anchors.fill: parent
+                anchors.leftMargin: -1
+                anchors.rightMargin: 1
+                anchors.topMargin: 0
+                anchors.bottomMargin: 0
+                font.pixelSize: 12
+            }
+        }
+
+        Text {
+            id: text4
+            x: 0
+            y: 101
+            width: 113
+            height: 20
+            text: "userID"
+            font.pixelSize: 12
+        }
+    }
+
     Loader {
         id: serverLoader
         x: 52
@@ -156,8 +369,44 @@ Window {
                     function onClicked() { CppInterface.createNewTextChannel(serverLoader.item.uuid) }
                 }
             }
+
+            ToolButton {
+                id: toolButton2
+                x: 109
+                y: 2
+                width: 103
+                height: 18
+                text: "Join Server"
+                Connections {
+                    target: toolButton2
+                    function onClicked() { addServerMenu.visible = true }
+                }
+            }
+
+            ToolButton {
+                id: toolButton3
+                x: 218
+                y: 2
+                width: 103
+                height: 18
+                text: "Create Invitation"
+                Connections {
+                    target: toolButton3
+                    function onClicked() { CppInterface.createServerInvitation(serverLoader.item.uuid) }
+                }
+            }
         }
     }
+
 }
 
 
+
+
+
+/*##^##
+Designer {
+    D{i:0}D{i:24;locked:true}D{i:25;locked:true}D{i:28;locked:true}D{i:29;locked:true}
+D{i:35}D{i:36;locked:true}D{i:38}D{i:48}
+}
+##^##*/

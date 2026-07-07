@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     CppInterface::instancePtr = engine.singletonInstance<CppInterface*>("project_fern", "CppInterface");
 
-    // PrimaryClient* client = PrimaryClient::getInstance();
+    PrimaryClient* client = PrimaryClient::getInstance();
     
     // Server* test = new Server();
     // client->loadServer(test);
@@ -43,27 +43,22 @@ int main(int argc, char *argv[])
 
     // TextChannel* t4 = new TextChannel();
     // test2->knownChannels[t4->getID()] = t4;
-
-    std::string larryid = ID::GenerateNewID();
     
 
     DatabaseConnection::startup();
+    DatabaseConnection::getServersFromDB();
+    RelayClient::RegisterUser("192.168.0.17", 7777);
     // PrimaryClient::getInstance()->registerNewUser(&larryid);
     // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid);
-    RemoteUser larry(larryid);
-    unsigned char aaa[SHAW_256_HASH_SIZE] = {3};
-    larry.connection.setSharedSecret(aaa);
-    DatabaseConnection::addUserToDB(&larry);
-    DatabaseConnection::getUsersFromDB();
     
-    PrimaryClient* aasda = PrimaryClient::getInstance();
+    
     // larry.connection.setAddr("68.146.39.61", 1024);
     // larry.connection.sendKeepAlive();
     // larry.connection.sendHandshakeRequest();
 
     // client->getOutgoingHandler()->enableConnection(&larry);
 
-    DatabaseConnection::getServersFromDB();
+    
     //aasda->createNewServer();
 
     

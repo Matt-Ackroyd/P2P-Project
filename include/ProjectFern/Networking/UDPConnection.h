@@ -21,8 +21,10 @@ private:
     struct sockaddr_in connectionAddr;
     int sock;
      
-
+    
     unsigned char* sharedSecret = NULL;
+
+    
 
     
     int outgoingSeqNum = 1;
@@ -35,6 +37,9 @@ public:
     ~UDPConnection();
 
     bool connected = false;
+    bool requestHandshakeOnceConnected = false;
+    // TODO Have a better Buffer system (right now it only stores a server join request for after a connection is established)
+    std::string bufferedServerInvitation = "";
 
     unsigned char handshakeRandBuffer[ML_KEM_HANDSHAKE_RANDSIZE];
     
