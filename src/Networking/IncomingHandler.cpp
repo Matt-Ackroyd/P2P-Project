@@ -91,7 +91,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     }
 
     // If this packet doesn't need an acknowledgement just handle and dont worry about any queues
-    if (incomingPacket->getPacketType() <= 3 || incomingPacket->getSeqNum() == -1) {
+    if (incomingPacket->getPacketType() <= 3) {
         handleIncoming(incomingPacket, cliaddr);
         return;
     }
@@ -128,6 +128,7 @@ void IncomingHandler::handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr
     // Handle Diffrent Packet Types
     switch(incomingPacket->getPacketType()) {
         case PacketType::KEEP_ALIVE:
+            handleKeepAlive(incomingPacket);
             break;
         case PacketType::ACK:
             this->handleAck(incomingPacket);
@@ -191,6 +192,9 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
             break;
         case DataTypes::FILETYPE:
             break;
+        case DataTypes::JOIN_REQUEST:
+            handleJoinRequest(output, packetAuthor);
+            break;
         case DataTypes::NEW_SERVER:
             handleNewServer(output);
             break;
@@ -231,10 +235,12 @@ void IncomingHandler::handleConnectionResponse(Packet *packet) {
     // set shared secret
     userRequesting->connection.setSharedSecret(hashOutput);
 
-    // if there is a buffered invitation send it
+        // if there is a buffered invitation send it
     if (!userRequesting->connection.bufferedServerInvitation.empty()) {
         userRequesting->connection.sendJoinRequest(userRequesting->connection.bufferedServerInvitation);
+        userRequesting->connection.bufferedServerInvitation = "";
     }
+
 }
 
 void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
@@ -269,6 +275,7 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
     
     userRequesting->connection.setAddr(ip, port);
     client->getOutgoingHandler()->enableConnection(userRequesting);
+
     return;
 }
 
@@ -289,9 +296,10 @@ void IncomingHandler::handleKeepAlive(Packet* packet) {
     if (userRequesting->connection.requestHandshakeOnceConnected) {
         userRequesting->connection.sendHandshakeRequest();
         userRequesting->connection.requestHandshakeOnceConnected = false;
-    } else if (!userRequesting->connection.bufferedServerInvitation.empty()) {
+    } else if (!userRequesting->connection.bufferedServerInvitation.empty() && userRequesting->connection.getSharedSecret() != nullptr) {
         // if there is a buffered invitation send it
         userRequesting->connection.sendJoinRequest(userRequesting->connection.bufferedServerInvitation);
+        userRequesting->connection.bufferedServerInvitation = "";
     }
 }
 

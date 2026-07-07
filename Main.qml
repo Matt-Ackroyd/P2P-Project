@@ -100,6 +100,7 @@ Window {
             Connections {
                 target: CppInterface
                 function onServerLoad(server_id) {
+                    console.log(server_id)
                     gridView.model.append({name: "test", colorCode: "red", serverid: server_id})
                 }
             }
@@ -149,6 +150,7 @@ Window {
                 id: ip
                 x: 0
                 y: 0
+                text: "192.168.0.17"
                 anchors.fill: parent
                 font.pixelSize: 12
             }
@@ -173,7 +175,7 @@ Window {
                 id: port
                 x: 0
                 y: 0
-                text: ""
+                text: "7777"
                 anchors.fill: parent
                 font.pixelSize: 12
             }
@@ -208,6 +210,7 @@ Window {
                 id: code
                 x: 0
                 y: 0
+                text: "48ca38ec6f1bc018a17f9369a44c7881"
                 anchors.fill: parent
                 anchors.leftMargin: -1
                 anchors.rightMargin: 1
@@ -298,6 +301,7 @@ Window {
                 id: userid
                 x: 0
                 y: 0
+                text: "58adb05c6196be187e44c75248057edd"
                 anchors.fill: parent
                 anchors.leftMargin: -1
                 anchors.rightMargin: 1
@@ -406,7 +410,7 @@ Window {
 
 /*##^##
 Designer {
-    D{i:0}D{i:24;locked:true}D{i:25;locked:true}D{i:28;locked:true}D{i:29;locked:true}
+    D{i:0}D{i:13;invisible:true}D{i:24;locked:true}D{i:28;locked:true}D{i:29;locked:true}
 D{i:35}D{i:36;locked:true}D{i:38}D{i:48}
 }
 ##^##*/

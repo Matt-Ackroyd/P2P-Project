@@ -2,7 +2,10 @@
 
 
 Packet::Packet(int seqNum, PacketType packetType, std::string* author) {
-    this->packetAuthorID = *author;
+    if (author != NULL) {
+        this->packetAuthorID = *author;
+    }
+    
     this->seqNum = seqNum;
     this->packetType = packetType;
     //this->data = new unsigned char[10];

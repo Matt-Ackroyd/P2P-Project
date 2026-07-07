@@ -14,28 +14,38 @@ void OutgoingHandler::OutgoingLoop() {
     sockaddr_in relay = client->getPreferedRelay();
 
     char keepAlive[0] = {};
+
+    auto nextCheck = std::chrono::system_clock::now() + std::chrono::milliseconds(this->keepAliveInterval);
     while (true) {
         // TODO Replace with online list instead
         for (auto [id, recipient]: client->knownConnections) {
             std::deque<Packet*>* packetsToBeSend = recipient->connection.getOutgoingBuffer(); 
-            for (auto packet: *packetsToBeSend) {
+            for (auto& packet: *packetsToBeSend) {
 
                 // Add timers for each packet
-                recipient->connection.sendPacket(packet);
+                if (packet->timeToSend <= std::chrono::system_clock::now()) {
+                    recipient->connection.sendPacket(packet);
+                    packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(1000);
+                }
             }
         }
 
         // Stay Connected to your prefered relay in order to be informed of incoming connections
         int a = sendto(socketfd, keepAlive, 0, 0, (struct sockaddr*)&relay, sizeof(relay));
 
-        // Send KeepAlive packets to other targets ( Maybe replace this list with known connections)
-        for (auto target: this->keepAliveTargets) {
-            target->connection.sendKeepAlive();
+        // Send Keep Alive every specified intervil
+        if (std::chrono::system_clock::now() > nextCheck) {
+            // Send KeepAlive packets to other targets ( Maybe replace this list with known connections)
+            for (auto& target: this->keepAliveTargets) {
+                target->connection.sendKeepAlive();
+                nextCheck = std::chrono::system_clock::now() + std::chrono::milliseconds(this->keepAliveInterval);
+            }
         }
 
-        // Change to comaring time and add section for sending outgoing packets 
-        std::this_thread::sleep_for(std::chrono::milliseconds(this->keepAliveInterval));
-        std::chrono::system_clock::now();
+        // 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        
+        
     }
 }
 

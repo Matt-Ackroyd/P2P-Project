@@ -33,12 +33,10 @@ private:
     char* data;
     int dataLen;
     int packetLength;
-
-
-    std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> lastSent;
-
 public:       
     std::string packetAuthorID;
+    // Marks the next time where this packet should be sent
+    std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> timeToSend = std::chrono::system_clock::now();
 
     Packet(int seqNum, PacketType packetType, std::string* author);
     ~Packet();
