@@ -84,3 +84,9 @@ std::string AddUserToServerRequest::getServerID() {
 std::string AddUserToServerRequest::getUserID() {
     return this->userID;
 }
+int AddUserToServerRequest::getContactAdress() {
+    return contactAdress;
+}
+short int AddUserToServerRequest::getContactPort() {
+    return contactPort;
+}

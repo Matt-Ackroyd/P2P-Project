@@ -46,8 +46,17 @@ int main(int argc, char *argv[])
     
 
     DatabaseConnection::startup();
+    DatabaseConnection::getUsersFromDB();
     DatabaseConnection::getServersFromDB();
     RelayClient::RegisterUser("192.168.0.17", 7777);
+
+    for (auto& [userid, user]: client->knownConnections) {
+        if (userid != *client->getClientID()) {
+            sockaddr_in a;
+            a.sin_addr.s_addr = user->contactAdress;
+            RelayClient::UserConnectionInfoReqest(client->socketfd, inet_ntoa(a.sin_addr), ntohs(user->contactPort), *user->getID(), client->getClientID());
+        }
+    }
     // PrimaryClient::getInstance()->registerNewUser(&larryid);
     // RemoteUser* larry = PrimaryClient::getInstance()->getUser(larryid);
     

@@ -42,7 +42,7 @@ public:
     }
 
     unsigned char* getData() {return this->data;}
-    int getDataLen() {return datalen;}
+    int getDataLen() {return this->datalen;}
 };
 
 
