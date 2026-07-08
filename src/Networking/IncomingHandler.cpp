@@ -80,15 +80,8 @@ void IncomingHandler::IncomingLoop(char* buffer) {
         return;
     }
 
-    // Get The User who Sent it, if they dont exist then create them
-    RemoteUser *packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
-    if (packetAuthor == NULL) {
-        if (!PrimaryClient::getInstance()->registerNewUser(incomingPacket->packetAuthorID)) {
-            throw std::runtime_error("User Not Registered");
-        }
-        packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
-        packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
-    }
+    // Get The User who Sent it, if they dont exist then create them & Send any Buffered actions now that there exists a connection
+    RemoteUser *packetAuthor = onIncomingPacket(incomingPacket, cliaddr);
 
     // If this packet doesn't need an acknowledgement just handle and dont worry about any queues
     if (incomingPacket->getPacketType() <= 3) {
@@ -128,7 +121,6 @@ void IncomingHandler::handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr
     // Handle Diffrent Packet Types
     switch(incomingPacket->getPacketType()) {
         case PacketType::KEEP_ALIVE:
-            handleKeepAlive(incomingPacket);
             break;
         case PacketType::ACK:
             this->handleAck(incomingPacket);
@@ -279,6 +271,9 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
     userRequesting->connection.setAddr(ip, port);
     client->getOutgoingHandler()->enableConnection(userRequesting);
 
+    // Send a packet immediately to open up communications to the other side 
+    userRequesting->connection.sendHello();
+
     return;
 }
 
@@ -293,16 +288,6 @@ void IncomingHandler::handleKeepAlive(Packet* packet) {
             return;
         }
         userRequesting = client->getUser(packet->packetAuthorID);
-    }
-
-    // If there is any buffered actions then do them
-    if (userRequesting->connection.requestHandshakeOnceConnected) {
-        userRequesting->connection.sendHandshakeRequest();
-        userRequesting->connection.requestHandshakeOnceConnected = false;
-    } else if (!userRequesting->connection.bufferedServerInvitation.empty() && userRequesting->connection.getSharedSecret() != nullptr) {
-        // if there is a buffered invitation send it
-        userRequesting->connection.sendJoinRequest(userRequesting->connection.bufferedServerInvitation);
-        userRequesting->connection.bufferedServerInvitation = "";
     }
 }
 
@@ -323,7 +308,7 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
     Server* server = client->getServer(*msg->getServerID());
     TextChannel* channel = server->knownChannels[*msg->getChannelID()];
 
-    channel->messages.push_back(msg);
+    channel->receiveMessage(msg);
     CppInterface::instancePtr->GUIloadMessage(msg);
     
 }
@@ -395,3 +380,26 @@ void IncomingHandler::handleJoinRequest(unsigned char* decryptedData, RemoteUser
 
 
 
+RemoteUser* IncomingHandler::onIncomingPacket(Packet* incomingPacket, sockaddr_in cliaddr) {
+    RemoteUser* packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
+    if (packetAuthor == NULL) {
+        if (!PrimaryClient::getInstance()->registerNewUser(incomingPacket->packetAuthorID)) {
+            throw std::runtime_error("User Not Registered");
+        }
+        packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
+        packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
+    }
+
+
+    // If there is any buffered actions then do them
+    if (packetAuthor->connection.requestHandshakeOnceConnected) {
+        packetAuthor->connection.sendHandshakeRequest();
+        packetAuthor->connection.requestHandshakeOnceConnected = false;
+    } else if (!packetAuthor->connection.bufferedServerInvitation.empty() && packetAuthor->connection.getSharedSecret() != nullptr) {
+        // if there is a buffered invitation send it
+        packetAuthor->connection.sendJoinRequest(packetAuthor->connection.bufferedServerInvitation);
+        packetAuthor->connection.bufferedServerInvitation = "";
+    }
+
+    return packetAuthor;
+}

@@ -27,6 +27,13 @@ void UDPConnection::sendAck(int seqNum) {
     sendto(this->sock, ack.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
 }
 
+void UDPConnection::sendHello() {
+    Packet* hello = new Packet(this->newSeqNum(), PacketType::HELLO, PrimaryClient::getInstance()->getClientID());
+
+    hello->serialize(NULL, 0, NULL, NULL);
+    addPacketToOutgoingQueue(hello);
+}
+
 // Send an Empty packet in order to keep the connection going 
 void UDPConnection::sendKeepAlive() {
     unsigned char* keepAlive[0];

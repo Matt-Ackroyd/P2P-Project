@@ -13,7 +13,7 @@ public:
     std::string* getID();
     UDPConnection connection;
 
-    std::string Username;
+    std::string Username = "Unknown";
     bool requiresRelay;
     int contactAdress;
     short int contactPort;

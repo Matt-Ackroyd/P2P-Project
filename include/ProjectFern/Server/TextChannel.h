@@ -14,6 +14,8 @@ public:
     TextChannel(Server* ownedByThisServer, std::string idString = "");
     std::string* getID();
 
+    void receiveMessage(MessageContainer *message);
+
     void loadMessage(MessageContainer* message);
     void sendMessage(MessageContainer* message);
     

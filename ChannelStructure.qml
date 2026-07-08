@@ -44,8 +44,11 @@ Item {
 
             Connections {
                 target: CppInterface
-                function onMessageLoad(fmessage_id, fmessage) {messsageHistoryList.model.append({message_id: fmessage_id,
-                                                                                                    name: "you", message: fmessage})}
+                function onMessageLoad(fchannel_id, fmessage, fname, fdate) {
+                    if (fchannel_id === channel.uuid) {
+                        messsageHistoryList.model.append({message_id: "IDK", name: fname, message: fmessage})
+                    }
+                }
             }
         }
     }

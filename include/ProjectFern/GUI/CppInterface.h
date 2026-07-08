@@ -39,7 +39,7 @@ public:
 signals:
     void serverLoad(QString signal_param);
     void channelLoad(QString channel_id);
-    void messageLoad(QString message_id, QString message);
+    void messageLoad(QString channel_id, QString message, QString authorName, QString sendDate);
 };
 
 

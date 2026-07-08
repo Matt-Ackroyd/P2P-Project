@@ -47,7 +47,8 @@ public:
     void sendEncrypted(unsigned char* data, int datalen);
     void sendKeepAlive();
     void sendAck(int seqNum);
-    void sendPacket(Packet* packet);
+    void sendHello();
+    void sendPacket(Packet *packet);
     void sendHandshakeRequest();
     unsigned char* getSharedSecret();
     void setSharedSecret(unsigned char* secret);

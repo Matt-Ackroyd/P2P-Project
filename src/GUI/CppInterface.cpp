@@ -120,8 +120,10 @@ void CppInterface::GUIloadChannel(TextChannel* channel) {
 
 // C++ side interface to load a message into the current channel on the GUI
 void CppInterface::GUIloadMessage(MessageContainer* message) {
-    QString id = QString::fromStdString(*message->getMessageID());
+    RemoteUser* sender = PrimaryClient::getInstance()->getUser(*message->getAuthor());
+    QString channel_id = QString::fromStdString(*message->getMessageID());
+    QString authorName = QString::fromStdString(sender->Username);
     QString message_text = QString::fromStdString(message->getMessage());
 
-    emit messageLoad(id, message_text);
+    emit messageLoad(channel_id, message_text, authorName, "");
 }
