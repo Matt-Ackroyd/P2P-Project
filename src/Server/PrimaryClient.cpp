@@ -41,6 +41,7 @@ int PrimaryClient::init() {
         ID::BytesFromString(ID::GenerateNewID(), (unsigned char*)uuid);
         ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
     }
+    this->registerNewUser(this->clientID);
     
     std::cout << "Your ID: " << this->clientID << "\n";
     
@@ -80,11 +81,6 @@ std::string* PrimaryClient::getClientID() {
 
 
 int PrimaryClient::registerNewUser(std::string id) {
-    // Guard clause to not add oneself as a new user
-    // if (id == this->clientID) {
-    //     std::cout << "Cannot Register Yourself\n";
-    //     return 0;
-    // }
     
     // Guard Clause to not overwrite a user
     if (this->knownConnections.contains(id)) {

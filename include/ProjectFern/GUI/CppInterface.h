@@ -16,6 +16,7 @@ class CppInterface : public QObject
     QML_SINGLETON
     QML_ELEMENT
 
+    std::string currentChannel = "";
 public:
     explicit CppInterface(QObject *parent = nullptr) : QObject(parent) {}
     // Static pointer to the Singleton instance
@@ -24,6 +25,7 @@ public:
 
 
     Q_INVOKABLE void test();
+
     Q_INVOKABLE void sendMessage(QString message, QObject* server, QObject* channel);
     Q_INVOKABLE void requestServerInfo(QString Qid);
     Q_INVOKABLE void requestChannelInfo(QObject* server, QObject* channel);

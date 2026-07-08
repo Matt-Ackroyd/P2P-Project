@@ -45,18 +45,10 @@ void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
     std::string serverid = qserver->property("uuid").toString().toStdString();
     std::string channelid = qchannel->property("uuid").toString().toStdString();
 
-
-    std::string tempID = "58adb05c6196be187e44c75248057edd";
-    RemoteUser *tempuser = PrimaryClient::getInstance()->getUser(tempID);
-    if (tempuser == NULL) {
-        if (!PrimaryClient::getInstance()->registerNewUser(tempID)) {
-            throw std::runtime_error("User Not Registered");
-        }
-        tempuser = PrimaryClient::getInstance()->getUser(tempID);
-    }
-
     Server* server = client->getServer(serverid);
     TextChannel* channel = server->knownChannels[channelid];
+
+    this->currentChannel = channelid;
 
     for (auto& message: channel->messages) { 
         GUIloadMessage(message);
@@ -121,9 +113,11 @@ void CppInterface::GUIloadChannel(TextChannel* channel) {
 // C++ side interface to load a message into the current channel on the GUI
 void CppInterface::GUIloadMessage(MessageContainer* message) {
     RemoteUser* sender = PrimaryClient::getInstance()->getUser(*message->getAuthor());
-    QString channel_id = QString::fromStdString(*message->getMessageID());
+    QString channel_id = QString::fromStdString(*message->getChannelID());
     QString authorName = QString::fromStdString(sender->Username);
     QString message_text = QString::fromStdString(message->getMessage());
 
-    emit messageLoad(channel_id, message_text, authorName, "");
+    if (*message->getChannelID() == this->currentChannel) {
+        emit messageLoad(channel_id, message_text, authorName, "");
+    }
 }

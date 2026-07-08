@@ -45,9 +45,7 @@ Item {
             Connections {
                 target: CppInterface
                 function onMessageLoad(fchannel_id, fmessage, fname, fdate) {
-                    if (fchannel_id === channel.uuid) {
-                        messsageHistoryList.model.append({message_id: "IDK", name: fname, message: fmessage})
-                    }
+                    messsageHistoryList.model.append({message_id: "IDK", name: fname, message: fmessage})
                 }
             }
         }

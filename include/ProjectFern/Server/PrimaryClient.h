@@ -31,6 +31,7 @@ private:
 
     // Specific User profile information
     std::string defaultUsername;
+    RemoteUser* thisUser;
     
     sockaddr_in preferedRelayAdress;
     IncomingHandler* incomingHandler;

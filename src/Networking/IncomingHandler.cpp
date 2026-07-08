@@ -122,6 +122,8 @@ void IncomingHandler::handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr
     switch(incomingPacket->getPacketType()) {
         case PacketType::KEEP_ALIVE:
             break;
+        case PacketType::HELLO:
+            break;
         case PacketType::ACK:
             this->handleAck(incomingPacket);
             break;
