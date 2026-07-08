@@ -21,27 +21,27 @@ class Container {
 protected: 
     DataTypes datatype;
     int offset = sizeof(DataTypes);
+    unsigned char* data = nullptr;
     int datalen;
-    unsigned char* data;
+    
 
 public:
     Container(DataTypes datatype, int datalen) {
         this->datatype = datatype;
+        this->datalen = sizeof(DataTypes) + datalen;
 
         if (datatype != DataTypes::EMPTY) {
-            this->datalen = sizeof(DataTypes) + datalen;
-            this->data = new unsigned char[datalen];
+            this->data = new unsigned char[this->datalen];
             // DataType
-            memcpy(data, &datatype, sizeof(DataTypes));
+            memcpy(this->data, &datatype, sizeof(DataTypes));
         }
     }
     ~Container() { 
-        if (datatype != DataTypes::EMPTY) {
-            delete[] data;
-        }
+        delete[] this->data;
+        this->data = nullptr;
     }
 
-    unsigned char* getData() {return data;}
+    unsigned char* getData() {return this->data;}
     int getDataLen() {return datalen;}
 };
 
@@ -97,7 +97,7 @@ public:
     int createNew(std::string id, int fileSize, std::string path);
     void serialize(unsigned char* serializedData);
     static FileIndicator deserialize(unsigned char* serializedData);
-};
+};  
 
 
 class JoinRequest : public Container{

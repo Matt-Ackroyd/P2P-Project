@@ -10,11 +10,8 @@ JoinRequest::JoinRequest(DataTypes datatype, std::string givenInvitation) : Cont
 }
 
 void JoinRequest::serialize() {
-    unsigned char uuid[UUID_BYTE_SIZE];
-
     // inviation
-    ID::BytesFromString(this->invitation, uuid);
-    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
+    ID::BytesFromString(this->invitation, data+offset);
     offset += UUID_BYTE_SIZE;
 }
 
