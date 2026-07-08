@@ -379,10 +379,14 @@ void IncomingHandler::handleJoinRequest(unsigned char* decryptedData, RemoteUser
         requestee->connection.sendTextChannel(channel);
     }
 
-    // Send Server Members to the new member
+    // Send Server Members to the new member & ourselfs
+    std::string tempid = *PrimaryClient::getInstance()->getClientID();
+    requestee->connection.sendAddUserToServerRequest(&RemoteUser(tempid), server); // Temp TODO MAKE THIS BETTER
     for (auto [id, user]: server->knownUsers) {
         requestee->connection.sendAddUserToServerRequest(user, server);
     }
+
+    server->addNewUser(requestee);
 }
 
 

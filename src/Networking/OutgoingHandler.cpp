@@ -30,16 +30,17 @@ void OutgoingHandler::OutgoingLoop() {
             }
         }
 
-        // Stay Connected to your prefered relay in order to be informed of incoming connections
-        int a = sendto(socketfd, keepAlive, 0, 0, (struct sockaddr*)&relay, sizeof(relay));
+        
 
         // Send Keep Alive every specified intervil
         if (std::chrono::system_clock::now() > nextCheck) {
+            // Stay Connected to your prefered relay in order to be informed of incoming connections
+            int a = sendto(socketfd, keepAlive, 0, 0, (struct sockaddr*)&relay, sizeof(relay));
             // Send KeepAlive packets to other targets ( Maybe replace this list with known connections)
             for (auto& target: this->keepAliveTargets) {
                 target->connection.sendKeepAlive();
-                nextCheck = std::chrono::system_clock::now() + std::chrono::milliseconds(this->keepAliveInterval);
             }
+            nextCheck = std::chrono::system_clock::now() + std::chrono::milliseconds(this->keepAliveInterval);
         }
 
         // 
