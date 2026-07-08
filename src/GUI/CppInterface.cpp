@@ -31,8 +31,6 @@ void CppInterface::requestServerInfo(QString Qid) {
     PrimaryClient* client = PrimaryClient::getInstance();
     std::string id = Qid.toStdString();
 
-    RelayClient::RegisterUser("192.168.0.17", 7777);
-
     Server* server = client->getServer(id);
 
     // Loop over all known channels
@@ -56,9 +54,6 @@ void CppInterface::requestChannelInfo(QObject* qserver, QObject* qchannel) {
         }
         tempuser = PrimaryClient::getInstance()->getUser(tempID);
     }
-
-    RelayClient::UserConnectionInfoReqest(client->socketfd, "192.168.0.17", 7777, tempID, client->getClientID());
-    tempuser->connection.sendHandshakeRequest();
 
     Server* server = client->getServer(serverid);
     TextChannel* channel = server->knownChannels[channelid];

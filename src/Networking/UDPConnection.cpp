@@ -157,7 +157,7 @@ void UDPConnection::sendJoinRequest(std::string invitationCode) {
 }
 
 void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server) {
-    AddUserToServerRequest request(DataTypes::JOIN_REQUEST, user, server);
+    AddUserToServerRequest request(DataTypes::ADD_USER_TO_SERVER, user, server);
 
     this->sendEncrypted(request.getData(), request.getDataLen());
 }

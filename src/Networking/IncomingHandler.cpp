@@ -195,6 +195,9 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
         case DataTypes::JOIN_REQUEST:
             handleJoinRequest(output, packetAuthor);
             break;
+        case DataTypes::ADD_USER_TO_SERVER:
+            handleAddNewUserToServerRequest(output);
+            break;
         case DataTypes::NEW_SERVER:
             handleNewServer(output);
             break;
