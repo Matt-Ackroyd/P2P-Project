@@ -68,9 +68,12 @@ std::string JoinRequest::getInvitation()
     return this->invitation;
 }
 
-int AddUserToServerRequest::getContactAddress() {
+int JoinRequest::getContactAddress() {
     return contactAddress;
 }
-short int AddUserToServerRequest::getContactPort() {
+short int JoinRequest::getContactPort() {
     return contactPort;
+}
+bool JoinRequest::getRelayRequired() {
+    return requiresRelay;
 }
