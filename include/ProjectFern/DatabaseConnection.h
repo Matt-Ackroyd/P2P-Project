@@ -2,6 +2,8 @@
 #include "PrimaryClient.h"
 
 class DatabaseConnection {
+private:
+    static std::mutex mtx;
 public:
     static void startup();
     static void addUserToDB(RemoteUser* user);

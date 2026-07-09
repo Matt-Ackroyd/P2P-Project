@@ -1,8 +1,10 @@
 #include "DatabaseConnection.h"
 
+std::mutex DatabaseConnection::mtx;
+
 
 void DatabaseConnection::startup() {
-    //std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
 
     sqlite3* db;
     int exit = 0;
@@ -64,7 +66,7 @@ void DatabaseConnection::startup() {
 }
 
 void DatabaseConnection::addUserToDB(RemoteUser* user) {
-    //std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -78,7 +80,7 @@ void DatabaseConnection::addUserToDB(RemoteUser* user) {
     unsigned char uuid[UUID_BYTE_SIZE];
     ID::BytesFromString(*user->getID(), uuid);
     sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
-    sqlite3_bind_text(stmt, 2, user->Username.c_str(), user->Username.length(), SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, user->Username.c_str(), user->Username.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 3, user->contactAdress);
     sqlite3_bind_int(stmt, 4, user->contactPort);
     sqlite3_bind_int(stmt, 5, user->requiresRelay);
@@ -126,7 +128,7 @@ void DatabaseConnection::getUsersFromDB() {
 }
 
 void DatabaseConnection::addServerToDB(Server* server) {
-    //std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -170,7 +172,7 @@ void DatabaseConnection::getServersFromDB() {
 }
 
 void DatabaseConnection::addTextChannelToDB(Server* server, TextChannel* channel) {
-    //std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -224,7 +226,7 @@ void DatabaseConnection::getTextChannelsFromDB(Server* server) {
 }
 
 void DatabaseConnection::addMessageToDB(TextChannel* channel, MessageContainer* message) {
-    //std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx);
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -250,7 +252,7 @@ void DatabaseConnection::addMessageToDB(TextChannel* channel, MessageContainer* 
     sqlite3_bind_blob(stmt, 3, (char*)authoruuid, UUID_BYTE_SIZE, nullptr);      // AuthorID
 
 
-    sqlite3_bind_text(stmt, 4, message->getMessage().c_str(), message->getMessage().length(), nullptr); // Message Contents
+    sqlite3_bind_text(stmt, 4, message->getMessage().c_str(), message->getMessage().length()+1, SQLITE_TRANSIENT); // Message Contents
     sqlite3_bind_int64(stmt, 5, ID::getTimestamp(*message->getMessageID()));                              // TimeStamp
     
 
@@ -293,6 +295,8 @@ void DatabaseConnection::getMessagesFromDB(TextChannel* channel, int amount) {
 }
 
 void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -345,6 +349,8 @@ void DatabaseConnection::getUsersInServerFromDB(Server* server) {
 }
 
 void DatabaseConnection::addServerInvitationToDB(std::string invitation, Server* server) {
+    std::lock_guard<std::mutex> lock(mtx);
+    
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
