@@ -274,6 +274,7 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
     client->getOutgoingHandler()->enableConnection(userRequesting);
 
     // Send a packet immediately to open up communications to the other side 
+    userRequesting->connection.resetConnection();
     userRequesting->connection.sendHello();
 
     return;

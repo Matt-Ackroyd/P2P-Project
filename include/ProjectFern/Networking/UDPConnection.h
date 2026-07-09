@@ -65,4 +65,7 @@ public:
     void sendTextChannel(TextChannel *channel);
     void sendJoinRequest(std::string invitationCode);
     void sendAddUserToServerRequest(RemoteUser *user, Server *server);
+
+
+    void resetConnection();
 };

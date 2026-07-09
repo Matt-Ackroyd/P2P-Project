@@ -84,7 +84,7 @@ void RelayClient::onRelayHandshakeResponse(Packet* incomingPacket, sockaddr_in a
 
 // returns a given users connection info
 // Does not require an Encrypted Connection
-void RelayClient::UserConnectionInfoReqest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, std::string requestedUserID, std::string* yourID) {
+void RelayClient::UserConnectionInfoRequest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, std::string requestedUserID, std::string* yourID) {
     // specifying address
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;

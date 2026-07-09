@@ -23,7 +23,7 @@ void Server::addNewUser(RemoteUser *user) {
         return;
     }
 
-    DatabaseConnection::addUserToDB(user);
+    DatabaseConnection::addUserToDB(user); // NEXT UP NOT WORKING
     DatabaseConnection::addUserToServerDB(user, this);
     loadUser(user);
 }

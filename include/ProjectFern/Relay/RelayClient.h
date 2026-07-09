@@ -19,7 +19,7 @@ public:
 
     // returns a given users connection info
     // Does not require an Encrypted Connection
-    static void UserConnectionInfoReqest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, std::string requestedUserID, std::string* YourID);
+    static void UserConnectionInfoRequest(SOCKTYPE socketfd, std::string relayAddr, int relayPort, std::string requestedUserID, std::string* YourID);
     
     static void onRelayHandshakeResponse(Packet* incomingPacket, sockaddr_in addr);
 };

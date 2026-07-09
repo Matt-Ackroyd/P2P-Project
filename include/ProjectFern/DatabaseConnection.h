@@ -2,9 +2,6 @@
 #include "PrimaryClient.h"
 
 class DatabaseConnection {
-private:
-    static std::mutex mtx;
-    static sqlite3* db;
 public:
     static void startup();
     static void addUserToDB(RemoteUser* user);

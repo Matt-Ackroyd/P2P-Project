@@ -88,7 +88,7 @@ Q_INVOKABLE void CppInterface::joinServer(QString addr, QString port, QString id
 
     serverAccsess->connection.bufferedServerInvitation = serverInviation;
 
-    RelayClient::UserConnectionInfoReqest(PrimaryClient::getInstance()->socketfd, addr.toStdString(), port.toShort(), userid, PrimaryClient::getInstance()->getClientID());
+    RelayClient::UserConnectionInfoRequest(PrimaryClient::getInstance()->socketfd, addr.toStdString(), port.toShort(), userid, PrimaryClient::getInstance()->getClientID());
 }
 
 Q_INVOKABLE void CppInterface::createServerInvitation(QString serverid)

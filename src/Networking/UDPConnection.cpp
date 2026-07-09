@@ -168,3 +168,11 @@ void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server)
 
     this->sendEncrypted(request.getData(), request.getDataLen());
 }
+
+void UDPConnection::resetConnection()
+{
+    this->outgoingBuffer.clear();
+    this->incommingBuffer.clear();
+    this->outgoingSeqNum = 1;
+    this->incomingSeqNum = 1;
+}

@@ -1,11 +1,10 @@
 #include "DatabaseConnection.h"
 
-std::mutex DatabaseConnection::mtx;
-sqlite3* DatabaseConnection::db;
 
 void DatabaseConnection::startup() {
     //std::lock_guard<std::mutex> lock(mtx);
 
+    sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
     std::string sql = "CREATE TABLE Users("
@@ -60,16 +59,17 @@ void DatabaseConnection::startup() {
 
     // Foren key table for Roles & User Role Links to servers
 
+    sqlite3_close_v2(db);
+
 }
 
 void DatabaseConnection::addUserToDB(RemoteUser* user) {
     //std::lock_guard<std::mutex> lock(mtx);
-    
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
-    std::string sql = "INSERT INTO Users (userID, username, contactAddress, contactPort, relay, secret) VALUES ("
-        "?, ?, ?, ?, ?, ?"
-    ");";
+    std::string sql = "INSERT INTO Users (userID, username, contactAddress, contactPort, relayRequired, secret) VALUES (?, ?, ?, ?, ?, ?);";
 
     sqlite3_stmt* stmt; // will point to prepared stamement object
     exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
@@ -87,12 +87,15 @@ void DatabaseConnection::addUserToDB(RemoteUser* user) {
     int ret = sqlite3_step(stmt);
     
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::getUsersFromDB() {
     //std::lock_guard<std::mutex> lock(mtx);
-
+    sqlite3* db;
     int exit;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql("SELECT * FROM Users");
 
@@ -107,24 +110,28 @@ void DatabaseConnection::getUsersFromDB() {
         user->contactAdress = sqlite3_column_int(stmt, 2);
         user->contactPort = sqlite3_column_int(stmt, 3);
         user->requiresRelay = sqlite3_column_int(stmt, 4);
+        
 
-        unsigned char* secret = new unsigned char[SHAW_256_HASH_SIZE];
-        memcpy(secret, (unsigned char*)sqlite3_column_blob(stmt, 5), SHAW_256_HASH_SIZE);
-        user->connection.setSharedSecret(secret);
+        if (sqlite3_column_type(stmt, 5) != SQLITE_NULL) {
+            unsigned char* secret = new unsigned char[SHAW_256_HASH_SIZE];
+            memcpy(secret, (unsigned char*)sqlite3_column_blob(stmt, 5), SHAW_256_HASH_SIZE);
+            user->connection.setSharedSecret(secret);
+        }
 
         PrimaryClient::getInstance()->loadUser(user);
     }
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::addServerToDB(Server* server) {
-    std::lock_guard<std::mutex> lock(mtx);
-    
+    //std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
-    std::string sql = "INSERT INTO Servers (serverID) VALUES ("
-        "?"
-    ");";
+    std::string sql = "INSERT INTO Servers (serverID) VALUES (?);";
 
     sqlite3_stmt* stmt; // will point to prepared stamement object
     exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
@@ -141,8 +148,9 @@ void DatabaseConnection::addServerToDB(Server* server) {
 
 void DatabaseConnection::getServersFromDB() {
     //std::lock_guard<std::mutex> lock(mtx);
-
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql("SELECT * FROM Servers");
 
@@ -157,12 +165,15 @@ void DatabaseConnection::getServersFromDB() {
         PrimaryClient::getInstance()->loadServer(server);
     }
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::addTextChannelToDB(Server* server, TextChannel* channel) {
     //std::lock_guard<std::mutex> lock(mtx);
-
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql = "INSERT INTO TextChannels (channelID, serverID) VALUES (?, ?);";
 
@@ -181,12 +192,15 @@ void DatabaseConnection::addTextChannelToDB(Server* server, TextChannel* channel
     int ret = sqlite3_step(stmt);
     
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::getTextChannelsFromDB(Server* server) {
     //std::lock_guard<std::mutex> lock(mtx);
-
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql("SELECT * FROM TextChannels WHERE serverID = ?");
 
@@ -206,12 +220,14 @@ void DatabaseConnection::getTextChannelsFromDB(Server* server) {
         server->loadChannel(textchannel);
     }
     sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::addMessageToDB(TextChannel* channel, MessageContainer* message) {
     //std::lock_guard<std::mutex> lock(mtx);
-
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql = "INSERT INTO Messages (messageID, channelID, authorID, contents, timestamp) VALUES ("
         "?, ?, ?, ?, ?"
@@ -241,12 +257,15 @@ void DatabaseConnection::addMessageToDB(TextChannel* channel, MessageContainer* 
     int ret = sqlite3_step(stmt);
     
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::getMessagesFromDB(TextChannel* channel, int amount) {
     //std::lock_guard<std::mutex> lock(mtx);
-
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql("SELECT * FROM Messages WHERE channelID = ? ORDER BY timestamp LIMIT ?;");
 
@@ -269,10 +288,14 @@ void DatabaseConnection::getMessagesFromDB(TextChannel* channel, int amount) {
         channel->loadMessage(message);
     }
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql = "INSERT INTO ServerUsers (serverID, userID) VALUES (?, ?);";
 
@@ -291,10 +314,14 @@ void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
     int ret = sqlite3_step(stmt);
     
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::getUsersInServerFromDB(Server* server) {
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql("SELECT userID FROM ServerUsers WHERE channelID = ?");
 
@@ -312,10 +339,14 @@ void DatabaseConnection::getUsersInServerFromDB(Server* server) {
         server->loadUser(PrimaryClient::getInstance()->getUser(userid));
     }
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 void DatabaseConnection::addServerInvitationToDB(std::string invitation, Server* server) {
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql = "INSERT INTO Invitations (invitationCode, serverID) VALUES (?, ?);";
 
@@ -334,10 +365,14 @@ void DatabaseConnection::addServerInvitationToDB(std::string invitation, Server*
     int ret = sqlite3_step(stmt);
     
     sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
 }
 
 std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitationCode) {
+    sqlite3* db;
     int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
     std::string sql("SELECT serverID FROM Invitations WHERE invitationCode = ? LIMIT 1;");
 
@@ -353,6 +388,9 @@ std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitatio
         std::string serverid = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
         return serverid;
     }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
 
     return "";
 }

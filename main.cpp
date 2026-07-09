@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         if (userid != *client->getClientID()) {
             sockaddr_in a;
             a.sin_addr.s_addr = user->contactAdress;
-            RelayClient::UserConnectionInfoReqest(client->socketfd, inet_ntoa(a.sin_addr), ntohs(user->contactPort), *user->getID(), client->getClientID());
+            RelayClient::UserConnectionInfoRequest(client->socketfd, inet_ntoa(a.sin_addr), ntohs(user->contactPort), *user->getID(), client->getClientID());
         }
     }
     // PrimaryClient::getInstance()->registerNewUser(&larryid);
