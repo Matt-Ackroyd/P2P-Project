@@ -341,7 +341,7 @@ void IncomingHandler::handleAddNewUserToServerRequest(unsigned char* decryptedDa
     client->registerNewUser(request.getUserID());
     RemoteUser* newUser = client->getUser(request.getUserID());
 
-    newUser->contactAdress = request.getContactAdress();
+    newUser->contactAddress = request.getContactAddress();
     newUser->contactPort = request.getContactPort();
 
     client->getServer(request.getServerID())->addNewUser(newUser);
@@ -350,15 +350,19 @@ void IncomingHandler::handleAddNewUserToServerRequest(unsigned char* decryptedDa
 void IncomingHandler::handleJoinRequest(unsigned char* decryptedData, RemoteUser* requestee) {
     // Add check to make sure we have the permission to accept invitations
 
-    std::string invitation = JoinRequest::deserialize(decryptedData);
+    JoinRequest request = JoinRequest::deserialize(decryptedData);
 
-    std::string serverid = DatabaseConnection::getInvitationsServerFromDB(invitation);
+    std::string serverid = DatabaseConnection::getInvitationsServerFromDB(request.getInvitation());
     Server* server = PrimaryClient::getInstance()->getServer(serverid);
 
     // If there is no server asosiated with this invitation code bail
     if (server == nullptr) {
         return;
     }
+
+    requestee->contactAddress = request.getContactAddress();
+    requestee->contactPort = request.getContactPort();
+    requestee->requiresRelay = request.getRelayRequired();
 
     // Send Other Users this persons connecton info
     for (auto [id, user]: server->knownUsers) {

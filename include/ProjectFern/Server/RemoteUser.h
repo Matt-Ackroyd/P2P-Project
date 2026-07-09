@@ -15,6 +15,6 @@ public:
 
     std::string Username = "Unknown";
     bool requiresRelay;
-    int contactAdress;
+    int contactAddress;
     short int contactPort;
 };

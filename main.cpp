@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     for (auto& [userid, user]: client->knownConnections) {
         if (userid != *client->getClientID()) {
             sockaddr_in a;
-            a.sin_addr.s_addr = user->contactAdress;
+            a.sin_addr.s_addr = user->contactAddress;
             RelayClient::UserConnectionInfoRequest(client->socketfd, inet_ntoa(a.sin_addr), ntohs(user->contactPort), *user->getID(), client->getClientID());
         }
     }

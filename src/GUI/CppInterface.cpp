@@ -65,7 +65,7 @@ void CppInterface::createNewTextChannel(QString serverid) {
 }
 
 Q_INVOKABLE void CppInterface::joinServer(QString addr, QString port, QString id, QString inviation) {
-    int contactAdress = inet_addr(addr.toUtf8());;
+    int contactAddress = inet_addr(addr.toUtf8());;
     short int contactPort = htons(port.toShort());
     std::string userid = id.toStdString();
     std::string serverInviation = inviation.toStdString();

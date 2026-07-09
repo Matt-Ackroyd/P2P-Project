@@ -7,17 +7,17 @@ AddUserToServerRequest::AddUserToServerRequest(DataTypes datatype, RemoteUser* u
 : Container(datatype, (UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(short int) + sizeof(bool))) {
     this->userID = *user->getID();
     this->serverID = *server->getID();
-    this->contactAdress = user->contactAdress;
+    this->contactAddress = user->contactAddress;
     this->contactPort = user->contactPort;
     this->requiresRelay = user->requiresRelay;
     serialize();
 }
 
 // Private Constructor
-AddUserToServerRequest::AddUserToServerRequest(std::string userID, std::string serverID, int contactAdress, short int contactPort, bool requiresRelay) : Container(DataTypes::EMPTY, 0) {
+AddUserToServerRequest::AddUserToServerRequest(std::string userID, std::string serverID, int contactAddress, short int contactPort, bool requiresRelay) : Container(DataTypes::EMPTY, 0) {
     this->userID = userID;
     this->serverID = serverID;
-    this->contactAdress = contactAdress;
+    this->contactAddress = contactAddress;
     this->contactPort = contactPort;
     this->requiresRelay = requiresRelay;
 }
@@ -36,8 +36,8 @@ void AddUserToServerRequest::serialize() {
     offset += UUID_BYTE_SIZE;
 
     // Contact Adress
-    memcpy(data+offset, &this->contactAdress, sizeof(this->contactAdress));
-    offset += sizeof(this->contactAdress);
+    memcpy(data+offset, &this->contactAddress, sizeof(this->contactAddress));
+    offset += sizeof(this->contactAddress);
 
     // Contact Port
     memcpy(data+offset, &this->contactPort, sizeof(this->contactPort));
@@ -61,9 +61,9 @@ AddUserToServerRequest AddUserToServerRequest::deserialize(unsigned char* serial
     offset += UUID_BYTE_SIZE;
 
     // Contact Adress
-    int contactAdress;
-    memcpy(&contactAdress, serializedData+offset, sizeof(contactAdress));
-    offset += sizeof(contactAdress);
+    int contactAddress;
+    memcpy(&contactAddress, serializedData+offset, sizeof(contactAddress));
+    offset += sizeof(contactAddress);
 
     // Contact Port
     short int contactPort;
@@ -75,7 +75,7 @@ AddUserToServerRequest AddUserToServerRequest::deserialize(unsigned char* serial
     memcpy(&requiresRelay, serializedData+offset, sizeof(requiresRelay));
     offset += sizeof(requiresRelay);
 
-    return AddUserToServerRequest(userID, serverID, contactAdress, contactPort, requiresRelay);
+    return AddUserToServerRequest(userID, serverID, contactAddress, contactPort, requiresRelay);
 }
 
 std::string AddUserToServerRequest::getServerID() {
@@ -84,9 +84,13 @@ std::string AddUserToServerRequest::getServerID() {
 std::string AddUserToServerRequest::getUserID() {
     return this->userID;
 }
-int AddUserToServerRequest::getContactAdress() {
-    return contactAdress;
+
+int AddUserToServerRequest::getContactAddress() {
+    return contactAddress;
 }
 short int AddUserToServerRequest::getContactPort() {
     return contactPort;
+}
+bool AddUserToServerRequest::getRelayRequired() {
+    return this->requiresRelay;
 }

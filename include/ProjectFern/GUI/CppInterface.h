@@ -31,7 +31,7 @@ public:
     Q_INVOKABLE void requestChannelInfo(QObject* server, QObject* channel);
     Q_INVOKABLE void createNewServer();
     Q_INVOKABLE void createNewTextChannel(QString serverid);
-    Q_INVOKABLE void joinServer(QString contactAdress, QString contactPort, QString userID, QString inviation); 
+    Q_INVOKABLE void joinServer(QString contactAddress, QString contactPort, QString userID, QString inviation); 
     Q_INVOKABLE void createServerInvitation(QString serverid);
 
 

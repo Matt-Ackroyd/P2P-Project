@@ -62,7 +62,7 @@ int PrimaryClient::init() {
     this->preferedRelayAdress.sin_addr.s_addr = inet_addr("192.168.0.17");
 
     // TODO clean this up
-    this->getUser(*this->getClientID())->contactAdress = preferedRelayAdress.sin_addr.s_addr;
+    this->getUser(*this->getClientID())->contactAddress = preferedRelayAdress.sin_addr.s_addr;
     this->getUser(*this->getClientID())->contactPort = preferedRelayAdress.sin_port;
 
     this->incomingHandler = new IncomingHandler(10346);

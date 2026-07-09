@@ -102,11 +102,21 @@ public:
 
 class JoinRequest : public Container{
     std::string invitation;
+    int contactAddress;
+    short int contactPort;
+    bool requiresRelay;
+
+    JoinRequest(std::string givenInvitation, int contactAddress, short int contactPort, bool requiresRelay);
     void serialize();
 
 public:
-    JoinRequest(DataTypes datatype, std::string invitation);
-    static std::string deserialize(unsigned char* serializedData);
+    JoinRequest(DataTypes datatype, std::string givenInvitation, int contactAddress, short int contactPort, bool requiresRelay);
+    static JoinRequest deserialize(unsigned char* serializedData);
+
+    std::string getInvitation();
+    int getContactAddress();
+    short int getContactPort();
+    bool getRelayRequired();
 };
 
 
@@ -143,19 +153,19 @@ public:
 class AddUserToServerRequest : public Container{
     std::string userID;
     std::string serverID;
-    int contactAdress;
+    int contactAddress;
     short int contactPort;
     bool requiresRelay;
 
     void serialize();
-    AddUserToServerRequest(std::string userID, std::string serverID, int contactAdress, short int contactPort, bool requiresRelay);
+    AddUserToServerRequest(std::string userID, std::string serverID, int contactAddress, short int contactPort, bool requiresRelay);
 public:
     AddUserToServerRequest(DataTypes datatype, RemoteUser* user, Server* server);
     static AddUserToServerRequest deserialize(unsigned char* serializedData);
 
     std::string getUserID();
     std::string getServerID();
-    int getContactAdress();
+    int getContactAddress();
     short int getContactPort();
     bool getRelayRequired();
 };

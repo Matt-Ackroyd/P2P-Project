@@ -81,7 +81,7 @@ void DatabaseConnection::addUserToDB(RemoteUser* user) {
     ID::BytesFromString(*user->getID(), uuid);
     sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
     sqlite3_bind_text(stmt, 2, user->Username.c_str(), user->Username.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 3, user->contactAdress);
+    sqlite3_bind_int(stmt, 3, user->contactAddress);
     sqlite3_bind_int(stmt, 4, user->contactPort);
     sqlite3_bind_int(stmt, 5, user->requiresRelay);
     sqlite3_bind_blob(stmt, 6, user->connection.getSharedSecret(), SHAW_256_HASH_SIZE, nullptr);
@@ -109,7 +109,7 @@ void DatabaseConnection::getUsersFromDB() {
 
         RemoteUser* user = new RemoteUser(id);
         user->Username = (char*)sqlite3_column_text(stmt, 1);
-        user->contactAdress = sqlite3_column_int(stmt, 2);
+        user->contactAddress = sqlite3_column_int(stmt, 2);
         user->contactPort = sqlite3_column_int(stmt, 3);
         user->requiresRelay = sqlite3_column_int(stmt, 4);
         
@@ -324,6 +324,8 @@ void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
 }
 
 void DatabaseConnection::getUsersInServerFromDB(Server* server) {
+    //std::lock_guard<std::mutex> lock(mtx);
+
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -377,6 +379,8 @@ void DatabaseConnection::addServerInvitationToDB(std::string invitation, Server*
 }
 
 std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitationCode) {
+    //std::lock_guard<std::mutex> lock(mtx);
+
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -393,6 +397,10 @@ std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitatio
 
     while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
         std::string serverid = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+
+        sqlite3_finalize(stmt);
+        sqlite3_close_v2(db);
+
         return serverid;
     }
 

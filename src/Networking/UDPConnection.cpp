@@ -151,7 +151,8 @@ void UDPConnection::sendTextChannel(TextChannel* channel) {
 }
 
 void UDPConnection::sendJoinRequest(std::string invitationCode) {
-    JoinRequest request(DataTypes::JOIN_REQUEST, invitationCode);
+    sockaddr_in relay = PrimaryClient::getInstance()->getPreferedRelay();
+    JoinRequest request(DataTypes::JOIN_REQUEST, invitationCode, relay.sin_addr.s_addr, relay.sin_port, 1);
 
     this->sendEncrypted(request.getData(), request.getDataLen());
 }
