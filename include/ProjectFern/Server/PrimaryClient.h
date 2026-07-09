@@ -66,6 +66,9 @@ public:
     // Clean up
     SOCKTYPE socketfd;
     std::unordered_map<std::string, RemoteUser*> knownConnections;
+    std::unordered_set<std::string> onlineConnections;
+    static void enableConnection(RemoteUser*);
+    static void disableConnection(RemoteUser*);
 
     
 

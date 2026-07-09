@@ -9,6 +9,8 @@
 #include "Encryption.h"
 #include "ID.h"
 
+#define MAX_RESEND_AMOUNT 10
+
 enum PacketType
 {
     NONE,
@@ -38,6 +40,7 @@ public:
     std::string packetAuthorID;
     // Marks the next time where this packet should be sent
     std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> timeToSend = std::chrono::system_clock::now();
+    int timesResent = 0;
 
     Packet(int seqNum, PacketType packetType, std::string* author);
     ~Packet();

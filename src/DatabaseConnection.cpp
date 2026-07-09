@@ -303,14 +303,15 @@ void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
     exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
                         
     // UUID
-    unsigned char useruuid[UUID_BYTE_SIZE];
-    ID::BytesFromString(*user->getID(), useruuid);
-    sqlite3_bind_blob(stmt, 1, (char*)useruuid, UUID_BYTE_SIZE, nullptr);      // UserID
-
     unsigned char serveruuid[UUID_BYTE_SIZE];
     ID::BytesFromString(*server->getID(), serveruuid);
-    sqlite3_bind_blob(stmt, 2, (char*)serveruuid, UUID_BYTE_SIZE, nullptr);      // ServerID
+    sqlite3_bind_blob(stmt, 1, (char*)serveruuid, UUID_BYTE_SIZE, nullptr);      // ServerID
 
+    unsigned char useruuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*user->getID(), useruuid);
+    sqlite3_bind_blob(stmt, 2, (char*)useruuid, UUID_BYTE_SIZE, nullptr);      // UserID
+
+    
     int ret = sqlite3_step(stmt);
     
     sqlite3_finalize(stmt);
@@ -323,7 +324,7 @@ void DatabaseConnection::getUsersInServerFromDB(Server* server) {
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
-    std::string sql("SELECT userID FROM ServerUsers WHERE channelID = ?");
+    std::string sql("SELECT userID FROM ServerUsers WHERE serverID = ?");
 
     sqlite3_stmt* stmt; // will point to prepared stamement object
     sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
@@ -332,8 +333,8 @@ void DatabaseConnection::getUsersInServerFromDB(Server* server) {
     unsigned char uuid[UUID_BYTE_SIZE];
     ID::BytesFromString(*server->getID(), uuid);
     sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
-
-    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+    
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
         std::string userid = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
 
         server->loadUser(PrimaryClient::getInstance()->getUser(userid));

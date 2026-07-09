@@ -103,13 +103,13 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     userConnection->addPacketToIncomingQueue(incomingPacket);  //Add the packet in sorted order
 
     // Keep handling packets as long as there as some and we have the next expected packet
-    while (!userConnection->getIncomingBuffer()->empty()) {
-        Packet* front = userConnection->getIncomingBuffer()->front();
+    while (!userConnection->incommingBuffer.empty()) {
+        Packet* front = userConnection->incommingBuffer.front();
         if (front->getSeqNum() != userConnection->incomingSeqNum) {
             break;
         }
         userConnection->sendAck(incomingPacket->getSeqNum());   // Send Ack
-        userConnection->getIncomingBuffer()->pop_front();
+        userConnection->incommingBuffer.pop_front();
         this->handleIncoming(front, cliaddr);
         userConnection->incomingSeqNum++;
         
@@ -271,7 +271,7 @@ void IncomingHandler::handleRelayInfoResponse(Packet* packet) {
     }
     
     userRequesting->connection.setAddr(ip, port);
-    client->getOutgoingHandler()->enableConnection(userRequesting);
+    client->enableConnection(userRequesting);
 
     // Send a packet immediately to open up communications to the other side 
     userRequesting->connection.resetConnection();
@@ -393,6 +393,9 @@ RemoteUser* IncomingHandler::onIncomingPacket(Packet* incomingPacket, sockaddr_i
         packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
     }
 
+    packetAuthor->connection.lastHeardFrom = std::chrono::system_clock::now();
+    // Enable this connection if it wasn't already
+    PrimaryClient::enableConnection(packetAuthor);
 
     // If there is any buffered actions then do them
     if (packetAuthor->connection.requestHandshakeOnceConnected) {

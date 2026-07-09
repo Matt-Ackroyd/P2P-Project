@@ -10,12 +10,9 @@ private:
 
     // Time Between KeepAlive Packets in milli
     int keepAliveInterval = 10000;
-    std::unordered_set<RemoteUser*> keepAliveTargets;
+    int connectionTimeout = 60000;
 
     void OutgoingLoop();
 public:
     OutgoingHandler();
-
-    void enableConnection(RemoteUser* target);
-    void disableConnection(RemoteUser* target);
 };

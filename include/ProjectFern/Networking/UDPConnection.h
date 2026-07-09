@@ -20,22 +20,16 @@ class UDPConnection {
 private:
     struct sockaddr_in connectionAddr;
     int sock;
-     
-    
     unsigned char* sharedSecret = NULL;
-
-    
-
-    
     int outgoingSeqNum = 1;
     
-    std::deque<Packet*> outgoingBuffer;
-    std::deque<Packet*> incommingBuffer; 
     
 public:    
     UDPConnection();
     ~UDPConnection();
 
+    std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> lastHeardFrom = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> sendCooldown = std::chrono::system_clock::now();
     bool connected = false;
     bool requestHandshakeOnceConnected = false;
     // TODO Have a better Buffer system (right now it only stores a server join request for after a connection is established)
@@ -57,15 +51,13 @@ public:
     void addPacketToOutgoingQueue(Packet* outgoingPacket);
     void addPacketToIncomingQueue(Packet* incomingPacket);
     int newSeqNum();
-    int incomingSeqNum = 1;
-
-    std::deque<Packet*>* getOutgoingBuffer();
-    std::deque<Packet*>* getIncomingBuffer();
     void sendServer(Server *server);
     void sendTextChannel(TextChannel *channel);
     void sendJoinRequest(std::string invitationCode);
     void sendAddUserToServerRequest(RemoteUser *user, Server *server);
-
-
     void resetConnection();
+
+    int incomingSeqNum = 1;
+    std::deque<Packet*> outgoingBuffer;
+    std::deque<Packet*> incommingBuffer; 
 };

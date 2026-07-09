@@ -7,6 +7,7 @@
 #include <openssl/rand.h>
 
 #define UUID_BYTE_SIZE 16
+#define NULL_ID "00000000000000000000000000000000"
 
 //First 8 bytes is the timestamp in nanoseconds 
 //Second set of 8 bytes is random

@@ -138,13 +138,6 @@ int UDPConnection::newSeqNum() {
     return output;
 }
 
-std::deque<Packet*>* UDPConnection::getOutgoingBuffer() {
-    return &this->outgoingBuffer;
-}
-std::deque<Packet*>* UDPConnection::getIncomingBuffer() {
-    return &this->incommingBuffer;
-}
-
 void UDPConnection::sendServer(Server* server) {
     ServerContainer container(DataTypes::NEW_SERVER, server);
 

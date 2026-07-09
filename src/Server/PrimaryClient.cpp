@@ -85,7 +85,10 @@ std::string* PrimaryClient::getClientID() {
 
 
 int PrimaryClient::registerNewUser(std::string id) {
-    
+    if (id == NULL_ID) {
+        std::cout << "NULL ID\n";
+        return 0;
+    }
     // Guard Clause to not overwrite a user
     if (this->knownConnections.contains(id)) {
         std::cout << "User " << id << " already Exists\n";
@@ -100,6 +103,24 @@ int PrimaryClient::registerNewUser(std::string id) {
     std::cout << "New User Added: " << id << " \n";
     this->knownConnections[id] = test;
     return 1;  // return sucsess 
+}
+
+void PrimaryClient::enableConnection(RemoteUser *user) {
+    user->connection.connected = true;
+
+    std::lock_guard<std::mutex> lock(mtx);
+    if (!instancePtr->onlineConnections.contains(*user->getID())) {
+        instancePtr->onlineConnections.emplace(*user->getID());
+    }
+}
+
+void PrimaryClient::disableConnection(RemoteUser *user) {
+    user->connection.connected = false;
+
+    std::lock_guard<std::mutex> lock(mtx);
+    if (instancePtr->onlineConnections.contains(*user->getID())) {
+        instancePtr->onlineConnections.erase(*user->getID());
+    }
 }
 
 RemoteUser* PrimaryClient::getUser(std::string userID) {
