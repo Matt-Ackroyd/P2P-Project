@@ -1,6 +1,7 @@
 #include "DataTypes.h"
 #include "TextChannel.h"
 #include "Server.h"
+#include "PrimaryClient.h"
 
 // Public contructor
 TextChannelContainer::TextChannelContainer(DataTypes datatype, TextChannel* channel) : Container(datatype, UUID_BYTE_SIZE*2) {
@@ -50,3 +51,4 @@ std::string TextChannelContainer::getServerID() {
 std::string TextChannelContainer::getChannelID() {
     return this->channelID;
 }
+

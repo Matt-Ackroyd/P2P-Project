@@ -189,13 +189,13 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
         case DataTypes::JOIN_REQUEST:
             handleJoinRequest(output, packetAuthor);
             break;
-        case DataTypes::ADD_USER_TO_SERVER:
+        case DataTypes::USER:
             handleAddNewUserToServerRequest(output);
             break;
-        case DataTypes::NEW_SERVER:
+        case DataTypes::SERVER:
             handleNewServer(output);
             break;
-        case DataTypes::NEW_TEXT_CHANNEL:
+        case DataTypes::TEXT_CHANNEL:
             handleNewTextChannel(output);
             break;
     }
@@ -334,7 +334,7 @@ void IncomingHandler::handleNewTextChannel(unsigned char* decryptedData) {
 
 void IncomingHandler::handleAddNewUserToServerRequest(unsigned char* decryptedData) {
     // Add check that the user creating this channel has the permision to do so
-    AddUserToServerRequest request = AddUserToServerRequest::deserialize(decryptedData);
+    UserContainer request = UserContainer::deserialize(decryptedData);
 
     PrimaryClient* client = PrimaryClient::getInstance();
 

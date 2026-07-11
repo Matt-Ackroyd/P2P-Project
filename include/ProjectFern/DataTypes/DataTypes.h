@@ -9,12 +9,15 @@ enum DataTypes {
     EMPTY,
     MESSAGETYPE,
     FILETYPE,
-    FILEINDICATOR,
-    NEW_SERVER,
-    NEW_TEXT_CHANNEL,
+    FILE_INDICATOR,
+    SERVER,
+    TEXT_CHANNEL,
+    VOICE_CHANNEL,
+    USER,
     JOIN_REQUEST,
-    ADD_USER_TO_SERVER,
-    MODIFY_USER_PROFILE
+    REQUEST,
+    SYNC,
+    DELETED
 };
 
 class Container {
@@ -46,6 +49,25 @@ public:
 };
 
 
+class Request : public Container {
+private:
+    std::string serverID;
+    std::string requestedID;
+    DataTypes requestedDatatype;
+    void serialize();
+
+    Request(DataTypes dataTypeOfThisObject, std::string serverID, std::string requestedID, DataTypes requestedDatatype);
+public:
+    Request(std::string serverID, std::string requestedID, DataTypes requestedDatatype);
+    static Request deserialize(unsigned char* serializedData);
+
+    DataTypes getRequestedDatatype();
+    std::string getServerID();
+    std::string getRequestedID();
+
+    static void onRequest(unsigned char *decryptedData, RemoteUser *requestee);
+};
+
 
 
 // class to contain infomation about a message as well as the message itself
@@ -68,6 +90,8 @@ public:
     std::string* getChannelID();
     std::string* getAuthor();
     std::string getMessage();
+
+    static void onRequest(std::string serverID, std::string id, RemoteUser* requestee);
 };
 
 // a class to contain file data along side its ID
@@ -149,8 +173,7 @@ public:
     std::string getChannelID();
 };
 
-
-class AddUserToServerRequest : public Container{
+class UserContainer : public Container{
     std::string userID;
     std::string serverID;
     int contactAddress;
@@ -158,10 +181,10 @@ class AddUserToServerRequest : public Container{
     bool requiresRelay;
 
     void serialize();
-    AddUserToServerRequest(std::string userID, std::string serverID, int contactAddress, short int contactPort, bool requiresRelay);
+    UserContainer(std::string userID, std::string serverID, int contactAddress, short int contactPort, bool requiresRelay);
 public:
-    AddUserToServerRequest(DataTypes datatype, RemoteUser* user, Server* server);
-    static AddUserToServerRequest deserialize(unsigned char* serializedData);
+    UserContainer(DataTypes datatype, RemoteUser* user, Server* server);
+    static UserContainer deserialize(unsigned char* serializedData);
 
     std::string getUserID();
     std::string getServerID();

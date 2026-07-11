@@ -32,6 +32,9 @@ qt_add_executable(app_${PROJECT_NAME}
     src/DataTypes/TextChannelContainer.cpp
     src/DataTypes/JoinRequest.cpp
     src/DataTypes/AddUserToServerRequest.cpp
+    src/DataTypes/SyncRequest.cpp
+    src/DataTypes/SyncResponse.cpp
+    src/DataTypes/Request.cpp
 )
 target_include_directories(app_${PROJECT_NAME}
     PUBLIC include/ProjectFern/DataTypes/

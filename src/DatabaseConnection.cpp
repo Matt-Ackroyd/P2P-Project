@@ -294,6 +294,42 @@ void DatabaseConnection::getMessagesFromDB(TextChannel* channel, int amount) {
     sqlite3_close_v2(db);
 }
 
+MessageContainer DatabaseConnection::getMessageFromDB(std::string id) {
+    //std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql("SELECT (messageID, channelID, ServerID, authorID, contents) FROM Messages INNER JOIN TextChannels ON Messages.channelID=TextChannels.channelID WHERE messageID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only messages assosiated with this channel
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(id, uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    MessageContainer* message;
+    if (int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string id = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+        std::string channel = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 1));
+        std::string server = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 2));
+        std::string author = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 3));
+        std::string contents = (char*)sqlite3_column_text(stmt, 4);
+
+        message = &MessageContainer(DataTypes::MESSAGETYPE, server, channel, author, contents, id);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
+
+    if (message == nullptr) {
+        throw std::runtime_error("Message doesn't exist");
+    }
+
+    return *message;
+}
+
 void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
     std::lock_guard<std::mutex> lock(mtx);
 

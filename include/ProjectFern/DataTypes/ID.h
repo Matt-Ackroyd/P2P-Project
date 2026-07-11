@@ -14,7 +14,7 @@
 class ID {
 public:
     ID() = delete;
-
+    
     static std::string stringFromBytes(unsigned char* existingUUID);
     static void BytesFromString(std::string id, unsigned char* buffer); 
     static std::string GenerateNewID();

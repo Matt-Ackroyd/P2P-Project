@@ -1,4 +1,6 @@
 #include "DataTypes.h"
+#include "PrimaryClient.h"
+#include "DatabaseConnection.h"
 
 MessageContainer::MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageid) 
     : Container(datatype, (UUID_BYTE_SIZE*4 + sizeof(int) + message.length())) {
@@ -95,4 +97,32 @@ std::string* MessageContainer::getAuthor() {
 }
 std::string MessageContainer::getMessage() {
     return this->message;
+}
+
+void MessageContainer::onRequest(std::string serverID, std::string id, RemoteUser *requestee) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    Server* server = client->getServer(serverID);
+    TextChannel* channel = server->getChannel(id);
+
+    try {
+        MessageContainer message = DatabaseConnection::getMessageFromDB(id);
+        // Check requesting users perms
+        if (message.serverID != serverID) {
+            return;
+        }
+        
+        if (!server->knownUsers.contains(*requestee->getID())) { // If they dont belong to this server dont send them anything
+            return;
+        }
+
+        requestee->connection.sendEncrypted(message.getData(), message.getDataLen());
+
+
+    } catch (std::runtime_error e) {
+        return;
+    }
+
+    
+
 }

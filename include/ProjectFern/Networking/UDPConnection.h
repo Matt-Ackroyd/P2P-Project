@@ -8,9 +8,12 @@
 #include <deque>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "Packet.h"
 #include "Encryption.h"
+#include "Sync.h"
 
 class Server;
 class TextChannel;
@@ -60,4 +63,7 @@ public:
     int incomingSeqNum = 1;
     std::deque<Packet*> outgoingBuffer;
     std::deque<Packet*> incommingBuffer; 
+
+    std::unordered_map<std::string, SyncRequest*> syncRequests;
+    std::unordered_set<std::string> listOfRequestedIDs;
 };

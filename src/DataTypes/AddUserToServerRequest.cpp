@@ -3,7 +3,7 @@
 #include "RemoteUser.h"
 
 // Public contructor
-AddUserToServerRequest::AddUserToServerRequest(DataTypes datatype, RemoteUser* user, Server* server) 
+UserContainer::UserContainer(DataTypes datatype, RemoteUser* user, Server* server) 
 : Container(datatype, (UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(short int) + sizeof(bool))) {
     this->userID = *user->getID();
     this->serverID = *server->getID();
@@ -14,7 +14,7 @@ AddUserToServerRequest::AddUserToServerRequest(DataTypes datatype, RemoteUser* u
 }
 
 // Private Constructor
-AddUserToServerRequest::AddUserToServerRequest(std::string userID, std::string serverID, int contactAddress, short int contactPort, bool requiresRelay) : Container(DataTypes::EMPTY, 0) {
+UserContainer::UserContainer(std::string userID, std::string serverID, int contactAddress, short int contactPort, bool requiresRelay) : Container(DataTypes::EMPTY, 0) {
     this->userID = userID;
     this->serverID = serverID;
     this->contactAddress = contactAddress;
@@ -22,7 +22,7 @@ AddUserToServerRequest::AddUserToServerRequest(std::string userID, std::string s
     this->requiresRelay = requiresRelay;
 }
 
-void AddUserToServerRequest::serialize() {
+void UserContainer::serialize() {
     unsigned char uuid[UUID_BYTE_SIZE];
 
     // UserID
@@ -48,7 +48,7 @@ void AddUserToServerRequest::serialize() {
     offset += sizeof(this->requiresRelay);
 }
 
-AddUserToServerRequest AddUserToServerRequest::deserialize(unsigned char* serializedData) {
+UserContainer UserContainer::deserialize(unsigned char* serializedData) {
     // The dataType has been removed by now
     int offset = sizeof(DataTypes);
 
@@ -75,22 +75,22 @@ AddUserToServerRequest AddUserToServerRequest::deserialize(unsigned char* serial
     memcpy(&requiresRelay, serializedData+offset, sizeof(requiresRelay));
     offset += sizeof(requiresRelay);
 
-    return AddUserToServerRequest(userID, serverID, contactAddress, contactPort, requiresRelay);
+    return UserContainer(userID, serverID, contactAddress, contactPort, requiresRelay);
 }
 
-std::string AddUserToServerRequest::getServerID() {
+std::string UserContainer::getServerID() {
     return this->serverID;
 }
-std::string AddUserToServerRequest::getUserID() {
+std::string UserContainer::getUserID() {
     return this->userID;
 }
 
-int AddUserToServerRequest::getContactAddress() {
+int UserContainer::getContactAddress() {
     return contactAddress;
 }
-short int AddUserToServerRequest::getContactPort() {
+short int UserContainer::getContactPort() {
     return contactPort;
 }
-bool AddUserToServerRequest::getRelayRequired() {
+bool UserContainer::getRelayRequired() {
     return this->requiresRelay;
 }

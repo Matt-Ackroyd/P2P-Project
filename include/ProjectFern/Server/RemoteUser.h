@@ -10,11 +10,13 @@ class RemoteUser {
 public:
     RemoteUser(std::string id);
     ~RemoteUser();
-    std::string* getID();
     UDPConnection connection;
 
     std::string Username = "Unknown";
     bool requiresRelay;
     int contactAddress;
     short int contactPort;
+
+    std::string* getID();
+    static void onRequest(std::string serverID, std::string id, RemoteUser *requestee);
 };

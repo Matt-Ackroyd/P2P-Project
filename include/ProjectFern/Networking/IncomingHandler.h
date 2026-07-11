@@ -18,6 +18,7 @@
 #include "ML-KEM_Handshake.h"
 #include "OutgoingHandler.h"
 #include "RelayClient.h"
+#include "Sync.h"
 
 #define MAXLINE 3000
 

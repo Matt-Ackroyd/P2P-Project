@@ -20,4 +20,5 @@ public:
     void sendMessage(MessageContainer* message);
     
     Server* getServer();
+    static void onRequest(std::string serverID, std::string id, RemoteUser *requestee);
 };

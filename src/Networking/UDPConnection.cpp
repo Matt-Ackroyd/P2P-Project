@@ -139,13 +139,13 @@ int UDPConnection::newSeqNum() {
 }
 
 void UDPConnection::sendServer(Server* server) {
-    ServerContainer container(DataTypes::NEW_SERVER, server);
+    ServerContainer container(DataTypes::SERVER, server);
 
     this->sendEncrypted(container.getData(), container.getDataLen());
 }
 
 void UDPConnection::sendTextChannel(TextChannel* channel) {
-    TextChannelContainer container(DataTypes::NEW_TEXT_CHANNEL, channel);
+    TextChannelContainer container(DataTypes::TEXT_CHANNEL, channel);
 
     this->sendEncrypted(container.getData(), container.getDataLen());
 }
@@ -158,7 +158,7 @@ void UDPConnection::sendJoinRequest(std::string invitationCode) {
 }
 
 void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server) {
-    AddUserToServerRequest request(DataTypes::ADD_USER_TO_SERVER, user, server);
+    UserContainer request(DataTypes::USER, user, server);
 
     this->sendEncrypted(request.getData(), request.getDataLen());
 }

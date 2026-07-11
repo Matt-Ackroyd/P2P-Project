@@ -55,3 +55,11 @@ void Server::createNewTextChannel(std::string id) {
 void Server::loadChannel(TextChannel* channel) {
     this->knownChannels[*channel->getID()] = channel;
 }
+
+TextChannel *Server::getChannel(std::string id)
+{
+    if (!this->knownChannels .contains(id)) {
+        return nullptr;
+    }
+    return this->knownChannels[id];
+}

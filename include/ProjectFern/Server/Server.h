@@ -34,6 +34,8 @@ public:
     
     void loadChannel(TextChannel* channel);
 
+    TextChannel* getChannel(std::string id);
+
     // All known TextChannels within this server 
     std::unordered_map<std::string, TextChannel*> knownChannels;
     std::unordered_map<std::string, RemoteUser*> knownUsers;

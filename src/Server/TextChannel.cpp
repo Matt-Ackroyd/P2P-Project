@@ -33,3 +33,27 @@ void TextChannel::sendMessage(MessageContainer* message) {
 Server *TextChannel::getServer() {
     return this->ownedByThisServer;
 }
+
+
+
+
+
+void TextChannel::onRequest(std::string serverID, std::string id, RemoteUser* requestee) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    Server* server = client->getServer(serverID);
+    TextChannel* channel = server->getChannel(id);
+
+    if (channel == nullptr) {
+        return;
+    }
+
+    // Check requesting users perms
+    if (!server->knownUsers.contains(*requestee->getID())) { // If they dont belong to this server dont send them anything
+        return;
+    }
+
+    TextChannelContainer outgoing(DataTypes::TEXT_CHANNEL, channel);
+    requestee->connection.sendEncrypted(outgoing.getData(), outgoing.getDataLen());
+
+}
