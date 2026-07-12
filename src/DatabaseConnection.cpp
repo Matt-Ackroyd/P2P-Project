@@ -22,14 +22,15 @@ void DatabaseConnection::startup() {
 
 
     sql = "CREATE TABLE Servers("
-            "serverID BLOB(16) PRIMARY KEY    NOT NULL);";
+            "serverID BLOB(16) PRIMARY KEY    NOT NULL,"
+            "UNIQUE(serverID));";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);  
 
     sql = "CREATE TABLE TextChannels("
             "channelID BLOB(16) PRIMARY KEY        NOT NULL, "
             "serverID  BLOB(16) NOT NULL,"
             "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
-            ");";
+            "UNIQUE(channelID));";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
     sql = "CREATE TABLE Messages("
@@ -40,7 +41,7 @@ void DatabaseConnection::startup() {
             "timestamp  UNSIGNED BIG INT         NOT NULL,"
             "FOREIGN KEY(authorID) REFERENCES Users(userID),"
             "FOREIGN KEY(channelID) REFERENCES Channels(channelID)"
-        "); ";
+            "UNIQUE(messageID));";
 
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
@@ -56,7 +57,7 @@ void DatabaseConnection::startup() {
             "invitationCode BLOB(16) PRIMARY KEY        NOT NULL, "
             "serverID  BLOB(16) NOT NULL,"
             "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
-            ");";
+            "UNIQUE(invitationCode));";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
     // Foren key table for Roles & User Role Links to servers

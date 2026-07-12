@@ -30,9 +30,9 @@ protected:
     
 
 public:
-    Container(DataTypes datatype, int datalen) {
-        this->datatype = datatype;
-        this->datalen = sizeof(DataTypes) + datalen;
+    Container(DataTypes type, int len) {
+        this->datatype = type;
+        this->datalen = sizeof(DataTypes) + len;
 
         if (datatype != DataTypes::EMPTY) {
             this->data = new unsigned char[this->datalen];
