@@ -18,6 +18,19 @@ void OutgoingHandler::OutgoingLoop() {
 
         for (auto& userid: client->onlineConnections) {
             RemoteUser* recipient = client->getUser(userid);
+
+            // For each server you share with this user, send a sync request for that server
+            if (recipient->connection.synced == false) {
+                for (auto& [serverid, server]: client->allServers) {
+                    if (server->knownUsers.contains(*recipient->getID())) {
+                        recipient->connection.sendSyncRequest(server);
+                    }
+                }
+                recipient->connection.synced = true;
+            }
+
+
+            // Send Any Outgoing packets
             for (auto& packet: recipient->connection.outgoingBuffer) {
 
                 // Add timers for each packet

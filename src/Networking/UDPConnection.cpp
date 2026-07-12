@@ -169,4 +169,19 @@ void UDPConnection::resetConnection()
     this->incommingBuffer.clear();
     this->outgoingSeqNum = 1;
     this->incomingSeqNum = 1;
+    this->synced = false;
+}
+
+
+void UDPConnection::sendSyncRequest(Server* server) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    SyncRequest channelRequest(*server->getID(), DataTypes::TEXT_CHANNEL, 0, 100);
+    this->sendEncrypted(channelRequest.getData(), channelRequest.getDataLen());
+
+    SyncRequest userRequest(*server->getID(), DataTypes::USER, 0, 100);
+    this->sendEncrypted(channelRequest.getData(), channelRequest.getDataLen());
+
+    SyncRequest messageRequest(*server->getID(), DataTypes::MESSAGETYPE, 0, 100);
+    this->sendEncrypted(channelRequest.getData(), channelRequest.getDataLen());
 }

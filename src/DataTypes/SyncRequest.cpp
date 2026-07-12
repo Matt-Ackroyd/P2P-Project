@@ -11,7 +11,7 @@ SyncRequest::SyncRequest(std::string syncID, std::string serverID, DataTypes obj
 }
 
 SyncRequest::SyncRequest(std::string serverID, DataTypes objectType, int rangeStart, int rangeEnd) : 
-Container(DataTypes::SYNC, sizeof(DataTypes)+UUID_BYTE_SIZE+sizeof(int)*2) {
+Container(DataTypes::SYNC_REQUEST, sizeof(DataTypes)+UUID_BYTE_SIZE+sizeof(int)*2) {
     this->syncID = ID::GenerateNewID();
     this->serverID = serverID;
     this->objectType = objectType;
@@ -93,7 +93,7 @@ int SyncRequest::getEndRange() {
 
 
 
-void onSyncRequest(unsigned char* decryptedData, RemoteUser* requestee) {
+void SyncRequest::onSyncRequest(unsigned char* decryptedData, RemoteUser* requestee) {
     PrimaryClient* client = PrimaryClient::getInstance();
     SyncRequest request = SyncRequest::deserialize(decryptedData);
 

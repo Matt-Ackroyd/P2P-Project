@@ -60,10 +60,14 @@ public:
     void sendAddUserToServerRequest(RemoteUser *user, Server *server);
     void resetConnection();
 
+    void sendSyncRequest(Server *server);
+
     int incomingSeqNum = 1;
     std::deque<Packet*> outgoingBuffer;
     std::deque<Packet*> incommingBuffer; 
 
     std::unordered_map<std::string, SyncRequest*> syncRequests;
     std::unordered_set<std::string> listOfRequestedIDs;
+    bool synced = false;
+
 };

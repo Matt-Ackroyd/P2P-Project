@@ -198,6 +198,12 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
         case DataTypes::TEXT_CHANNEL:
             handleNewTextChannel(output);
             break;
+        case DataTypes::SYNC_REQUEST:
+            SyncRequest::onSyncRequest(output, packetAuthor);
+            break;
+        case DataTypes::SYNC_RESPONSE:
+            SyncResponse::onSyncResponse(output, packetAuthor);
+            break;
     }
 }
 

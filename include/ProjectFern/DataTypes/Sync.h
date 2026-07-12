@@ -23,9 +23,8 @@ public:
     std::string getserverID();
     int getStartRange();
     int getEndRange();
+    static void onSyncRequest(unsigned char *decryptedData, RemoteUser *requestee);
 };
-
-
 
 class SyncResponse : public Container {
 private:
@@ -40,11 +39,13 @@ public:
     static SyncResponse generateResponse(SyncRequest* request);
     static SyncResponse deserialize(unsigned char *serializedData);
 
-    void onSyncResponse(unsigned char *decryptedData, RemoteUser *sender);
-
-    static std::vector<std::string> getSyncFromDB(std::string sql, std::string serverID, int rangeStart, int rangeEnd);
-    bool doesDBcontain(std::string sql, std::string id, std::string serverID);
-
     std::string getSyncID();
     std::vector<std::string> getListOfIDs();
+
+
+    static void onSyncResponse(unsigned char *decryptedData, RemoteUser *sender);
+    static std::vector<std::string> getSyncFromDB(std::string sql, std::string serverID, int rangeStart, int rangeEnd);
+    static bool doesDBcontain(std::string sql, std::string id, std::string serverID);
+
+
 };

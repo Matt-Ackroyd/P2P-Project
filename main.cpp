@@ -45,8 +45,6 @@ int main(int argc, char *argv[])
     // TextChannel* t4 = new TextChannel();
     // test2->knownChannels[t4->getID()] = t4;
     
-    SyncRequest asd = SyncRequest("60fecd1c5ac4c0184afcaa256893f0c8", DataTypes::MESSAGETYPE, 0, 100);
-    SyncResponse::generateResponse(&asd);
 
     DatabaseConnection::startup();
     DatabaseConnection::getUsersFromDB();

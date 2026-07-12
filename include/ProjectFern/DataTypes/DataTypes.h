@@ -16,7 +16,8 @@ enum DataTypes {
     USER,
     JOIN_REQUEST,
     REQUEST,
-    SYNC,
+    SYNC_REQUEST,
+    SYNC_RESPONSE,
     DELETED
 };
 

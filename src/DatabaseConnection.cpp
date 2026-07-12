@@ -310,7 +310,7 @@ MessageContainer DatabaseConnection::getMessageFromDB(std::string id) {
     ID::BytesFromString(id, uuid);
     sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
 
-    MessageContainer* message;
+    MessageContainer message(EMPTY, "", "", "", "");
     if (int ret = sqlite3_step(stmt) == SQLITE_ROW) {
         std::string id = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
         std::string channel = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 1));
@@ -318,16 +318,16 @@ MessageContainer DatabaseConnection::getMessageFromDB(std::string id) {
         std::string author = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 3));
         std::string contents = (char*)sqlite3_column_text(stmt, 4);
 
-        message = &MessageContainer(DataTypes::MESSAGETYPE, server, channel, author, contents, id);
+        message = MessageContainer(DataTypes::MESSAGETYPE, server, channel, author, contents, id);
     }
     sqlite3_finalize(stmt);
     sqlite3_close_v2(db);
 
-    if (message == nullptr) {
+    if (*message.getAuthor() == "") {
         throw std::runtime_error("Message doesn't exist");
     }
 
-    return *message;
+    return message;
 }
 
 void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
