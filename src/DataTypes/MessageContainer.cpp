@@ -103,12 +103,11 @@ void MessageContainer::onRequest(std::string serverID, std::string id, RemoteUse
     PrimaryClient* client = PrimaryClient::getInstance();
 
     Server* server = client->getServer(serverID);
-    TextChannel* channel = server->getChannel(id);
 
     try {
-        MessageContainer message = DatabaseConnection::getMessageFromDB(id);
+        MessageContainer* message = DatabaseConnection::getMessageFromDB(id);
         // Check requesting users perms
-        if (message.serverID != serverID) {
+        if (message->serverID != serverID) {
             return;
         }
         
@@ -116,7 +115,9 @@ void MessageContainer::onRequest(std::string serverID, std::string id, RemoteUse
             return;
         }
 
-        requestee->connection.sendEncrypted(message.getData(), message.getDataLen());
+        requestee->connection.sendEncrypted(message->getData(), message->getDataLen());
+
+        delete message;
 
 
     } catch (std::runtime_error e) {

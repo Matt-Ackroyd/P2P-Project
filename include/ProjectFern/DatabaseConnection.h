@@ -18,7 +18,7 @@ public:
     static void addMessageToDB(TextChannel *channel, MessageContainer *message);
     static void getMessagesFromDB(TextChannel *channel, int amount);
 
-    static MessageContainer getMessageFromDB(std::string id);
+    static MessageContainer* getMessageFromDB(std::string id);
 
     static void addUserToServerDB(RemoteUser * user, Server * server);
 

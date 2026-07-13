@@ -82,6 +82,7 @@ private:
     int messageLength;
     void serialize();
     
+    bool destoryOnSend;
 public:
     MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageID = ""); 
     static MessageContainer* deserialize(unsigned char* data);
