@@ -5,7 +5,7 @@
 
 
 // Public Constructor
-Request::Request(std::string serverID, std::string requestedID, DataTypes requestedDatatype) : Container(DataTypes::REQUEST, sizeof(DataTypes) + UUID_BYTE_SIZE) {
+Request::Request(std::string serverID, std::string requestedID, DataTypes requestedDatatype) : Container(DataTypes::REQUEST, sizeof(DataTypes) + UUID_BYTE_SIZE*2) {
     this->serverID = serverID;
     this->requestedID = requestedID;
     this->requestedDatatype = requestedDatatype;

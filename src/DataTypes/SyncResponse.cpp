@@ -164,9 +164,9 @@ void SyncResponse::onSyncResponse(unsigned char* decryptedData, RemoteUser* send
             sender->connection.sendEncrypted(request.getData(), request.getDataLen());
             sender->connection.listOfRequestedIDs.emplace(id);
         }
-
-        delete syncrequest;
     }
+    
+    delete syncrequest;
 }
 
 
