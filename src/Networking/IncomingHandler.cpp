@@ -204,6 +204,9 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
         case DataTypes::SYNC_RESPONSE:
             SyncResponse::onSyncResponse(output, packetAuthor);
             break;
+        case DataTypes::REQUEST:
+            Request::onRequest(output, packetAuthor);
+            break;
     }
 }
 
