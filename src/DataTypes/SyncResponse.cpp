@@ -81,7 +81,9 @@ SyncResponse SyncResponse::generateResponse(SyncRequest* request) {
     }
 
     int size = ids.size()*UUID_BYTE_SIZE + UUID_BYTE_SIZE + sizeof(int);
-    return SyncResponse(DataTypes::SYNC_RESPONSE, size, request->getSyncID(), ids);
+    SyncResponse response = SyncResponse(DataTypes::SYNC_RESPONSE, size, request->getSyncID(), ids);
+    response.serialize();
+    return response;
 }
 
 std::vector<std::string> SyncResponse::getSyncFromDB(std::string sql, std::string serverID, int rangeStart, int rangeEnd) {

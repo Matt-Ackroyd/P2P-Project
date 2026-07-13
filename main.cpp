@@ -44,6 +44,10 @@ int main(int argc, char *argv[])
 
     // TextChannel* t4 = new TextChannel();
     // test2->knownChannels[t4->getID()] = t4;
+
+    // SyncRequest asdasd = SyncRequest("1111111111111111", DataTypes::MESSAGETYPE, 0, 100);
+
+    // SyncRequest aasasddfgdg = SyncRequest::deserialize(asdasd.getData());
     
 
     DatabaseConnection::startup();
