@@ -176,12 +176,16 @@ void UDPConnection::resetConnection()
 void UDPConnection::sendSyncRequest(Server* server) {
     PrimaryClient* client = PrimaryClient::getInstance();
 
-    SyncRequest channelRequest(*server->getID(), DataTypes::TEXT_CHANNEL, 0, 100);
-    this->sendEncrypted(channelRequest.getData(), channelRequest.getDataLen());
+    SyncRequest* channelRequest = new SyncRequest(*server->getID(), DataTypes::TEXT_CHANNEL, 0, 100);
+    this->sendEncrypted(channelRequest->getData(), channelRequest->getDataLen());
 
-    SyncRequest userRequest(*server->getID(), DataTypes::USER, 0, 100);
-    this->sendEncrypted(channelRequest.getData(), channelRequest.getDataLen());
+    SyncRequest* userRequest = new SyncRequest(*server->getID(), DataTypes::USER, 0, 100);
+    this->sendEncrypted(userRequest->getData(), userRequest->getDataLen());
 
-    SyncRequest messageRequest(*server->getID(), DataTypes::MESSAGETYPE, 0, 100);
-    this->sendEncrypted(channelRequest.getData(), channelRequest.getDataLen());
+    SyncRequest* messageRequest = new SyncRequest(*server->getID(), DataTypes::MESSAGETYPE, 0, 100);
+    this->sendEncrypted(messageRequest->getData(), messageRequest->getDataLen());
+
+    this->syncRequests[channelRequest->getSyncID()] = channelRequest;
+    this->syncRequests[userRequest->getSyncID()] = userRequest;
+    this->syncRequests[messageRequest->getSyncID()] = messageRequest;
 }
