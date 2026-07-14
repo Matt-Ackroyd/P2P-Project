@@ -1,5 +1,6 @@
 #pragma once
 #include "ID.h"
+#include "Encryption.h"
 
 #define SIGNITURE_SIZE 32
 
@@ -84,20 +85,24 @@ private:
     std::string author;
     std::string message;
     int messageLength;
+    unsigned char* signature = nullptr;
     void serialize();
     
-    bool destoryOnSend;
 public:
-    MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageID = ""); 
+    MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageID = "", unsigned char* sig = nullptr); 
     static MessageContainer* deserialize(unsigned char* data);
+    ~MessageContainer();
 
     std::string* getMessageID();
     std::string* getServerID();
     std::string* getChannelID();
     std::string* getAuthor();
     std::string getMessage();
+    unsigned char* getSignature();
 
-    static void onRequest(std::string serverID, std::string id, RemoteUser* requestee);
+    bool verify();
+
+    static void onRequest(std::string serverID, std::string id, RemoteUser *requestee);
 };
 
 // a class to contain file data along side its ID
@@ -129,7 +134,7 @@ private:
     int fileSize;
     std::string relativeFileLocation;
     // File Signiture
-    unsigned char signature[SIGNITURE_SIZE];
+    unsigned char* signature = nullptr;
 
     // Will not be serilized as this is ment for the original person who uploaded the file so we dont copy to the relitive path
     std::string localFileLocation;
@@ -138,6 +143,8 @@ public:
     FileIndicator(std::string relativePath, int fileSize, std::string serverID, 
         unsigned char* signature, std::string localPath = "", std::string id = "", DataTypes type = DataTypes::FILE_INDICATOR);
     static FileIndicator deserialize(unsigned char* serializedData);
+
+    ~FileIndicator();
 
     static void onAddRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
     static void onRemoveRequest(std::string serverID, std::string fileID, RemoteUser *requestee);

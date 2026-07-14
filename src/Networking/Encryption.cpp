@@ -200,6 +200,7 @@ EVP_PKEY* getDSAkeyFromFile() {
         unsigned char privateKey[4896];
 
         size_t len;
+        EVP_PKEY_get_raw_private_key(pkey, NULL, &len);
         EVP_PKEY_get_raw_private_key(pkey, privateKey, &len);
         ConfigLoader::WriteBinaryFile("Configs/PrimaryClient/DSAkey.bin", (char*)privateKey, len);
         
@@ -208,7 +209,39 @@ EVP_PKEY* getDSAkeyFromFile() {
         unsigned char rawprivateKey[4896];
         ConfigLoader::ReadBinaryFile("Configs/PrimaryClient/DSAkey.bin", (char*)rawprivateKey, 4896);
 
-        pkey = EVP_PKEY_new_raw_private_key_ex(NULL, "ML-DSA-87", NULL, rawprivateKey, ML_KEM_KEYLENGTH);
+        pkey = EVP_PKEY_new_raw_private_key_ex(NULL, "ML-DSA-87", NULL, rawprivateKey, ML_DSA_87_PRIVATE_KEY_BYTE_SIZE);
     }
     return pkey;
+}
+
+
+void signMessage(EVP_PKEY *key, unsigned char *msg, size_t msg_len, unsigned char* signatureBuffer) {
+    size_t sig_len;
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_sign_message_init(ctx, sig_alg, NULL);
+    EVP_PKEY_sign(ctx, signatureBuffer, &sig_len, msg, msg_len);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+}
+
+
+bool verifyMessage(EVP_PKEY *key, unsigned char* sig, unsigned char *msg, size_t msg_len) {
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_verify_message_init(ctx, sig_alg, NULL);
+
+    int ret = EVP_PKEY_verify(ctx, sig, ML_DSA_87_SIGNATURE_BYTE_SIZE, msg, msg_len);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+
+    if (ret == 1) {
+        return true;
+    }
+    return false;
 }

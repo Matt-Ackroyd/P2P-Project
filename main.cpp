@@ -48,6 +48,10 @@ int main(int argc, char *argv[])
     // SyncRequest asdasd = SyncRequest("1111111111111111", DataTypes::MESSAGETYPE, 0, 100);
 
     // SyncRequest aasasddfgdg = SyncRequest::deserialize(asdasd.getData());
+
+    unsigned char buffer[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    signMessage(client->getDSAkey(), (unsigned char*)"Hia", 3, buffer);
+    int ret = verifyMessage(client->getDSAkey(), buffer, (unsigned char*)"Hia", 3);
     
 
     DatabaseConnection::startup();

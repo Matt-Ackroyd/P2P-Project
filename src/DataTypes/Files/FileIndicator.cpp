@@ -3,16 +3,20 @@
 #include "DatabaseConnection.h"
 
 FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, unsigned char* signature, std::string localPath, 
-     std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(int) + relativeFileLocation.length() + SIGNITURE_SIZE){
+     std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(int) + relativeFileLocation.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE){
     this->fileID = ID::clean(id);
     this->serverID = serverID;
     this->fileSize = fileSize;
     this->relativeFileLocation = relativePath;
-    memcpy(this->signature, signature, SIGNITURE_SIZE);
+    this->signature = signature;
 
     if (type == DataTypes::FILE_INDICATOR) {
         serialize();
     }
+}
+
+FileIndicator::~FileIndicator() {
+    delete[] this->signature;
 }
 
 void FileIndicator::serialize() {
@@ -28,9 +32,9 @@ void FileIndicator::serialize() {
     memcpy(data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
-    // File Hash
-    memcpy(data+offset, this->signature, SIGNITURE_SIZE);
-    offset += SIGNITURE_SIZE;
+    // File sig
+    memcpy(data+offset, this->signature, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
 
     // FileSize
     memcpy(data+offset, &this->fileSize, sizeof(this->fileSize));
@@ -58,9 +62,9 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     offset += UUID_BYTE_SIZE;
 
     // Signiture
-    unsigned char signiture[SIGNITURE_SIZE];
-    memcpy(signiture, serializedData+offset, SIGNITURE_SIZE);
-    offset += SIGNITURE_SIZE;
+    unsigned char* signiture = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    memcpy(signiture, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
 
     // File Size
     int filelen;

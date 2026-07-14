@@ -40,6 +40,7 @@ void DatabaseConnection::startup() {
             "authorID   BLOB(16)    NOT NULL,"
             "contents   TEXT        NOT NULL,"
             "timestamp  UNSIGNED BIG INT         NOT NULL,"
+            "signature  BLOB(4627)         NOT NULL,"
             "FOREIGN KEY(authorID) REFERENCES Users(userID),"
             "FOREIGN KEY(channelID) REFERENCES Channels(channelID)"
             "UNIQUE(messageID));";
@@ -92,7 +93,7 @@ void DatabaseConnection::addUserToDB(RemoteUser* user) {
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
-    std::string sql = "INSERT INTO Users (userID, username, contactAddress, contactPort, relayRequired, secret) VALUES (?, ?, ?, ?, ?, ?);";
+    std::string sql = "INSERT INTO Users (userID, username, contactAddress, contactPort, relayRequired, secret, public_ML_DSA_key) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     sqlite3_stmt* stmt; // will point to prepared stamement object
     exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
@@ -106,6 +107,7 @@ void DatabaseConnection::addUserToDB(RemoteUser* user) {
     sqlite3_bind_int(stmt, 4, user->contactPort);
     sqlite3_bind_int(stmt, 5, user->requiresRelay);
     sqlite3_bind_blob(stmt, 6, user->connection.getSharedSecret(), SHAW_256_HASH_SIZE, nullptr);
+    sqlite3_bind_blob(stmt, 7, user->connection.DSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE, nullptr);
 
     int ret = sqlite3_step(stmt);
     
@@ -139,6 +141,11 @@ void DatabaseConnection::getUsersFromDB() {
             unsigned char* secret = new unsigned char[SHAW_256_HASH_SIZE];
             memcpy(secret, (unsigned char*)sqlite3_column_blob(stmt, 5), SHAW_256_HASH_SIZE);
             user->connection.setSharedSecret(secret);
+        }
+
+        if (sqlite3_column_type(stmt, 6) != SQLITE_NULL) {
+            user->connection.DSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, 
+                (unsigned char*)sqlite3_column_blob(stmt, 6), ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);;
         }
 
         PrimaryClient::getInstance()->loadUser(user);
@@ -252,8 +259,8 @@ void DatabaseConnection::addMessageToDB(TextChannel* channel, MessageContainer* 
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
     char* errMsg;
-    std::string sql = "INSERT INTO Messages (messageID, channelID, authorID, contents, timestamp) VALUES ("
-        "?, ?, ?, ?, ?"
+    std::string sql = "INSERT INTO Messages (messageID, channelID, authorID, contents, timestamp, signature) VALUES ("
+        "?, ?, ?, ?, ?, ?"
     ");";
 
     sqlite3_stmt* stmt; // will point to prepared stamement object
@@ -272,10 +279,10 @@ void DatabaseConnection::addMessageToDB(TextChannel* channel, MessageContainer* 
     ID::BytesFromString(*message->getAuthor(), authoruuid);
     sqlite3_bind_blob(stmt, 3, (char*)authoruuid, UUID_BYTE_SIZE, nullptr);      // AuthorID
 
-
     sqlite3_bind_text(stmt, 4, message->getMessage().c_str(), message->getMessage().length()+1, SQLITE_TRANSIENT); // Message Contents
     sqlite3_bind_int64(stmt, 5, ID::getTimestamp(*message->getMessageID()));                              // TimeStamp
     
+    sqlite3_bind_blob(stmt, 6, message->getSignature(), ML_DSA_87_SIGNATURE_BYTE_SIZE, nullptr);    // Signature
 
     int ret = sqlite3_step(stmt);
     
@@ -320,7 +327,7 @@ MessageContainer* DatabaseConnection::getMessageFromDB(std::string id) {
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
-    std::string sql("SELECT m.messageID, m.channelID, tc.serverID, m.authorID, m.contents "
+    std::string sql("SELECT m.messageID, m.channelID, tc.serverID, m.authorID, m.contents, m.signature "
                     "FROM Messages as m "
                     "INNER JOIN TextChannels as tc "
                     "ON m.channelID=tc.channelID "
@@ -344,7 +351,10 @@ MessageContainer* DatabaseConnection::getMessageFromDB(std::string id) {
         std::string author = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 3));
         std::string contents = (char*)sqlite3_column_text(stmt, 4);
 
-        message = new MessageContainer(DataTypes::MESSAGETYPE, server, channel, author, contents, id);
+        unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        memcpy(sig, (unsigned char*)sqlite3_column_blob(stmt, 5), ML_DSA_87_SIGNATURE_BYTE_SIZE);
+
+        message = new MessageContainer(DataTypes::MESSAGETYPE, server, channel, author, contents, id, sig);
     }
     sqlite3_finalize(stmt);
     sqlite3_close_v2(db);

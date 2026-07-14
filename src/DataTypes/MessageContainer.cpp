@@ -2,24 +2,37 @@
 #include "PrimaryClient.h"
 #include "DatabaseConnection.h"
 
-MessageContainer::MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageid) 
-    : Container(datatype, (UUID_BYTE_SIZE*4 + sizeof(int) + message.length())) {
+MessageContainer::MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageid, unsigned char* sig) 
+    : Container(datatype, (UUID_BYTE_SIZE*4 + sizeof(int) + message.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE)) {
     this->serverID = server;
     this->channelID = channel;
     this->author = author;
     this->message = message;
     this->messageLength = message.length();
     this->messageID = ID::clean(messageid);
+    this->signature = sig;
 
-    if (datatype != DataTypes::EMPTY) {
+    if (datatype == DataTypes::MESSAGETYPE) {
         serialize();
     }
     
 }
 
+MessageContainer::~MessageContainer() {
+    delete[] this->signature;
+}
+
 
 void MessageContainer::serialize() {
     unsigned char uuid[UUID_BYTE_SIZE];    
+
+    // Sign the message if this message is being sent out to someone and has not been signed yet
+    if (this->signature == nullptr) {
+        signMessage(PrimaryClient::getInstance()->getDSAkey(), (unsigned char*)this->message.data(), messageLength, this->data+offset);
+    } else {
+        memcpy(this->data+offset, this->signature, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    }
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
 
     // MessageID
     ID::BytesFromString(this->messageID, uuid);
@@ -54,6 +67,11 @@ MessageContainer* MessageContainer::deserialize(unsigned char* serializedData) {
     // The dataType has been removed by now
     int offset = sizeof(DataTypes);
 
+    // Signature
+    unsigned char* signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    memcpy(signature, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
+
     // MessageID
     std::string messageID = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
@@ -79,7 +97,7 @@ MessageContainer* MessageContainer::deserialize(unsigned char* serializedData) {
     std::string msg(reinterpret_cast<char const*>(serializedData+offset), msglen);
     offset += msglen;
 
-    return new MessageContainer(DataTypes::EMPTY, serverID, channelID, author, msg, messageID);
+    return new MessageContainer(DataTypes::EMPTY, serverID, channelID, author, msg, messageID, signature);
 }
 
 std::string* MessageContainer::getMessageID() {
@@ -97,6 +115,21 @@ std::string* MessageContainer::getAuthor() {
 }
 std::string MessageContainer::getMessage() {
     return this->message;
+}
+
+unsigned char *MessageContainer::getSignature() {
+    return this->signature;
+}
+
+bool MessageContainer::verify() {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    RemoteUser* author = client->getUser(this->author);
+
+    if (author == NULL || this->signature == nullptr) {
+        return false;
+    }
+
+    return verifyMessage(author->connection.DSAkey, this->signature, (unsigned char*)this->message.data(), messageLength);
 }
 
 void MessageContainer::onRequest(std::string serverID, std::string id, RemoteUser *requestee) {

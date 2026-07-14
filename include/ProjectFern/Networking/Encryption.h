@@ -41,3 +41,5 @@ void handleErrors();
 
 
 EVP_PKEY* getDSAkeyFromFile();
+void signMessage(EVP_PKEY *key, unsigned char *msg, size_t msg_len, unsigned char* signatureBuffer);
+bool verifyMessage(EVP_PKEY *key, unsigned char* sig, unsigned char *msg, size_t msg_len);

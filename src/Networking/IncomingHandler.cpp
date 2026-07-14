@@ -314,6 +314,11 @@ void IncomingHandler::handleAck(Packet* packet) {
 
 void IncomingHandler::handleMessage(unsigned char* decryptedData) {
     MessageContainer* msg = MessageContainer::deserialize(decryptedData);
+
+    if (!msg->verify()) {
+        delete msg;
+        return;
+    }
     
     PrimaryClient* client = PrimaryClient::getInstance();
 
