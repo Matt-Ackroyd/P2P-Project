@@ -80,7 +80,7 @@ void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
 
 void UDPConnection::sendHandshakeRequest() {
     PrimaryClient* client = PrimaryClient::getInstance();
-    Packet* requestPacket = ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->getClientID(), newSeqNum());
+    Packet* requestPacket = ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->getClientID(), newSeqNum(), client->getDSAkey());
     addPacketToOutgoingQueue(requestPacket);
 }
 

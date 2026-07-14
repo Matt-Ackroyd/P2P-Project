@@ -11,6 +11,7 @@ public:
     RemoteUser(std::string id);
     ~RemoteUser();
     UDPConnection connection;
+    
 
     std::string Username = "Unknown";
     bool requiresRelay;

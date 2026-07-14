@@ -220,7 +220,7 @@ void IncomingHandler::handleConnectionRequest(Packet *packet) {
     }
     
     unsigned char* hashOutput = new unsigned char[SHAW_256_HASH_SIZE];
-    Packet* responsePacket = ML_KEM_Handshake::onRequest(packet, client->getClientID(), hashOutput, userRequesting->connection.newSeqNum());
+    Packet* responsePacket = ML_KEM_Handshake::onRequest(packet, client->getClientID(), hashOutput, userRequesting->connection.newSeqNum(), client->getDSAkey(), userRequesting->connection.DSAkey);
     userRequesting->connection.addPacketToOutgoingQueue(responsePacket);
 
     // set shared secret
@@ -236,7 +236,7 @@ void IncomingHandler::handleConnectionResponse(Packet *packet) {
     }
 
     unsigned char* hashOutput = new unsigned char[SHAW_256_HASH_SIZE];
-    ML_KEM_Handshake::onReply(packet, client->getKeyPair(), userRequesting->connection.handshakeRandBuffer, hashOutput);
+    ML_KEM_Handshake::onReply(packet, client->getKeyPair(), userRequesting->connection.handshakeRandBuffer, hashOutput, userRequesting->connection.DSAkey);
     
     // set shared secret
     userRequesting->connection.setSharedSecret(hashOutput);

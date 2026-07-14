@@ -31,6 +31,8 @@ public:
     UDPConnection();
     ~UDPConnection();
 
+    EVP_PKEY* DSAkey;
+
     std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> lastHeardFrom = std::chrono::system_clock::now();
     std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> sendCooldown = std::chrono::system_clock::now();
     bool connected = false;

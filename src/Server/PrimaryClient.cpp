@@ -79,6 +79,11 @@ EVP_PKEY* PrimaryClient::getKeyPair() {
     return this->keyPair;
 }
 
+EVP_PKEY *PrimaryClient::getDSAkey()
+{
+    return this->ML_DSAkey;
+}
+
 std::string* PrimaryClient::getClientID() {
     return &this->clientID;
 }

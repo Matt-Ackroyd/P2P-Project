@@ -2,7 +2,7 @@
 #include "PrimaryClient.h"
 #include "DatabaseConnection.h"
 
-FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, unsigned char* signature, std::string localPath = "", 
+FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, unsigned char* signature, std::string localPath, 
      std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(int) + relativeFileLocation.length() + SIGNITURE_SIZE){
     this->fileID = ID::clean(id);
     this->serverID = serverID;

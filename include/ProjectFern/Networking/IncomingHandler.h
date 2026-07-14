@@ -20,7 +20,7 @@
 #include "RelayClient.h"
 #include "Sync.h"
 
-#define MAXLINE 3000
+#define MAXLINE 8192
 
 class IncomingHandler {
     public:     

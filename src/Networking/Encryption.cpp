@@ -1,4 +1,6 @@
 #include "Encryption.h"
+#include <filesystem>
+#include "ConfigLoader.h"
 
 // uses a GCM block cipher to encrypt plaintext into the ciphertext, returns the ciphertext length
 int symmetricEncryption(unsigned char *plaintext, int plaintext_len,
@@ -184,4 +186,29 @@ void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* ra
 
 void handleErrors() {
     throw std::runtime_error("Encrypt/Decrypt Failure\n");
+}
+
+
+EVP_PKEY* getDSAkey() {
+    EVP_PKEY* pkey;
+
+    std::filesystem::path path("Configs/PrimaryClient/DSAkey.bin");
+    if (std::filesystem::exists(path)) {
+        EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-87", NULL);
+        pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-87");
+
+        unsigned char privateKey[4896];
+
+        size_t len;
+        EVP_PKEY_get_raw_private_key(pkey, privateKey, &len);
+        ConfigLoader::WriteBinaryFile("Configs/PrimaryClient/DSAkey.bin", (char*)privateKey, len);
+        
+    } else {    
+
+        unsigned char rawprivateKey[4896];
+        ConfigLoader::ReadBinaryFile("Configs/PrimaryClient/DSAkey.bin", (char*)rawprivateKey, 4896);
+
+        pkey = EVP_PKEY_new_raw_private_key_ex(NULL, "ML-DSA-87", NULL, rawprivateKey, ML_KEM_KEYLENGTH);
+    }
+    return pkey;
 }

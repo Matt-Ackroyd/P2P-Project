@@ -16,6 +16,7 @@ void DatabaseConnection::startup() {
                       "contactPort     INT(2)       NOT NULL, "
                       "relayRequired   BOOLEAN      NOT NULL, "
                       "secret          BLOB(32),"
+                      "public_ML_DSA_key BLOB(2592),"
                       "UNIQUE(userID));";
     char* messaggeError;
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);

@@ -34,6 +34,8 @@ private:
     // pointer to public & private keys 
     EVP_PKEY *keyPair;
 
+    EVP_PKEY* ML_DSAkey;
+
     // Static pointer to the Singleton instance
     static PrimaryClient* instancePtr;
     // Mutex to ensure thread safety
@@ -49,6 +51,7 @@ public:
     ~PrimaryClient();
     static PrimaryClient* getInstance();
     EVP_PKEY* getKeyPair();
+    EVP_PKEY* getDSAkey();
 
     std::string* getClientID();
 

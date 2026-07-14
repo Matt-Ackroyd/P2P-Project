@@ -59,7 +59,7 @@ void RelayClient::RegisterUser(std::string relayAddr, int relayPort) {
     serverAddress.sin_addr.s_addr = inet_addr(relayAddr.c_str());
 
     unsigned char myRand[ML_KEM_HANDSHAKE_RANDSIZE];
-    Packet* packet = ML_KEM_Handshake::startHandshake(myRand, PrimaryClient::getInstance()->getKeyPair(), PrimaryClient::getInstance()->getClientID(), -1);
+    Packet* packet = ML_KEM_Handshake::startHandshake(myRand, PrimaryClient::getInstance()->getKeyPair(), PrimaryClient::getInstance()->getClientID(), -1, NULL);
 
     //Save Rand To File
     ConfigLoader::WriteBinaryFile(KNOWN_RELAY_PATH + relayAddr + "-" + std::to_string(relayPort) + "/" + "random.bin", (char*)myRand, ML_KEM_HANDSHAKE_RANDSIZE);
@@ -77,7 +77,7 @@ void RelayClient::onRelayHandshakeResponse(Packet* incomingPacket, sockaddr_in a
     ConfigLoader::ReadBinaryFile(KNOWN_RELAY_PATH + ip + "-" + std::to_string(port) + "/" + "random.bin", (char*)myRand, ML_KEM_HANDSHAKE_RANDSIZE);
 
     unsigned char sharedSecretBuffer[SHAW_256_HASH_SIZE];
-    ML_KEM_Handshake::onReply(incomingPacket, PrimaryClient::getInstance()->getKeyPair(), myRand, sharedSecretBuffer);
+    ML_KEM_Handshake::onReply(incomingPacket, PrimaryClient::getInstance()->getKeyPair(), myRand, sharedSecretBuffer, NULL);
 
     RelayClient::SendRelayRegisterRequest(ip, port, sharedSecretBuffer);
 }

@@ -60,7 +60,7 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
 
 void RelayServer::EstablishSharedSecret(Packet* handshakePacket, SOCKTYPE socketfd, sockaddr_in cliaddr) {
     unsigned char secret[SHAW_256_HASH_SIZE];
-    Packet* returnPacket = ML_KEM_Handshake::onRequest(handshakePacket, NULL, secret, -1, PacketType::RELAY_HANDSHAKE_RESPONSE);
+    Packet* returnPacket = ML_KEM_Handshake::onRequest(handshakePacket, NULL, secret, -1, NULL, NULL, PacketType::RELAY_HANDSHAKE_RESPONSE);
 
     // Store Secret
     std::filesystem::path path = UserPath(handshakePacket->packetAuthorID);
