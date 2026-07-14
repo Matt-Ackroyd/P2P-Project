@@ -189,11 +189,11 @@ void handleErrors() {
 }
 
 
-EVP_PKEY* getDSAkey() {
+EVP_PKEY* getDSAkeyFromFile() {
     EVP_PKEY* pkey;
 
     std::filesystem::path path("Configs/PrimaryClient/DSAkey.bin");
-    if (std::filesystem::exists(path)) {
+    if (!std::filesystem::exists(path)) {
         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-87", NULL);
         pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-87");
 

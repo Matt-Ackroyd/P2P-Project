@@ -27,6 +27,7 @@ PrimaryClient::~PrimaryClient() {
 int PrimaryClient::init() {
     // Innital Values 
     this->keyPair = NULL;
+    this->ML_DSAkey = getDSAkeyFromFile();
     // Load from file later
 
     

@@ -38,3 +38,6 @@ int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output
 void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* rand1, unsigned char* rand2, unsigned char* output);
 
 void handleErrors();
+
+
+EVP_PKEY* getDSAkeyFromFile();
