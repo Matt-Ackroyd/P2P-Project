@@ -20,6 +20,7 @@ Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* 
     // DSA-PUBLIC KEY
     if (yourDSAkey != NULL) {
         size_t DSAlen = ML_DSA_87_PUBLIC_KEY_BYTE_SIZE;
+        EVP_PKEY_get_raw_public_key(yourDSAkey, NULL, &DSAlen);
         EVP_PKEY_get_raw_public_key(yourDSAkey, data+offset, &DSAlen);
     }
     
@@ -90,6 +91,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
     // DSA-PUBLIC KEY
     if (yourDSAkey != NULL) {
         size_t DSAlen = ML_DSA_87_PUBLIC_KEY_BYTE_SIZE;
+        EVP_PKEY_get_raw_public_key(yourDSAkey, NULL, &DSAlen);
         EVP_PKEY_get_raw_public_key(yourDSAkey, returnBuffer+offset, &DSAlen);
     }
 
