@@ -74,7 +74,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
     // Hash the premaster with rand values + a salt
     handshakeHash(secret, secretlen, selfRand, rand, outputedSecret);
 
-    if (theirDSAkey != NULL) {
+    if (type != PacketType::RELAY_HANDSHAKE_RESPONSE) {
         theirDSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, rawDSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
     }
 
@@ -89,7 +89,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
     offset = ML_KEM_KEYLENGTH;
 
     // DSA-PUBLIC KEY
-    if (yourDSAkey != NULL) {
+    if (type != PacketType::RELAY_HANDSHAKE_RESPONSE) {
         size_t DSAlen = ML_DSA_87_PUBLIC_KEY_BYTE_SIZE;
         EVP_PKEY_get_raw_public_key(yourDSAkey, NULL, &DSAlen);
         EVP_PKEY_get_raw_public_key(yourDSAkey, returnBuffer+offset, &DSAlen);
@@ -141,7 +141,7 @@ int ML_KEM_Handshake::onReply(Packet* packet, EVP_PKEY* KeyPair, unsigned char* 
     // Hash the premaster with rand values + a salt
     handshakeHash(sharedSecret, sLen, rand, selfRandom, outputedSecret);
 
-    if (theirDSAkey != NULL) {
+    if (packet->getPacketType() != PacketType::RELAY_HANDSHAKE_RESPONSE) {
         theirDSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, rawDSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
     }
     return 1;
