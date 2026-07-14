@@ -45,7 +45,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
     unsigned char rawDSAkey[ML_DSA_87_PUBLIC_KEY_BYTE_SIZE];
     // Do not copy DSA key if this is a relay handshake response
     if (type != PacketType::RELAY_HANDSHAKE_RESPONSE) {
-        memcpy(rawDSAkey, packet->getData()+offset, ML_KEM_KEYLENGTH);
+        memcpy(rawDSAkey, packet->getData()+offset, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
     }
 
 
@@ -119,7 +119,7 @@ int ML_KEM_Handshake::onReply(Packet* packet, EVP_PKEY* KeyPair, unsigned char* 
     unsigned char rawDSAkey[ML_DSA_87_PUBLIC_KEY_BYTE_SIZE];
     // If this came from a relay they DID not send a DSA key so dont try copying it
     if (packet->getPacketType() != PacketType::RELAY_HANDSHAKE_RESPONSE) {
-        memcpy(rawDSAkey, packet->getData()+offset, ML_KEM_KEYLENGTH);
+        memcpy(rawDSAkey, packet->getData()+offset, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
     }
 
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, KeyPair, NULL);
