@@ -28,7 +28,7 @@ Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* 
     return packet;
 }
 
-Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigned char* outputedSecret, int seqenceNumber, EVP_PKEY* yourDSAkey, EVP_PKEY* theirDSAkey, PacketType type) {
+Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigned char* outputedSecret, int seqenceNumber, EVP_PKEY* yourDSAkey, EVP_PKEY** theirDSAkey, PacketType type) {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey;
     size_t secretlen = 0, outlen = 0;
@@ -75,7 +75,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
     handshakeHash(secret, secretlen, selfRand, rand, outputedSecret);
 
     if (type != PacketType::RELAY_HANDSHAKE_RESPONSE) {
-        theirDSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, rawDSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
+        *theirDSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, rawDSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
     }
 
     // Return packet setup
@@ -104,7 +104,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
 
 
 
-int ML_KEM_Handshake::onReply(Packet* packet, EVP_PKEY* KeyPair, unsigned char* selfRandom, unsigned char* outputedSecret, EVP_PKEY* theirDSAkey) {
+int ML_KEM_Handshake::onReply(Packet* packet, EVP_PKEY* KeyPair, unsigned char* selfRandom, unsigned char* outputedSecret, EVP_PKEY** theirDSAkey) {
     EVP_PKEY_CTX *ctx = NULL;
     
     // Get pre-master & Random Values
@@ -142,7 +142,7 @@ int ML_KEM_Handshake::onReply(Packet* packet, EVP_PKEY* KeyPair, unsigned char* 
     handshakeHash(sharedSecret, sLen, rand, selfRandom, outputedSecret);
 
     if (packet->getPacketType() != PacketType::RELAY_HANDSHAKE_RESPONSE) {
-        theirDSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, rawDSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
+        *theirDSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, rawDSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
     }
     return 1;
 }
