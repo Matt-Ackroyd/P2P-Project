@@ -10,6 +10,7 @@
 #include "ID.h"
 
 #define MAX_RESEND_AMOUNT 10
+#define MAXLINE 8192
 
 enum PacketType
 {
