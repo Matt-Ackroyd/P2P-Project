@@ -60,6 +60,25 @@ void DatabaseConnection::startup() {
             "UNIQUE(invitationCode));";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
+
+    sql = "CREATE TABLE Files("
+            "fileID BLOB(16) PRIMARY KEY        NOT NULL, "
+            "serverID  BLOB(16) NOT NULL,"
+            "path  TEXT NOT NULL,"
+            "localPath  TEXT NOT NULL,"
+            "size  INT NOT NULL,"
+            "signature  BLOB(32) NOT NULL,"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
+            "UNIQUE(fileID));";
+
+    sql = "CREATE TABLE FileHosting("
+            "fileID BLOB(16) PRIMARY KEY        NOT NULL, "
+            "userID  BLOB(16) NOT NULL,"
+            "FOREIGN KEY(fileID) REFERENCES Files(fileID),"
+            "FOREIGN KEY(userID) REFERENCES Users(userID)"
+            ");";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
     // Foren key table for Roles & User Role Links to servers
 
     sqlite3_close_v2(db);
@@ -446,4 +465,38 @@ std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitatio
     sqlite3_close_v2(db);
 
     return "";
+}
+
+FileIndicator *DatabaseConnection::getFileIndicatorFromDB(std::string id) {
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    std::string sql("SELECT serverID, path, localPath, size, signature "
+                    "FROM Files "
+                    "WHERE fileID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects this file
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(id, uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    FileIndicator* file;
+
+    int ret = sqlite3_step(stmt);
+    if (ret == SQLITE_ROW) {
+        std::string serverID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+        std::string path = (char*)sqlite3_column_text(stmt, 1);
+        std::string localPath = (char*)sqlite3_column_text(stmt, 2);
+        int size = sqlite3_column_int(stmt, 3);
+        unsigned char* signature = (unsigned char*)sqlite3_column_blob(stmt, 4);
+
+        file = new FileIndicator(path, size, serverID, signature, id);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
+
+    return file;
 }

@@ -11,9 +11,9 @@ qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(app_${PROJECT_NAME}
     main.cpp
-    ${PROJECT_SOURCE_DIR}/src/DataTypes/FileContainer.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/Files/FileContainer.cpp
     ${PROJECT_SOURCE_DIR}/src/DataTypes/MessageContainer.cpp
-    ${PROJECT_SOURCE_DIR}/src/DataTypes/FileIndicator.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/Files/FileIndicator.cpp
     ${PROJECT_SOURCE_DIR}/src/DataTypes/ID.cpp
     ${PROJECT_SOURCE_DIR}/src/Networking/Encryption.cpp
     ${PROJECT_SOURCE_DIR}/src/Networking/Packet.cpp
@@ -31,10 +31,11 @@ qt_add_executable(app_${PROJECT_NAME}
     src/DataTypes/ServerContainer.cpp
     src/DataTypes/TextChannelContainer.cpp
     src/DataTypes/JoinRequest.cpp
-    src/DataTypes/AddUserToServerRequest.cpp
+    src/DataTypes/UserContainer.cpp
     src/DataTypes/SyncRequest.cpp
     src/DataTypes/SyncResponse.cpp
     src/DataTypes/Request.cpp
+    src/DataTypes/Files/FileHostClaim.cpp
 )
 target_include_directories(app_${PROJECT_NAME}
     PUBLIC include/ProjectFern/DataTypes/

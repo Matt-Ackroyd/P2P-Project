@@ -28,5 +28,7 @@ public:
 
     static std::string getInvitationsServerFromDB(std::string invitationCode);
 
+    static FileIndicator* getFileIndicatorFromDB(std::string id);
+
     DatabaseConnection() = delete;
 };

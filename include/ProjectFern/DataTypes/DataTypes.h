@@ -1,6 +1,8 @@
 #pragma once
 #include "ID.h"
 
+#define SIGNITURE_SIZE 32
+
 class Server;
 class TextChannel;
 class RemoteUser;
@@ -10,12 +12,14 @@ enum DataTypes {
     MESSAGETYPE,
     FILETYPE,
     FILE_INDICATOR,
+    FILE_HOST_CLAIM,
     SERVER,
     TEXT_CHANNEL,
     VOICE_CHANNEL,
     USER,
     JOIN_REQUEST,
-    REQUEST,
+    ADD_OR_MODIFY_REQUEST,
+    DELETE_REQUEST,
     SYNC_REQUEST,
     SYNC_RESPONSE,
     DELETED
@@ -97,33 +101,59 @@ public:
 };
 
 // a class to contain file data along side its ID
-class FileContainer {
+class FileContainer : public Container{
 private:
     std::string fileID;
     int byteLocation; // Could use a better name (it means which byte of the file is this packet starting at)
     int datalen;
-    unsigned char* data;
+    unsigned char* fileData = nullptr;
+    void serialize();
+
 public:
-    int createNew(std::string id, int byteLocation, unsigned char* data, int datalenth);
-    void serialize(unsigned char* serializedData);
+    FileContainer(std::string id, int byteLocation, unsigned char* data, int datalenth, DataTypes type = FILETYPE);
+    ~FileContainer();
+
     static FileContainer deserialize(unsigned char* serializedData);
+
+    std::string getFileID();
+    int getByteLocation();
+    int getDatalen();
+    unsigned char* getData();
 };
 
 // a class containing meta data about a file
-class FileIndicator {
+class FileIndicator : public Container{
 private:
     std::string fileID;
+    std::string serverID;
     int fileSize;
     std::string relativeFileLocation;
     // File Signiture
+    unsigned char signature[SIGNITURE_SIZE];
 
     // Will not be serilized as this is ment for the original person who uploaded the file so we dont copy to the relitive path
     std::string localFileLocation;
+    void serialize();
 public:
-    int createNew(std::string id, int fileSize, std::string path);
-    void serialize(unsigned char* serializedData);
+    FileIndicator(std::string relativePath, int fileSize, std::string serverID, 
+        unsigned char* signature, std::string localPath = "", std::string id = "", DataTypes type = DataTypes::FILE_INDICATOR);
     static FileIndicator deserialize(unsigned char* serializedData);
+
+    static void onAddRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+    static void onRemoveRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
 };  
+
+
+class FileHostClaim : public Container {
+    std::string fileID;
+
+public:
+    FileHostClaim(std::string fileID, DataTypes type = DataTypes::FILE_HOST_CLAIM);
+
+    std::string deserialize(unsigned char* serializedData);
+    static void onAddRequest();
+    static void onRemoveRequest();
+};
 
 
 class JoinRequest : public Container{
