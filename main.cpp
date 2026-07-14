@@ -51,7 +51,16 @@ int main(int argc, char *argv[])
 
     unsigned char buffer[ML_DSA_87_SIGNATURE_BYTE_SIZE];
     signMessage(client->getDSAkey(), (unsigned char*)"Hia", 3, buffer);
-    int ret = verifyMessage(client->getDSAkey(), buffer, (unsigned char*)"Hia", 3);
+
+    unsigned char pubkey[ML_DSA_87_PUBLIC_KEY_BYTE_SIZE];
+    size_t DSAlen = ML_DSA_87_PUBLIC_KEY_BYTE_SIZE;
+    EVP_PKEY_get_raw_public_key(client->getDSAkey(), NULL, &DSAlen);
+    EVP_PKEY_get_raw_public_key(client->getDSAkey(), pubkey, &DSAlen);
+
+
+
+    EVP_PKEY* akey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, pubkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
+    int ret = verifyMessage(akey, buffer, (unsigned char*)"Hia", 3);
     
 
     DatabaseConnection::startup();

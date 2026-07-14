@@ -13,8 +13,8 @@ Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* 
 
     // Get Public key & place in data(offset by the randsize)
     size_t publen = ML_KEM_KEYLENGTH;
-    EVP_PKEY_get_raw_public_key(keyPair, 
-        data+offset, &publen);
+    EVP_PKEY_get_raw_public_key(keyPair, NULL, &publen);
+    EVP_PKEY_get_raw_public_key(keyPair, data+offset, &publen);
     offset += ML_KEM_KEYLENGTH;
 
     // DSA-PUBLIC KEY
@@ -85,8 +85,8 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
     memcpy(returnBuffer, selfRand, ML_KEM_HANDSHAKE_RANDSIZE);
     offset = ML_KEM_HANDSHAKE_RANDSIZE;
 
-    memcpy(returnBuffer, out, ML_KEM_KEYLENGTH);
-    offset = ML_KEM_KEYLENGTH;
+    memcpy(returnBuffer+offset, out, ML_KEM_KEYLENGTH);
+    offset += ML_KEM_KEYLENGTH;
 
     // DSA-PUBLIC KEY
     if (type != PacketType::RELAY_HANDSHAKE_RESPONSE) {
@@ -97,7 +97,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
 
     // Create Return Packet
     Packet* returnPacket = new Packet(seqenceNumber, type, yourID);
-    returnPacket->serialize((char*)out, returnLength, NULL, NULL);
+    returnPacket->serialize((char*)returnBuffer, returnLength, NULL, NULL);
 
     return returnPacket;
 }

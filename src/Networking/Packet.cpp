@@ -93,7 +93,7 @@ int Packet::deserialize(char* serializedData) {
     offset += sizeof(this->dataLen);
 
     if (0 > this->dataLen || this->dataLen > MAXLINE) {
-        this->data = new char[1];
+        this->data = nullptr;
         throw std::runtime_error("Bad Packet Buffer\n");
     }
     
