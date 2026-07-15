@@ -28,10 +28,10 @@ void MessageContainer::serialize() {
 
     // Sign the message if this message is being sent out to someone and has not been signed yet
     if (this->signature == nullptr) {
-        signMessage(PrimaryClient::getInstance()->getDSAkey(), (unsigned char*)this->message.data(), messageLength, this->data+offset);
-    } else {
-        memcpy(this->data+offset, this->signature, ML_DSA_87_SIGNATURE_BYTE_SIZE);
-    }
+        this->signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        signMessage(PrimaryClient::getInstance()->getDSAkey(), (unsigned char*)this->message.data(), messageLength, this->signature);
+    } 
+    memcpy(this->data+offset, this->signature, ML_DSA_87_SIGNATURE_BYTE_SIZE); 
     offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
 
     // MessageID
@@ -119,6 +119,12 @@ std::string MessageContainer::getMessage() {
 
 unsigned char *MessageContainer::getSignature() {
     return this->signature;
+}
+
+void MessageContainer::clearSignature()
+{
+    delete[] this->signature;
+    this->signature = nullptr;
 }
 
 bool MessageContainer::verify() {

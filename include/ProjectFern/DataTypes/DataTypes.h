@@ -99,6 +99,7 @@ public:
     std::string* getAuthor();
     std::string getMessage();
     unsigned char* getSignature();
+    void clearSignature();
 
     bool verify();
 

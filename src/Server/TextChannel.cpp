@@ -15,6 +15,9 @@ std::string* TextChannel::getID() {
 void TextChannel::receiveMessage(MessageContainer* message) {
     this->messages.push_back(message);
     DatabaseConnection::addMessageToDB(this, message);
+
+    // We dont need the signature in memory anymore so discard it
+    message->clearSignature();
 }
 
 void TextChannel::loadMessage(MessageContainer* message) {

@@ -107,7 +107,14 @@ void DatabaseConnection::addUserToDB(RemoteUser* user) {
     sqlite3_bind_int(stmt, 4, user->contactPort);
     sqlite3_bind_int(stmt, 5, user->requiresRelay);
     sqlite3_bind_blob(stmt, 6, user->connection.getSharedSecret(), SHAW_256_HASH_SIZE, nullptr);
-    sqlite3_bind_blob(stmt, 7, user->connection.DSAkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE, nullptr);
+
+    if (user->connection.DSAkey != NULL) {
+        size_t len;
+        EVP_PKEY_get_raw_public_key(user->connection.DSAkey, NULL, &len);
+        unsigned char publicKey[len];
+        EVP_PKEY_get_raw_public_key(user->connection.DSAkey, publicKey, &len);
+        sqlite3_bind_blob(stmt, 7, publicKey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE, SQLITE_TRANSIENT);
+    }
 
     int ret = sqlite3_step(stmt);
     
@@ -144,8 +151,9 @@ void DatabaseConnection::getUsersFromDB() {
         }
 
         if (sqlite3_column_type(stmt, 6) != SQLITE_NULL) {
-            user->connection.DSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, 
-                (unsigned char*)sqlite3_column_blob(stmt, 6), ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);;
+            unsigned char* buffer = (unsigned char*)sqlite3_column_blob(stmt, 6);
+
+            user->connection.DSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, buffer, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
         }
 
         PrimaryClient::getInstance()->loadUser(user);
