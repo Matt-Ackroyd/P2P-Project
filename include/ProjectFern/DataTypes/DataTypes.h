@@ -131,6 +131,7 @@ public:
 class FileIndicator : public Container{
 private:
     std::string fileID;
+    std::string fileAuthor;
     std::string serverID;
     int fileSize;
     std::string relativeFileLocation;
@@ -141,7 +142,7 @@ private:
     std::string localFileLocation;
     void serialize();
 public:
-    FileIndicator(std::string relativePath, int fileSize, std::string serverID, 
+    FileIndicator(std::string relativePath, int fileSize, std::string serverID, std::string fileAuthor,
         unsigned char* signature, std::string localPath = "", std::string id = "", DataTypes type = DataTypes::FILE_INDICATOR);
     static FileIndicator deserialize(unsigned char* serializedData);
 
@@ -149,6 +150,12 @@ public:
 
     static void onAddRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
     static void onRemoveRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+
+    std::string getFileID();
+    std::string getFileAuthor();
+    std::string getServerID();
+    int getFileSize();
+    unsigned char* getFileSignature();
 };  
 
 

@@ -81,6 +81,7 @@ void Request::onRequest(unsigned char* decryptedData, RemoteUser* requestee) {
             MessageContainer::onRequest(request.getServerID(), request.getRequestedID(), requestee);
             break;
         case DataTypes::FILE_INDICATOR:
+            FileIndicator::onAddRequest(request.getServerID(), request.getRequestedID(), requestee);
             break;
         case DataTypes::USER:
             RemoteUser::onRequest(request.getServerID(), request.getRequestedID(), requestee);

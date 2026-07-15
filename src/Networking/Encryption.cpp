@@ -245,3 +245,72 @@ bool verifyMessage(EVP_PKEY *key, unsigned char* sig, unsigned char *msg, size_t
     }
     return false;
 }
+
+
+void signFile(EVP_PKEY *key, std::string filePath, unsigned char* signatureBuffer) {
+    std::filesystem::path path(filePath);
+
+    if (!std::filesystem::exists(path)) {
+        return;
+    }
+
+    size_t sig_len = ML_DSA_87_SIGNATURE_BYTE_SIZE;
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_sign_message_init(ctx, sig_alg, NULL);
+
+    char buffer[1024];
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        return;
+    }
+    
+    while (int inlen = file.readsome(buffer, 1024) > 0) {
+        EVP_PKEY_sign_message_update(ctx, (unsigned char*)buffer, inlen);
+    }
+
+    EVP_PKEY_sign_message_final(ctx, signatureBuffer, &sig_len);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+
+}
+
+
+bool verifyFile(EVP_PKEY *key, unsigned char* sig, std::string filePath) {
+    std::filesystem::path path(filePath);
+
+    if (!std::filesystem::exists(path)) {
+        return false;
+    }
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_verify_message_init(ctx, sig_alg, NULL);
+
+    EVP_PKEY_CTX_set_signature(ctx, sig, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+
+
+    char buffer[1024];
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        return false;
+    }
+    
+    while (int inlen = file.readsome(buffer, 1024) > 0) {
+        EVP_PKEY_verify_message_update(ctx, (unsigned char*)buffer, inlen);
+    }
+
+    int ret = EVP_PKEY_verify_message_final(ctx);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+
+    if (ret == 1) {
+        return true;
+    }
+    return false;
+}

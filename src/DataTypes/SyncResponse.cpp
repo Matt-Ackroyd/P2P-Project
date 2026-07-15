@@ -73,6 +73,7 @@ SyncResponse SyncResponse::generateResponse(SyncRequest* request) {
                 "WHERE serverID = ? limit ?, ?", serverID, rangeStart, rangeEnd);
             break;
         case DataTypes::FILE_INDICATOR:
+            ids = getSyncFromDB("SELECT fileID FROM Files WHERE serverID = ? limit ?, ?", serverID, rangeStart, rangeEnd);
             break;
         case DataTypes::USER:
             ids = getSyncFromDB("SELECT userID FROM ServerUsers WHERE serverID = ? limit ?, ?", serverID, rangeStart, rangeEnd);
@@ -137,6 +138,12 @@ void SyncResponse::onSyncResponse(unsigned char* decryptedData, RemoteUser* send
 
     std::string serverID = syncrequest->getserverID();
 
+    // If this request was full then send another one 
+    if (response.getListOfIDs().size() >= MAX_SYNC_REQUEST) {
+        SyncRequest* newRequest = new SyncRequest(serverID, syncrequest->getObjectType(), syncrequest->getEndRange(), syncrequest->getEndRange()+MAX_SYNC_REQUEST);
+        sender->connection.sendEncrypted(newRequest->getData(), newRequest->getDataLen());
+    }
+
     for (std::string id: response.getListOfIDs()) {
         bool knownID;
         switch(syncrequest->getObjectType()) {
@@ -150,6 +157,7 @@ void SyncResponse::onSyncResponse(unsigned char* decryptedData, RemoteUser* send
                     "WHERE MessageID = ? AND serverID = ?", id, serverID);
                 break;
             case DataTypes::FILE_INDICATOR:
+                knownID = doesDBcontain("SELECT * FROM Files WHERE fileID = ? AND serverID = ?", id, serverID);
                 break;
             case DataTypes::USER:
                 knownID = doesDBcontain("SELECT * FROM serverUsers WHERE userID = ? AND serverID = ?", id, serverID);

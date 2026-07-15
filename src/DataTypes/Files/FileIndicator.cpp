@@ -2,12 +2,14 @@
 #include "PrimaryClient.h"
 #include "DatabaseConnection.h"
 
-FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, unsigned char* signature, std::string localPath, 
+FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, std::string fileAuthor, unsigned char* signature, std::string localPath, 
      std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(int) + relativeFileLocation.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE){
     this->fileID = ID::clean(id);
+    this->fileAuthor = fileAuthor;
     this->serverID = serverID;
     this->fileSize = fileSize;
     this->relativeFileLocation = relativePath;
+    this->localFileLocation = localPath;
     this->signature = signature;
 
     if (type == DataTypes::FILE_INDICATOR) {
@@ -22,8 +24,18 @@ FileIndicator::~FileIndicator() {
 void FileIndicator::serialize() {
     unsigned char uuid[UUID_BYTE_SIZE];
 
+    if (this->signature == nullptr) {
+        this->signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        signFile(PrimaryClient::getInstance()->getDSAkey(), localFileLocation, this->signature);
+    } 
+
     // ID
     ID::BytesFromString(this->fileID, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
+    offset += UUID_BYTE_SIZE;
+
+    // File author
+    ID::BytesFromString(this->fileAuthor, uuid);
     memcpy(data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
@@ -53,8 +65,17 @@ void FileIndicator::serialize() {
 FileIndicator FileIndicator::deserialize(unsigned char* serializedData) { 
     int offset = 4;
 
+    // Signature
+    unsigned char* signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    memcpy(signature, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
+
     // ID
     std::string fileID = ID::stringFromBytes(serializedData+offset);
+    offset += UUID_BYTE_SIZE;
+
+    // fileAuthor
+    std::string fileAuthor = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // ServerID
@@ -79,7 +100,33 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     // Path string
     std::string path(reinterpret_cast<char const*>(serializedData+offset), len);
 
-    return FileIndicator(path, filelen, serverID, signiture, fileID, path, DataTypes::EMPTY);
+    return FileIndicator(path, filelen, serverID, fileAuthor, signiture, fileID, path, DataTypes::EMPTY);
+}
+
+
+std::string FileIndicator::getFileID()
+{
+    return this->fileID;
+}
+
+std::string FileIndicator::getFileAuthor()
+{
+    return this->fileAuthor;
+}
+
+std::string FileIndicator::getServerID()
+{
+    return this->serverID;
+}
+
+int FileIndicator::getFileSize()
+{
+    return this->fileSize;
+}
+
+unsigned char *FileIndicator::getFileSignature()
+{
+    return this->signature;
 }
 
 

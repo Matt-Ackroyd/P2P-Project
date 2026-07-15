@@ -176,16 +176,20 @@ void UDPConnection::resetConnection()
 void UDPConnection::sendSyncRequest(Server* server) {
     PrimaryClient* client = PrimaryClient::getInstance();
 
-    SyncRequest* channelRequest = new SyncRequest(*server->getID(), DataTypes::TEXT_CHANNEL, 0, 100);
+    SyncRequest* channelRequest = new SyncRequest(*server->getID(), DataTypes::TEXT_CHANNEL, 0, MAX_SYNC_REQUEST);
     this->sendEncrypted(channelRequest->getData(), channelRequest->getDataLen());
 
-    SyncRequest* userRequest = new SyncRequest(*server->getID(), DataTypes::USER, 0, 100);
+    SyncRequest* userRequest = new SyncRequest(*server->getID(), DataTypes::USER, 0, MAX_SYNC_REQUEST);
     this->sendEncrypted(userRequest->getData(), userRequest->getDataLen());
 
-    SyncRequest* messageRequest = new SyncRequest(*server->getID(), DataTypes::MESSAGETYPE, 0, 100);
+    SyncRequest* messageRequest = new SyncRequest(*server->getID(), DataTypes::MESSAGETYPE, 0, MAX_SYNC_REQUEST);
     this->sendEncrypted(messageRequest->getData(), messageRequest->getDataLen());
+
+    SyncRequest* fileRequest = new SyncRequest(*server->getID(), DataTypes::FILE_INDICATOR, 0, MAX_SYNC_REQUEST);
+    this->sendEncrypted(channelRequest->getData(), channelRequest->getDataLen());
 
     this->syncRequests[channelRequest->getSyncID()] = channelRequest;
     this->syncRequests[userRequest->getSyncID()] = userRequest;
     this->syncRequests[messageRequest->getSyncID()] = messageRequest;
+    this->syncRequests[fileRequest->getSyncID()] = fileRequest;
 }

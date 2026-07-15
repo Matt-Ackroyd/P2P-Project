@@ -58,7 +58,7 @@ void DatabaseConnection::startup() {
     sql = "CREATE TABLE Invitations("
             "invitationCode BLOB(16) PRIMARY KEY        NOT NULL, "
             "serverID  BLOB(16) NOT NULL,"
-            "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID),"
             "UNIQUE(invitationCode));";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
@@ -66,11 +66,13 @@ void DatabaseConnection::startup() {
     sql = "CREATE TABLE Files("
             "fileID BLOB(16) PRIMARY KEY        NOT NULL, "
             "serverID  BLOB(16) NOT NULL,"
+            "authorID  BLOB(16) NOT NULL,"
             "path  TEXT NOT NULL,"
             "localPath  TEXT NOT NULL,"
             "size  INT NOT NULL,"
             "signature  BLOB(32) NOT NULL,"
-            "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID),"
+            "FOREIGN KEY(authorID) REFERENCES Users(userID),"
             "UNIQUE(fileID));";
 
     sql = "CREATE TABLE FileHosting("
@@ -490,7 +492,7 @@ FileIndicator *DatabaseConnection::getFileIndicatorFromDB(std::string id) {
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
-    std::string sql("SELECT serverID, path, localPath, size, signature "
+    std::string sql("SELECT serverID, authorID, path, localPath, size, signature "
                     "FROM Files "
                     "WHERE fileID = ?");
 
@@ -507,12 +509,15 @@ FileIndicator *DatabaseConnection::getFileIndicatorFromDB(std::string id) {
     int ret = sqlite3_step(stmt);
     if (ret == SQLITE_ROW) {
         std::string serverID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
-        std::string path = (char*)sqlite3_column_text(stmt, 1);
-        std::string localPath = (char*)sqlite3_column_text(stmt, 2);
-        int size = sqlite3_column_int(stmt, 3);
-        unsigned char* signature = (unsigned char*)sqlite3_column_blob(stmt, 4);
+        std::string authorID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 1));
+        std::string path = (char*)sqlite3_column_text(stmt, 2);
+        std::string localPath = (char*)sqlite3_column_text(stmt, 3);
+        int size = sqlite3_column_int(stmt, 4);
 
-        file = new FileIndicator(path, size, serverID, signature, id);
+        unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        memcpy(sig, (unsigned char*)sqlite3_column_blob(stmt, 5), ML_DSA_87_SIGNATURE_BYTE_SIZE);
+
+        file = new FileIndicator(path, size, serverID, authorID, sig, path, id);
     }
     sqlite3_finalize(stmt);
     sqlite3_close_v2(db);

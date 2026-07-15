@@ -50,7 +50,8 @@ int main(int argc, char *argv[])
     // SyncRequest aasasddfgdg = SyncRequest::deserialize(asdasd.getData());
 
     unsigned char buffer[ML_DSA_87_SIGNATURE_BYTE_SIZE];
-    signMessage(client->getDSAkey(), (unsigned char*)"Hia", 3, buffer);
+    //signMessage(client->getDSAkey(), (unsigned char*)"Hia", 3, buffer);
+    signFile(client->getDSAkey(), "A:\\Projects\\P2P-Project\\build\\bin\\libwinpthread-1.dll", buffer);
 
     unsigned char pubkey[ML_DSA_87_PUBLIC_KEY_BYTE_SIZE];
     size_t DSAlen = ML_DSA_87_PUBLIC_KEY_BYTE_SIZE;
@@ -60,8 +61,8 @@ int main(int argc, char *argv[])
 
 
     EVP_PKEY* akey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, pubkey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
-    int ret = verifyMessage(akey, buffer, (unsigned char*)"Hia", 3);
-    
+    //int ret = verifyMessage(akey, buffer, (unsigned char*)"Hia", 3);
+    int ret = verifyFile(akey, buffer, "A:\\Projects\\P2P-Project\\build\\bin\\libwinpthread-1.dll");
 
     DatabaseConnection::startup();
     DatabaseConnection::getUsersFromDB();

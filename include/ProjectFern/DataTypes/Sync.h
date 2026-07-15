@@ -3,6 +3,7 @@
 #include "DataTypes.h"
 #include <vector>
 
+#define MAX_SYNC_REQUEST 200
 
 class SyncRequest : public Container{
 private:
