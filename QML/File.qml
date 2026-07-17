@@ -3,13 +3,18 @@ import QtQuick.Controls 2.15
 
 Item {
     id: file
-    x: 0
-    y: 80
-    width: 640
-    height: 22
-    property string uuid: "This is a string"
-    property string path: "This is a string"
+    width: parent.width
+    height: parent.hight
+    property string uuid: parent.uuid
+    property string path: parent.path
     
+    Rectangle {
+        id: rectangle
+        color: "#ffffff"
+        border.color: "#bc8f8f"
+        anchors.fill: parent
+    }
+
     Image {
         id: image
         y: 0
@@ -61,4 +66,5 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: 88
     }
+
 }

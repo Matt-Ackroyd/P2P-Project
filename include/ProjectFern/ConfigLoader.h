@@ -8,6 +8,7 @@
 #include <sqlite3.h>
 
 #define DATABASE_NAME "Fern.db"
+#define FILE_PATH "Files/"
 
 class ConfigLoader {
 private:
@@ -24,6 +25,7 @@ public:
 
     static int WriteBinaryFile(std::string path, char* data, int datalen);
     static int ReadBinaryFile(std::string path, char* data, int datalen);
+    
     
     
 };

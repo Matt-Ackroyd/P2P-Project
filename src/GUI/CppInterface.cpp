@@ -1,5 +1,6 @@
 #include "CppInterface.h"
-
+#include "DatabaseConnection.h"
+#include "ConfigLoader.h"
 
 CppInterface* CppInterface::instancePtr = nullptr;
 
@@ -96,9 +97,38 @@ Q_INVOKABLE void CppInterface::createServerInvitation(QString serverid)
     PrimaryClient::getInstance()->getServer(serverid.toStdString())->createNewInvitation();
 }
 
-Q_INVOKABLE void CppInterface::fillFileContainer(QObject* fileStructure, QString path)
+Q_INVOKABLE void CppInterface::fillFileContainer(QString serverID, QString currrentPathString)
 {
+    std::vector<FileIndicator> allFiles = DatabaseConnection::getAllFileIndicatorsFromDB(serverID.toStdString());
+    std::filesystem::path currrentPath(FILE_PATH + currrentPathString.toStdString());
     
+
+    if (!std::filesystem::exists(currrentPath)) {
+        std::filesystem::create_directories(currrentPath);
+    }
+
+    for (const auto entry: std::filesystem::directory_iterator(currrentPath)) {
+        if (entry.is_directory()) {
+            std::filesystem::path entryPath(entry.path());
+            QString name = QString::fromStdString(entryPath.filename().string());
+            QString path = QString::fromStdString(entryPath.string());
+            emit folderLoad(name, path);
+        }
+    }
+
+    // Load all files 
+    for (auto& file: allFiles) {
+        std::string pathString = file.getFilePath();
+
+        std::filesystem::path path(FILE_PATH + pathString);
+        
+        if (path.parent_path() == currrentPath) { // this file belongs to this folder
+            QString qname = QString::fromStdString(path.filename().string());
+            QString qpath = QString::fromStdString(path.string());
+            QString quuid = QString::fromStdString(file.getFileID());
+            emit fileLoad(qname, qpath, quuid);
+        }
+    }
 }
 
 // C++ side interface to add a server to the GUI

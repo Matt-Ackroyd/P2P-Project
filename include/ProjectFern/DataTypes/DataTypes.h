@@ -154,6 +154,7 @@ public:
     std::string getFileID();
     std::string getFileAuthor();
     std::string getServerID();
+    std::string getFilePath();
     int getFileSize();
     unsigned char* getFileSignature();
 };  

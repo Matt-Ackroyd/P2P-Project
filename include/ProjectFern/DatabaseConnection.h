@@ -30,5 +30,7 @@ public:
 
     static FileIndicator* getFileIndicatorFromDB(std::string id);
 
+    static std::vector<FileIndicator> getAllFileIndicatorsFromDB(std::string serverID);
+
     DatabaseConnection() = delete;
 };

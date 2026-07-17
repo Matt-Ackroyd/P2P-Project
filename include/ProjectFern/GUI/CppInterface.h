@@ -35,7 +35,7 @@ public:
     Q_INVOKABLE void joinServer(QString contactAddress, QString contactPort, QString userID, QString inviation); 
     Q_INVOKABLE void createServerInvitation(QString serverid);
 
-    Q_INVOKABLE void fillFileContainer(QObject* column, QString path);
+    Q_INVOKABLE void fillFileContainer(QString serverID, QString path);
 
 
     void GUIloadServer(Server* server);
@@ -45,6 +45,9 @@ signals:
     void serverLoad(QString signal_param);
     void channelLoad(QString channel_id);
     void messageLoad(QString channel_id, QString message, QString authorName, QString sendDate);
+
+    void fileLoad(QString name, QString path, QString uuid);
+    void folderLoad(QString name, QString path);
 };
 
 

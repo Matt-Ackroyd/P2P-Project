@@ -35,7 +35,7 @@ Item {
         ToolButton {
             id: toolButton
             y: 0
-            text: qsTr("Tool Button")
+            text: "new Folder"
             anchors.left: parent.left
             anchors.leftMargin: 0
 
@@ -46,8 +46,7 @@ Item {
 
                     //itemLoader.source = "Folder.qml";
 
-                    listView.model.append({fileName: "File.qml"});
-                    listView.model.append({fileName: "Folder.qml"});
+
                 }
             }
         }
@@ -59,12 +58,32 @@ Item {
         y: 60
         width: 640
         height: 420
+        boundsBehavior: Flickable.StopAtBounds
+        boundsMovement: Flickable.StopAtBounds
         model: ListModel{}
         delegate: Loader {
-                source: fileName
+            property string path: pathString
+            property string uuid: uuidString
+            property string name: nameString
+            width: parent.width
+            height: 22
+            source: fileName
+        }
+
+        Connections {
+            target: CppInterface
+            function onFileLoad(fname, fpath, fuuid) {
+                listView.model.append({fileName: "File.qml", pathString: fpath, uuidString: fuuid, nameString: fname});
             }
         }
 
+        Connections {
+            target: CppInterface
+            function onFolderLoad(fname, fpath) {
+                listView.model.append({fileName: "Folder.qml", pathString: fpath, nameString: fname});
+            }
+        }
+    }
 }
 
 

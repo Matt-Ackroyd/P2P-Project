@@ -119,6 +119,11 @@ std::string FileIndicator::getServerID()
     return this->serverID;
 }
 
+std::string FileIndicator::getFilePath()
+{
+    return this->relativeFileLocation;
+}
+
 int FileIndicator::getFileSize()
 {
     return this->fileSize;

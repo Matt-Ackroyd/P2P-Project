@@ -1,12 +1,18 @@
 import QtQuick
+import QtQuick.Controls 2.15
 
 Item {
     id: folder
-    x: 0
-    y: 127
-    width: 640
-    height: 22
-    property string path: "This is a string"
+    width: parent.width
+    height: parent.hight
+    property string path: parent.path
+    property string name: parent.name
+    Rectangle {
+        id: rectangle
+        color: "#cdb7b7"
+        anchors.fill: parent
+    }
+
     Image {
         id: image1
         y: 0
@@ -27,10 +33,24 @@ Item {
         id: fileName1
         width: 246
         height: 16
-        text: "FileName"
+        text: name
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: image1.right
         anchors.leftMargin: 6
         font.pixelSize: 12
     }
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+
+        Connections {
+            target: mouseArea
+            function onDoubleClicked() {
+                listView.model.clear()
+                CppInterface.fillFileContainer(server.uuid, path)
+            }
+        }
+    }
+
 }
