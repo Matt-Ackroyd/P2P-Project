@@ -328,7 +328,7 @@ Window {
         y: 35
         width: 688
         height: 545
-        source: "ServerStructure.qml"
+        source: "QML/ServerStructure.qml"
         active: false
     }
 
@@ -411,6 +411,6 @@ Window {
 /*##^##
 Designer {
     D{i:0}D{i:13;invisible:true}D{i:24;locked:true}D{i:28;locked:true}D{i:29;locked:true}
-D{i:35}D{i:36;locked:true}D{i:38}D{i:48}
+D{i:36;locked:true}
 }
 ##^##*/

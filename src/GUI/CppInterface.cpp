@@ -96,6 +96,11 @@ Q_INVOKABLE void CppInterface::createServerInvitation(QString serverid)
     PrimaryClient::getInstance()->getServer(serverid.toStdString())->createNewInvitation();
 }
 
+Q_INVOKABLE void CppInterface::fillFileContainer(QObject* fileStructure, QString path)
+{
+    
+}
+
 // C++ side interface to add a server to the GUI
 void CppInterface::GUIloadServer(Server* server) {
     QString id = QString::fromStdString(*server->getID());

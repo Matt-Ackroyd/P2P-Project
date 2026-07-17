@@ -22,14 +22,33 @@ Item {
             width: 162
             height: 480
             color: "#ccbebe"
+
+            Button {
+                id: filesChannelButton
+                x: 0
+                y: 0
+                width: 162
+                height: 19
+                text: "FILES"
+
+                Connections {
+                    target: filesChannelButton
+                    function onClicked() {
+                        channelLoader.setSource("FileStructure.qml")
+                        channelLoader.active = false
+                        channelLoader.active = true
+                        CppInterface.fillFileContainer(channelLoader.item, "/")
+                    }
+                }
+            }
         }
 
         ListView {
             id: listView
             x: 0
-            y: 0
+            y: 24
             width: 160
-            height: 480
+            height: 456
             model: ListModel {
             }
             delegate: Row {
@@ -52,6 +71,7 @@ Item {
                             id: connections
                             target: button
                             function onClicked() {
+                                channelLoader.setSource("ChannelStructure.qml")
                                 // if its the first load
                                 if (channelLoader.active === false) {
                                     channelLoader.active = true

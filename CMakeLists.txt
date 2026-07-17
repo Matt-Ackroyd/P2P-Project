@@ -52,8 +52,11 @@ qt_add_qml_module(app_${PROJECT_NAME}
     URI ${PROJECT_NAME}
     QML_FILES
         Main.qml
-        ChannelStructure.qml
-        ServerStructure.qml
+        QML/ChannelStructure.qml
+        QML/ServerStructure.qml
+        QML/FileStructure.qml
+        QML/File.qml 
+        QML/Folder.qml
     SOURCES
         ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h
         ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp

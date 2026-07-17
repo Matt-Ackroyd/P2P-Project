@@ -4,6 +4,7 @@
 #include <iostream>
 #include <mutex>
 #include <QQmlApplicationEngine>
+#include <QColumnView>
 #include "Server.h"
 #include "TextChannel.h"
 #include "PrimaryClient.h"
@@ -33,6 +34,8 @@ public:
     Q_INVOKABLE void createNewTextChannel(QString serverid);
     Q_INVOKABLE void joinServer(QString contactAddress, QString contactPort, QString userID, QString inviation); 
     Q_INVOKABLE void createServerInvitation(QString serverid);
+
+    Q_INVOKABLE void fillFileContainer(QObject* column, QString path);
 
 
     void GUIloadServer(Server* server);
