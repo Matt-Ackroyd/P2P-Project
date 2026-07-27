@@ -557,7 +557,7 @@ FileIndicator *DatabaseConnection::getFileIndicatorFromDB(std::string id) {
         unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
         memcpy(sig, (unsigned char*)sqlite3_column_blob(stmt, 5), ML_DSA_87_SIGNATURE_BYTE_SIZE);
 
-        file = new FileIndicator(path, size, serverID, authorID, sig, path, id);
+        file = new FileIndicator(localPath, size, serverID, authorID, sig, path, id);
     }
     sqlite3_finalize(stmt);
     sqlite3_close_v2(db);

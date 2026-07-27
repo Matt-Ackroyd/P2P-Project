@@ -186,7 +186,7 @@ void UDPConnection::sendSyncRequest(Server* server) {
     this->sendEncrypted(messageRequest->getData(), messageRequest->getDataLen());
 
     SyncRequest* fileRequest = new SyncRequest(*server->getID(), DataTypes::FILE_INDICATOR, 0, MAX_SYNC_REQUEST);
-    this->sendEncrypted(channelRequest->getData(), channelRequest->getDataLen());
+    this->sendEncrypted(fileRequest->getData(), fileRequest->getDataLen());
 
     this->syncRequests[channelRequest->getSyncID()] = channelRequest;
     this->syncRequests[userRequest->getSyncID()] = userRequest;
