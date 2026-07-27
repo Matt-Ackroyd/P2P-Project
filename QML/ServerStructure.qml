@@ -37,7 +37,7 @@ Item {
                         channelLoader.setSource("FileStructure.qml")
                         channelLoader.active = false
                         channelLoader.active = true
-                        CppInterface.fillFileContainer(uuid, "/")
+                        CppInterface.fillFileContainer(uuid, "Files/" + server.uuid + "/")
                     }
                 }
             }

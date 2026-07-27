@@ -124,6 +124,11 @@ std::string FileIndicator::getFilePath()
     return this->relativeFileLocation;
 }
 
+std::string FileIndicator::getLocalFilePath()
+{
+    return this->localFileLocation;
+}
+
 int FileIndicator::getFileSize()
 {
     return this->fileSize;

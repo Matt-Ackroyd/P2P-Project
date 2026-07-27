@@ -31,6 +31,7 @@ void CppInterface::sendMessage(QString qmessage, QObject* qserver, QObject* qcha
 void CppInterface::requestServerInfo(QString Qid) {
     PrimaryClient* client = PrimaryClient::getInstance();
     std::string id = Qid.toStdString();
+    this->currentServer = id;
 
     Server* server = client->getServer(id);
 
@@ -99,8 +100,9 @@ Q_INVOKABLE void CppInterface::createServerInvitation(QString serverid)
 
 Q_INVOKABLE void CppInterface::fillFileContainer(QString serverID, QString currrentPathString)
 {
-    std::vector<FileIndicator> allFiles = DatabaseConnection::getAllFileIndicatorsFromDB(serverID.toStdString());
-    std::filesystem::path currrentPath(FILE_PATH + currrentPathString.toStdString());
+    std::vector<FileIndicator*>* allFiles = DatabaseConnection::getAllFileIndicatorsFromDB(serverID.toStdString());
+    std::filesystem::path currrentPath(currrentPathString.toStdString());
+    this->currentFilePath = currrentPath.string();
     
 
     if (!std::filesystem::exists(currrentPath)) {
@@ -111,24 +113,50 @@ Q_INVOKABLE void CppInterface::fillFileContainer(QString serverID, QString currr
         if (entry.is_directory()) {
             std::filesystem::path entryPath(entry.path());
             QString name = QString::fromStdString(entryPath.filename().string());
-            QString path = QString::fromStdString(entryPath.string());
+            QString path = QString::fromStdString(entryPath.string() + "/");
             emit folderLoad(name, path);
         }
     }
 
     // Load all files 
-    for (auto& file: allFiles) {
-        std::string pathString = file.getFilePath();
+    for (FileIndicator* file: *allFiles) {
+        std::string pathString = file->getFilePath();
 
-        std::filesystem::path path(FILE_PATH + pathString);
+        std::filesystem::path path(pathString);
+        std::filesystem::path parent(path.parent_path().string() + "/");
         
-        if (path.parent_path() == currrentPath) { // this file belongs to this folder
+        if (parent == currrentPath) { // this file belongs to this folder
             QString qname = QString::fromStdString(path.filename().string());
             QString qpath = QString::fromStdString(path.string());
-            QString quuid = QString::fromStdString(file.getFileID());
+            QString quuid = QString::fromStdString(file->getFileID());
             emit fileLoad(qname, qpath, quuid);
         }
+        delete file;
     }
+
+    delete allFiles;
+}
+
+Q_INVOKABLE void CppInterface::createNewFileIndicator(QString filePathString)
+{
+    std::filesystem::path filePath(filePathString.toStdString());
+
+    if (!std::filesystem::exists(filePath)) {
+        return;
+    }
+
+    int fileSize = std::filesystem::file_size(filePath);
+
+    std::filesystem::path relitive(this->currentFilePath + filePath.filename().string());
+
+    unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    signFile(PrimaryClient::getInstance()->getDSAkey(), filePath.string(), sig);
+
+    FileIndicator file(relitive.string(), fileSize, this->currentServer, *PrimaryClient::getInstance()->getClientID(), sig, filePath.string());
+
+    DatabaseConnection::addFileIndicatorToDB(&file);
+
+    //Send to others
 }
 
 // C++ side interface to add a server to the GUI

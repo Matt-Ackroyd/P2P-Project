@@ -28,9 +28,11 @@ public:
 
     static std::string getInvitationsServerFromDB(std::string invitationCode);
 
+    static void addFileIndicatorToDB(FileIndicator *file);
+
     static FileIndicator* getFileIndicatorFromDB(std::string id);
 
-    static std::vector<FileIndicator> getAllFileIndicatorsFromDB(std::string serverID);
+    static std::vector<FileIndicator*>* getAllFileIndicatorsFromDB(std::string serverID);
 
     DatabaseConnection() = delete;
 };

@@ -18,6 +18,8 @@ class CppInterface : public QObject
     QML_ELEMENT
 
     std::string currentChannel = "";
+    std::string currentFilePath = "";
+    std::string currentServer = "";
 public:
     explicit CppInterface(QObject *parent = nullptr) : QObject(parent) {}
     // Static pointer to the Singleton instance
@@ -36,6 +38,9 @@ public:
     Q_INVOKABLE void createServerInvitation(QString serverid);
 
     Q_INVOKABLE void fillFileContainer(QString serverID, QString path);
+
+
+    Q_INVOKABLE void createNewFileIndicator(QString filePath);
 
 
     void GUIloadServer(Server* server);

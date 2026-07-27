@@ -70,10 +70,11 @@ void DatabaseConnection::startup() {
             "path  TEXT NOT NULL,"
             "localPath  TEXT NOT NULL,"
             "size  INT NOT NULL,"
-            "signature  BLOB(32) NOT NULL,"
+            "signature  BLOB(4627) NOT NULL,"
             "FOREIGN KEY(serverID) REFERENCES Servers(serverID),"
             "FOREIGN KEY(authorID) REFERENCES Users(userID),"
             "UNIQUE(fileID));";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
     sql = "CREATE TABLE FileHosting("
             "fileID BLOB(16) PRIMARY KEY        NOT NULL, "
@@ -488,6 +489,45 @@ std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitatio
     return "";
 }
 
+void DatabaseConnection::addFileIndicatorToDB(FileIndicator* file) {
+    std::lock_guard<std::mutex> lock(mtx);
+    
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO Files (fileID, serverID, authorID, path, localPath, size, signature) VALUES (?, ?, ?, ? ,? ,?, ?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char fileID[UUID_BYTE_SIZE];
+    ID::BytesFromString(file->getFileID(), fileID);
+    sqlite3_bind_blob(stmt, 1, (char*)fileID, UUID_BYTE_SIZE, nullptr);      
+
+    unsigned char serverid[UUID_BYTE_SIZE];
+    ID::BytesFromString(file->getServerID(), serverid);
+    sqlite3_bind_blob(stmt, 2, (char*)serverid, UUID_BYTE_SIZE, nullptr);
+
+    unsigned char author[UUID_BYTE_SIZE];
+    ID::BytesFromString(file->getFileAuthor(), author);
+    sqlite3_bind_blob(stmt, 3, (char*)author, UUID_BYTE_SIZE, nullptr);
+
+    sqlite3_bind_text(stmt, 4, file->getFilePath().c_str(), file->getFilePath().length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, file->getLocalFilePath().c_str(), file->getLocalFilePath().length(), SQLITE_TRANSIENT);
+
+    sqlite3_bind_int(stmt, 6, file->getFileSize());
+
+    sqlite3_bind_blob(stmt, 7, file->getFileSignature(), ML_DSA_87_SIGNATURE_BYTE_SIZE, nullptr);    // Signature
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
 FileIndicator *DatabaseConnection::getFileIndicatorFromDB(std::string id) {
     sqlite3* db;
     int exit = 0;
@@ -526,7 +566,7 @@ FileIndicator *DatabaseConnection::getFileIndicatorFromDB(std::string id) {
 }
 
 
-std::vector<FileIndicator> DatabaseConnection::getAllFileIndicatorsFromDB(std::string serverID) {
+std::vector<FileIndicator*>* DatabaseConnection::getAllFileIndicatorsFromDB(std::string serverID) {
     sqlite3* db;
     int exit = 0;
     exit = sqlite3_open(DATABASE_NAME, &db);
@@ -542,7 +582,7 @@ std::vector<FileIndicator> DatabaseConnection::getAllFileIndicatorsFromDB(std::s
     ID::BytesFromString(serverID, uuid);
     sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
 
-    std::vector<FileIndicator> files;
+    std::vector<FileIndicator*>* files = new std::vector<FileIndicator*>;
 
     while (int ret = sqlite3_step(stmt) == SQLITE_ROW) {
         std::string fileID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
@@ -555,7 +595,8 @@ std::vector<FileIndicator> DatabaseConnection::getAllFileIndicatorsFromDB(std::s
         unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
         memcpy(sig, (unsigned char*)sqlite3_column_blob(stmt, 6), ML_DSA_87_SIGNATURE_BYTE_SIZE);
 
-        files.emplace_back(FileIndicator(path, size, serverID, authorID, sig, path, fileID, DataTypes::EMPTY));
+        FileIndicator* file = new FileIndicator(path, size, serverID, authorID, sig, path, fileID, DataTypes::EMPTY);
+        files->emplace_back(file);
     }
     sqlite3_finalize(stmt);
     sqlite3_close_v2(db);

@@ -5,6 +5,7 @@ Item {
     id: file
     width: parent.width
     height: parent.hight
+    property string name: parent.nameString
     property string uuid: parent.uuid
     property string path: parent.path
     
@@ -50,7 +51,7 @@ Item {
         id: fileName
         width: 246
         height: 16
-        text: "FileName"
+        text: nameString
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: image.right
         anchors.leftMargin: 6

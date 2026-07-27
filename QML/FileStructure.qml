@@ -23,6 +23,22 @@ Item {
             width: 640
             height: 20
         }
+
+        Connections {
+            target: dropArea
+            function onDropped(drop) {
+                for (var i = 0; i < drop.urls.length; i++) {
+                    var path = drop.urls[i].toString()
+                    // remove prefixed "file:///"
+                    path = path.replace(/^(file:\/{3})/,"");
+                    // unescape html codes like '%23' for '#'
+                    var cleanPath = decodeURIComponent(path);
+
+                    CppInterface.createNewFileIndicator(cleanPath)
+
+                }
+            }
+        }
     }
 
     ToolBar {
