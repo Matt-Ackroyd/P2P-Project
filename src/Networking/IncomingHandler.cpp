@@ -75,7 +75,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     incomingPacket->deserialize(buffer);
 
     // Relays dont have a userID so we need to handle the packet early 
-    if (incomingPacket->getPacketType() == PacketType::RELAY_USER_INFO) {
+    if (incomingPacket->getPacketType() == PacketType::RELAY_USER_INFO || incomingPacket->getPacketType() == RELAY_HANDSHAKE_RESPONSE) {
         handleIncoming(incomingPacket, cliaddr);
         return;
     }

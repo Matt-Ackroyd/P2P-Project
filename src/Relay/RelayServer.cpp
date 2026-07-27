@@ -208,7 +208,7 @@ std::filesystem::path RelayServer::UserPath(std::string userID) {
 // returns a users connection info & sends them a notification with your connection information
 // Does not require an Encrypted Connection
 void RelayServer::UdpHandler(int udpPort) {
-    char buffer[3000]; 
+    char buffer[MAXLINE]; 
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
 
@@ -227,7 +227,7 @@ void RelayServer::UdpHandler(int udpPort) {
     std::cout << "UDP Bind Return: " << a << "\n";
 
     while (true) {
-        int packetlen = recvfrom(socketfd, buffer, 3000,
+        int packetlen = recvfrom(socketfd, buffer, MAXLINE,
             0, (struct sockaddr*)&cliaddr, &clientlen);
 
         if (packetlen > Packet::MIN_PACKET_SIZE) {
