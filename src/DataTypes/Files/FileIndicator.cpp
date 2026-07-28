@@ -65,11 +65,6 @@ void FileIndicator::serialize() {
 FileIndicator FileIndicator::deserialize(unsigned char* serializedData) { 
     int offset = 4;
 
-    // Signature
-    unsigned char* signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
-    memcpy(signature, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
-    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
-
     // ID
     std::string fileID = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
@@ -82,9 +77,9 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     std::string serverID = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
-    // Signiture
-    unsigned char* signiture = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
-    memcpy(signiture, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    // Signature
+    unsigned char* signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    memcpy(signature, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
     offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
 
     // File Size
@@ -100,7 +95,7 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     // Path string
     std::string path(reinterpret_cast<char const*>(serializedData+offset), len);
 
-    return FileIndicator(path, filelen, serverID, fileAuthor, signiture, fileID, path, DataTypes::EMPTY);
+    return FileIndicator(path, filelen, serverID, fileAuthor, signature, fileID, path, DataTypes::EMPTY);
 }
 
 
