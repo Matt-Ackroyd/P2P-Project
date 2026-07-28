@@ -173,5 +173,5 @@ void FileIndicator::onRemoveRequest(std::string serverID, std::string fileID, Re
 void FileIndicator::onReceived(unsigned char* output, RemoteUser* sender) {
     FileIndicator file = FileIndicator::deserialize(output);
 
-    DatabaseConnection::addFileIndicatorToDB(&file)
+    DatabaseConnection::addFileIndicatorToDB(&file);
 }
