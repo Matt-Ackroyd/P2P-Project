@@ -76,13 +76,6 @@ void DatabaseConnection::startup() {
             "UNIQUE(fileID));";
     exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
-    sql = "CREATE TABLE FileHosting("
-            "fileID BLOB(16) PRIMARY KEY        NOT NULL, "
-            "userID  BLOB(16) NOT NULL,"
-            "FOREIGN KEY(fileID) REFERENCES Files(fileID),"
-            "FOREIGN KEY(userID) REFERENCES Users(userID)"
-            ");";
-    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
 
     // Foren key table for Roles & User Role Links to servers
 

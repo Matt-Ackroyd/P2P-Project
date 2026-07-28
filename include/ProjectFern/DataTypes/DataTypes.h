@@ -165,12 +165,18 @@ public:
 
 class FileHostClaim : public Container {
     std::string fileID;
+    bool hasFile;
 
 public:
-    FileHostClaim(std::string fileID, DataTypes type = DataTypes::FILE_HOST_CLAIM);
+    FileHostClaim(std::string fileID, bool hasFile, DataTypes type = DataTypes::FILE_HOST_CLAIM);
 
-    std::string deserialize(unsigned char* serializedData);
-    static void onAddRequest();
+    static FileHostClaim deserialize(unsigned char* serializedData);
+
+    bool hostHasFile();
+    std::string getFileID();
+
+    static void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+    static void onReceived(unsigned char *output, RemoteUser *sender);
     static void onRemoveRequest();
 };
 

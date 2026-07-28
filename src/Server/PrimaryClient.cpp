@@ -1,6 +1,7 @@
 #include "PrimaryClient.h"
 #include "IncomingHandler.h"
 #include "OutgoingHandler.h"
+#include "FileHandler.h"
 #include "Server.h"
 #include "DatabaseConnection.h"
 
@@ -68,6 +69,7 @@ int PrimaryClient::init() {
 
     this->incomingHandler = new IncomingHandler(10346);
     this->outgoingHandler = new OutgoingHandler();
+    this->fileHandler = new FileHandler();
    
     return 0;
 }

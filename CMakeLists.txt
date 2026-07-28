@@ -36,6 +36,7 @@ qt_add_executable(app_${PROJECT_NAME}
     src/DataTypes/SyncResponse.cpp
     src/DataTypes/Request.cpp
     src/DataTypes/Files/FileHostClaim.cpp
+    src/Networking/FileHandler.cpp
 )
 target_include_directories(app_${PROJECT_NAME}
     PUBLIC include/ProjectFern/DataTypes/

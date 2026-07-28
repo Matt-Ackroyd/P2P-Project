@@ -9,11 +9,14 @@
 #include "CppInterface.h"
 #include "ConfigLoader.h"
 
+
 #define SHARED_SECRET_PATH "/data/sharedSecrets/"
 
 // Forward Declorations
 class IncomingHandler;
 class OutgoingHandler;
+class FileHandler;
+
 class Server;
 
 class PrimaryClient {
@@ -83,4 +86,6 @@ public:
 
     sockaddr_in getPreferedRelay();
     OutgoingHandler* getOutgoingHandler();
+
+    FileHandler* fileHandler;
 };

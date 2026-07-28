@@ -170,7 +170,7 @@ void SyncResponse::onSyncResponse(unsigned char* decryptedData, RemoteUser* send
         if (!knownID) {
             Request request(serverID, id, syncrequest->getObjectType());
             sender->connection.sendEncrypted(request.getData(), request.getDataLen());
-            sender->connection.listOfRequestedIDs.emplace(id);
+            //sender->connection.listOfRequestedIDs.emplace(id);
         }
     }
     
