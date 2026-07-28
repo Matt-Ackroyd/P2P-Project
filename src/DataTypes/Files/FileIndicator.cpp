@@ -3,7 +3,7 @@
 #include "DatabaseConnection.h"
 
 FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, std::string fileAuthor, unsigned char* signature, std::string localPath, 
-     std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(int) + relativePath.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE){
+     std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*3 + sizeof(int) + sizeof(int) + relativePath.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE){
     this->fileID = ID::clean(id);
     this->fileAuthor = fileAuthor;
     this->serverID = serverID;
