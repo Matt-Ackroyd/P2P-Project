@@ -58,12 +58,13 @@ void FileIndicator::serialize() {
     offset += sizeof(len);
 
     // Path String
-    memcpy(data+offset, this->relativeFileLocation.data(), sizeof(len));
+    memcpy(data+offset, this->relativeFileLocation.data(), len);
     offset += len;
 }
 
 FileIndicator FileIndicator::deserialize(unsigned char* serializedData) { 
-    int offset = 4;
+    // The dataType has been removed by now
+    int offset = sizeof(DataTypes);
 
     // ID
     std::string fileID = ID::stringFromBytes(serializedData+offset);
@@ -95,7 +96,7 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     // Path string
     std::string path(reinterpret_cast<char const*>(serializedData+offset), len);
 
-    return FileIndicator(path, filelen, serverID, fileAuthor, signature, fileID, path, DataTypes::EMPTY);
+    return FileIndicator(path, filelen, serverID, fileAuthor, signature, fileID, "", DataTypes::EMPTY);
 }
 
 
