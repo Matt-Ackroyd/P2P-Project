@@ -148,8 +148,10 @@ public:
 
     ~FileIndicator();
 
-    static void onAddRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+    static void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
     static void onRemoveRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+
+    static void onReceived(unsigned char *output, RemoteUser *sender);
 
     std::string getFileID();
     std::string getFileAuthor();

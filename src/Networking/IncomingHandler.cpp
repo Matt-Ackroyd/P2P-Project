@@ -43,7 +43,7 @@ void IncomingHandler::incomingStartup(int ReceivingPort)
     while (this->acceptIncoming) {
         try {
             IncomingLoop(buffer);
-        } catch (...) {
+        } catch (std::runtime_error e) {
             // TODO Make more infomative 
             std::cout << "Incoming Exception";
         }
@@ -186,6 +186,8 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
             break;
         case DataTypes::FILETYPE:
             break;
+        case DataTypes::FILE_INDICATOR:
+            FileIndicator::onReceived(output, packetAuthor);
         case DataTypes::JOIN_REQUEST:
             handleJoinRequest(output, packetAuthor);
             break;

@@ -3,7 +3,7 @@
 #include "DatabaseConnection.h"
 
 FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, std::string fileAuthor, unsigned char* signature, std::string localPath, 
-     std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(int) + relativeFileLocation.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE){
+     std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(int) + relativePath.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE){
     this->fileID = ID::clean(id);
     this->fileAuthor = fileAuthor;
     this->serverID = serverID;
@@ -140,7 +140,7 @@ unsigned char *FileIndicator::getFileSignature()
 }
 
 
-void FileIndicator::onAddRequest(std::string serverID, std::string fileID, RemoteUser *requestee) {
+void FileIndicator::onRequest(std::string serverID, std::string fileID, RemoteUser *requestee) {
     PrimaryClient* client = PrimaryClient::getInstance();
 
     Server* server = client->getServer(serverID);
@@ -167,4 +167,11 @@ void FileIndicator::onAddRequest(std::string serverID, std::string fileID, Remot
 }
 void FileIndicator::onRemoveRequest(std::string serverID, std::string fileID, RemoteUser *requestee) {
 
+}
+
+// Maybe name handle FileIndicator
+void FileIndicator::onReceived(unsigned char* output, RemoteUser* sender) {
+    FileIndicator file = FileIndicator::deserialize(output);
+
+    DatabaseConnection::addFileIndicatorToDB(&file)
 }
