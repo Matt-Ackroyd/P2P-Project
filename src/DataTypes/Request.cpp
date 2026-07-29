@@ -86,6 +86,8 @@ void Request::onRequest(unsigned char* decryptedData, RemoteUser* requestee) {
         case DataTypes::FILE_HOST_CLAIM:
             FileHostClaim::onRequest(request.getServerID(), request.getRequestedID(), requestee);
             break;
+        case DataTypes::FILETYPE:
+            break;
         case DataTypes::USER:
             RemoteUser::onRequest(request.getServerID(), request.getRequestedID(), requestee);
             break;

@@ -1,5 +1,6 @@
 #include "IncomingHandler.h"
 #include "DatabaseConnection.h"
+#include "FileHandler.h"
 
 
 IncomingHandler::IncomingHandler(int ReceivingPort) {
@@ -185,9 +186,14 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
             handleMessage(output);
             break;
         case DataTypes::FILETYPE:
+            FileHandler::onFilePacketRecieved(output);
+            break;
+        case DataTypes::FILE_HOST_CLAIM:
+            FileHostClaim::onReceived(output, packetAuthor);
             break;
         case DataTypes::FILE_INDICATOR:
             FileIndicator::onReceived(output, packetAuthor);
+            break;
         case DataTypes::JOIN_REQUEST:
             handleJoinRequest(output, packetAuthor);
             break;

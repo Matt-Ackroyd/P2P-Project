@@ -4,6 +4,7 @@
 
 FileHostClaim::FileHostClaim(std::string fileID, bool hasFile, DataTypes type) : Container(type, sizeof(bool) + UUID_BYTE_SIZE) {
     this->hasFile = hasFile;
+    this->fileID = fileID;
 
     if (type == DataTypes::FILE_HOST_CLAIM) {
         ID::BytesFromString(this->fileID, this->data+this->offset);
@@ -63,7 +64,7 @@ void FileHostClaim::onRequest(std::string serverID, std::string fileID, RemoteUs
 
     int ret = sqlite3_step(stmt);
     if (ret == SQLITE_ROW) {
-        localPath = (char*)sqlite3_column_text(stmt, 1); 
+        localPath = (char*)sqlite3_column_text(stmt, 0); 
     }
     sqlite3_finalize(stmt);
     sqlite3_close_v2(db);
@@ -95,9 +96,10 @@ void FileHostClaim::onRequest(std::string serverID, std::string fileID, RemoteUs
 
 void FileHostClaim::onReceived(unsigned char* output, RemoteUser* sender) {
     FileHostClaim claim = FileHostClaim::deserialize(output);
+    PrimaryClient* client = PrimaryClient::getInstance();
 
     // Make Sure We Requested this
-    if (PrimaryClient::getInstance()->fileHandler->incomingFiles.contains(claim.fileID)) {
+    if (!client->fileHandler->incomingFiles.contains(claim.fileID)) {
         return;
     }
 
@@ -106,6 +108,6 @@ void FileHostClaim::onReceived(unsigned char* output, RemoteUser* sender) {
         return;
     }
 
-    PrimaryClient::getInstance()->fileHandler->incomingFiles[claim.fileID]->addHost(sender);
+    client->fileHandler->incomingFiles[claim.fileID]->addHost(sender);
 
 }

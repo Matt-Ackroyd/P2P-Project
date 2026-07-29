@@ -1,5 +1,6 @@
 #include "DataTypes.h"
-
+#include "PrimaryClient.h"
+#include "FileHandler.h"
 
 FileContainer::FileContainer(std::string id, int byteLocation, unsigned char* data, int datalenth, DataTypes type) : 
 Container(type, UUID_BYTE_SIZE + sizeof(int) + sizeof(int) + datalenth) {
@@ -70,4 +71,21 @@ unsigned char* FileContainer::getFileData() {
 
 int FileContainer::getFileDatalen() {
     return this->fileDataLen;
+}
+
+
+
+void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee) { 
+    PrimaryClient* client = PrimaryClient::getInstance();
+    Server* server = client->getServer(serverID);
+    if (server == NULL) {
+        return;
+    }
+
+    if (!server->knownUsers.contains(*requestee->getID())) { // If they dont belong to this server dont send them anything
+        return;
+    }
+
+    client->fileHandler->sendFile(fileID, requestee);
+
 }

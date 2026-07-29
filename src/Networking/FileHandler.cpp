@@ -11,6 +11,12 @@ void FileHandler::downloadFile(std::string fileID)
     this->incomingFiles[fileID] = new DownloadingFile(fileID);
 }
 
+void FileHandler::sendFile(std::string fileID, RemoteUser* recipient)
+{
+    OutgoingFile* file = new OutgoingFile(fileID, recipient);
+    this->outgoingFiles.emplace(file);
+}
+
 void FileHandler::manageFiles()
 {
     // Send Download Requests after a delay
@@ -28,9 +34,37 @@ void FileHandler::manageFiles()
     }
 }
 
-void FileHandler::onFilePacketRecieved()
+void FileHandler::onFilePacketRecieved(unsigned char* output)
 {
+    FileHandler* fileHandler = PrimaryClient::getInstance()->fileHandler;
+    FileContainer filedata = FileContainer::deserialize(output);
+    FileIndicator* fileInfo = DatabaseConnection::getFileIndicatorFromDB(filedata.getFileID());
+
+    // If this file isn't being requested then ignore it
+    if (!fileHandler->incomingFiles.contains(filedata.getFileID())) {
+        return;
+    }
+
     
+
+    std::filesystem::path path(fileInfo->getLocalFilePath());
+    std::ofstream file(path, std::ios::binary);
+    
+    if (!file.is_open()) {
+        return;
+    }
+
+    file.seekp(filedata.getByteLocation());
+    file.write((char*)filedata.getFileData(), filedata.getFileDatalen());
+    
+    
+    // If this is the last of the file
+    if (file.tellp() >= fileInfo->getFileSize()) {
+        delete fileHandler->incomingFiles[filedata.getFileID()];
+        fileHandler->incomingFiles.erase(filedata.getFileID());
+    }
+
+    delete fileInfo;
 }
 
 
@@ -41,6 +75,7 @@ void FileHandler::onFilePacketRecieved()
 
 DownloadingFile::DownloadingFile(std::string fileID)
 {
+    std::mutex mtx;
     PrimaryClient* client = PrimaryClient::getInstance();
     this->fileInfo = DatabaseConnection::getFileIndicatorFromDB(fileID);
 
@@ -49,11 +84,13 @@ DownloadingFile::DownloadingFile(std::string fileID)
     Server* server = client->getServer(fileInfo->getServerID());
     
     // Ask each user in the server if they are hosting this file
-    for (std::string userid: server->onlineUsers) {
-        UDPConnection remoteConnection = client->getUser(userid)->connection;
+    for (auto& [userid, user]: server->knownUsers) {
 
-        Request request(fileInfo->getServerID(), fileID, DataTypes::FILE_HOST_CLAIM);
-        remoteConnection.sendEncrypted(request.getData(), request.getDataLen());
+        // If users online
+        if (user->connection.connected) {
+            Request request(fileInfo->getServerID(), fileID, DataTypes::FILE_HOST_CLAIM);
+            user->connection.sendEncrypted(request.getData(), request.getDataLen());
+        }
     }
 }
 
@@ -66,7 +103,11 @@ void DownloadingFile::sendDownloadRequests()
 {
     if (avaliableHosts.size() > 0) {
         Request req(this->fileInfo->getServerID(), this->fileInfo->getFileID(), DataTypes::FILETYPE);
-        this->avaliableHosts[0]->connection.sendEncrypted(req.getData(), req.getDataLen());
+        for (auto& hostid: this->avaliableHosts) {
+            RemoteUser* host = PrimaryClient::getInstance()->getUser(hostid);
+            host->connection.sendEncrypted(req.getData(), req.getDataLen());
+            break;
+        }
         this->hostsDiscovered = true;
     }
 }
@@ -78,15 +119,18 @@ std::string DownloadingFile::getFileID()
 
 void DownloadingFile::addHost(RemoteUser* host)
 {
-    std::lock_guard<std::mutex> lock(mtx);
-    this->avaliableHosts.emplace_back(host);
+    //std::lock_guard<std::mutex> lock(mtx);
+    
+    std::string id = *host->getID();
+    this->avaliableHosts.emplace(id);
 
 }
 
 void DownloadingFile::RemoveHost(RemoteUser* host)
 {
-    std::lock_guard<std::mutex> lock(mtx);
-    // TODO
+    //std::lock_guard<std::mutex> lock(mtx);
+    std::string id = *host->getID();
+    this->avaliableHosts.erase(id);
 }
 
 
@@ -128,7 +172,10 @@ void OutgoingFile::sendNextPacket()
 
 
     // Check if this is the last packet & remove this object if it is
-
+    if (bytesRead != fileSizePerPacket) {
+        PrimaryClient::getInstance()->fileHandler->outgoingFiles.erase(this);
+        delete this;
+    }
 }
 
 RemoteUser* OutgoingFile::getRecipient()

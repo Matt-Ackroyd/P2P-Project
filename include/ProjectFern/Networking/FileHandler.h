@@ -12,7 +12,7 @@
 class DownloadingFile {
     std::string fileID;
     FileIndicator* fileInfo;
-    std::vector<RemoteUser*> avaliableHosts;
+    std::unordered_set<std::string> avaliableHosts;
 
     std::mutex mtx;
 
@@ -60,11 +60,12 @@ public:
 
     // Adds a file to be downloaded
     void downloadFile(std::string fileID);
+    void sendFile(std::string fileID, RemoteUser* recipient);
 
     // Sends Download Requests after a short Period inorder to give time for host claims to be returned & also manages outgoing files
     void manageFiles();
 
 
-    static void onFilePacketRecieved();
+    static void onFilePacketRecieved(unsigned char* packetdata);
 
 };
