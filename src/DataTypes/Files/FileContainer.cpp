@@ -65,6 +65,16 @@ FileContainer FileContainer::deserialize(unsigned char* serializedata) {
     return FileContainer(fileID, bytelocation, filedata, fileDataLen, DataTypes::EMPTY);
 }
 
+std::string FileContainer::getFileID()
+{
+    return this->fileID;
+}
+
+int FileContainer::getByteLocation()
+{
+    return this->byteLocation;
+}
+
 unsigned char* FileContainer::getFileData() {
     return this->fileData;
 }

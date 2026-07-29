@@ -8,49 +8,44 @@
 #include "DataTypes.h"
 
 
-
-class DownloadingFile {
-    std::string fileID;
-    FileIndicator* fileInfo;
-    std::unordered_set<std::string> avaliableHosts;
-
-    std::mutex mtx;
-
-public: 
-    DownloadingFile(std::string fileID);
-    ~DownloadingFile();
-
-    std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> downloadStarted = std::chrono::system_clock::now();
-
-    void sendDownloadRequests();
-
-    std::string getFileID();
-    void addHost(RemoteUser*);
-    void RemoveHost(RemoteUser*);
-
-    bool hostsDiscovered = false;
-};
-
-class OutgoingFile {
-    RemoteUser* recipient;
-    std::string fileID;
-    FileIndicator* fileInfo;
-
-    int lastByteSent = 0;
-    int fileSizePerPacket = 4096;
-
-public:
-    OutgoingFile(std::string fileID, RemoteUser* recipient);
-    ~OutgoingFile();
-
-    void sendNextPacket();
-    RemoteUser* getRecipient();
-};
-
-
-
-
 class FileHandler {
+    class DownloadingFile {
+        std::string fileID;
+        FileIndicator* fileInfo;
+        std::unordered_set<std::string> avaliableHosts;
+
+        std::mutex mtx;
+
+    public: 
+        DownloadingFile(std::string fileID);
+        ~DownloadingFile();
+
+        std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> downloadStarted = std::chrono::system_clock::now();
+
+        void sendDownloadRequests();
+
+        std::string getFileID();
+        void addHost(RemoteUser*);
+        void RemoveHost(RemoteUser*);
+
+        bool hostsDiscovered = false;
+    };
+
+    class OutgoingFile {
+        RemoteUser* recipient;
+        std::string fileID;
+        FileIndicator* fileInfo;
+
+        int lastByteSent = 0;
+        int fileSizePerPacket = 4096;
+
+    public:
+        OutgoingFile(std::string fileID, RemoteUser* recipient);
+
+        void sendNextPacket();
+        RemoteUser* getRecipient();
+    };
+
 public: 
     FileHandler();
     std::unordered_map<std::string, DownloadingFile*> incomingFiles;
