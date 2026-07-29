@@ -106,4 +106,6 @@ void FileHostClaim::onReceived(unsigned char* output, RemoteUser* sender) {
         return;
     }
 
+    PrimaryClient::getInstance()->fileHandler->incomingFiles[claim.fileID].addHost(sender);
+
 }

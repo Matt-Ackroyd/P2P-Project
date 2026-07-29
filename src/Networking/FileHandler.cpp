@@ -2,6 +2,7 @@
 #include "PrimaryClient.h"
 #include "DatabaseConnection.h"
 
+
 void FileHandler::downloadFile(std::string fileID)
 {
     this->incomingFiles.emplace(DownloadingFile(fileID));
@@ -10,7 +11,12 @@ void FileHandler::downloadFile(std::string fileID)
 void FileHandler::manageFiles()
 {
     // Send Download Requests after a delay
-
+    for (auto& [id, file]: this->incomingFiles) {
+        if (!file.hostsDiscovered && file.downloadStarted + std::chrono::milliseconds(hostClaimDelay) < std::chrono::system_clock::now()) {
+            file.hostsDiscovered = true;
+            file.sendDownloadRequests();
+        }
+    }
 
     // Manage outgoing files 
     for (OutgoingFile file: this->outgoingFiles) {
@@ -22,6 +28,7 @@ void FileHandler::manageFiles()
 
 void FileHandler::onFilePacketRecieved()
 {
+    
 }
 
 
@@ -85,6 +92,38 @@ void DownloadingFile::RemoveHost(RemoteUser* host)
 
 void OutgoingFile::sendNextPacket()
 {
+    // Check if file exists and attempt to open it
+    std::filesystem::path filePath(this->fileInfo->getLocalFilePath());
+    
+    if(!std::filesystem::exists(filePath)) {
+        return;
+    }
+
+    std::ifstream file(filePath, std::ios::binary);
+
+    if (!file.is_open()) {
+        return;
+    }
+
+    // Read data into the buffer
+    file.seekg(this->lastByteSent);
+
+    char buffer[this->fileSizePerPacket];
+    file.read(buffer, this->fileSizePerPacket);
+    int bytesRead = file.gcount();
+
+    file.close();
+    
+    // Send the File Data
+    FileContainer a(fileInfo->getFileID(), lastByteSent, (unsigned char*)buffer, bytesRead);
+    recipient->connection.sendEncrypted(a.getData(), a.getDataLen());
+
+    // Update the last byte sent
+    this->lastByteSent += bytesRead;
+
+
+    // Check if this is the last packet 
+    
 }
 
 RemoteUser* OutgoingFile::getRecipient()

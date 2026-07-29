@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <mutex>
+#include <fstream>
 #include "RemoteUser.h"
 #include "DataTypes.h"
 
@@ -34,7 +35,6 @@ class DownloadingFile {
 
     std::mutex mtx;
 
-
 public: 
     DownloadingFile(std::string fileID);
     ~DownloadingFile();
@@ -46,6 +46,8 @@ public:
     std::string getFileID();
     void addHost(RemoteUser*);
     void RemoveHost(RemoteUser*);
+
+    bool hostsDiscovered = false;
 };
 
 class OutgoingFile {
@@ -54,6 +56,7 @@ class OutgoingFile {
     FileIndicator* fileInfo;
 
     int lastByteSent = 0;
+    int fileSizePerPacket = 4096;
 
 public:
     OutgoingFile(std::string fileID, RemoteUser* recipient);
