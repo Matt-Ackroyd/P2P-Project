@@ -124,7 +124,8 @@ public:
     std::string getFileID();
     int getByteLocation();
     int getFileDatalen();
-    unsigned char* getFileData();
+    static void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+    unsigned char *getFileData();
 };
 
 // a class containing meta data about a file

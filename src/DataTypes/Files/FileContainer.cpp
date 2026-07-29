@@ -85,7 +85,7 @@ int FileContainer::getFileDatalen() {
 
 
 
-void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee) { 
+void FileContainer::onRequest(std::string serverID, std::string fileID, RemoteUser *requestee) { 
     PrimaryClient* client = PrimaryClient::getInstance();
     Server* server = client->getServer(serverID);
     if (server == NULL) {
