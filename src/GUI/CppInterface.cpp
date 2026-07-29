@@ -1,6 +1,7 @@
 #include "CppInterface.h"
 #include "DatabaseConnection.h"
 #include "ConfigLoader.h"
+#include "FileHandler.h"
 
 CppInterface* CppInterface::instancePtr = nullptr;
 
@@ -157,6 +158,12 @@ Q_INVOKABLE void CppInterface::createNewFileIndicator(QString filePathString)
     DatabaseConnection::addFileIndicatorToDB(&file);
 
     //Send to others
+}
+
+Q_INVOKABLE void CppInterface::downloadFile(QString fileID)
+{
+    std::string id = fileID.toStdString();
+    PrimaryClient::getInstance()->fileHandler->downloadFile(id);
 }
 
 // C++ side interface to add a server to the GUI

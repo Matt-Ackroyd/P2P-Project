@@ -2,26 +2,28 @@
 #include "PrimaryClient.h"
 #include "DatabaseConnection.h"
 
+FileHandler::FileHandler()
+{
+}
 
 void FileHandler::downloadFile(std::string fileID)
 {
-    this->incomingFiles.emplace(DownloadingFile(fileID));
+    this->incomingFiles[fileID] = new DownloadingFile(fileID);
 }
 
 void FileHandler::manageFiles()
 {
     // Send Download Requests after a delay
     for (auto& [id, file]: this->incomingFiles) {
-        if (!file.hostsDiscovered && file.downloadStarted + std::chrono::milliseconds(hostClaimDelay) < std::chrono::system_clock::now()) {
-            file.hostsDiscovered = true;
-            file.sendDownloadRequests();
+        if (!file->hostsDiscovered && file->downloadStarted + std::chrono::milliseconds(hostClaimDelay) < std::chrono::system_clock::now()) {
+            file->sendDownloadRequests();
         }
     }
 
     // Manage outgoing files 
-    for (OutgoingFile file: this->outgoingFiles) {
-        if (file.getRecipient()->connection.outgoingBuffer.size() < maxOutgoingPackets) {
-            file.sendNextPacket();
+    for (OutgoingFile* file: this->outgoingFiles) {
+        if (file->getRecipient()->connection.outgoingBuffer.size() < maxOutgoingPackets) {
+            file->sendNextPacket();
         }
     }
 }
@@ -62,8 +64,11 @@ DownloadingFile::~DownloadingFile()
 
 void DownloadingFile::sendDownloadRequests()
 {
-    Request req(this->fileInfo->getServerID(), this->fileInfo->getFileID(), DataTypes::FILETYPE);
-    this->avaliableHosts[0]->connection.sendEncrypted(req.getData(), req.getDataLen());
+    if (avaliableHosts.size() > 0) {
+        Request req(this->fileInfo->getServerID(), this->fileInfo->getFileID(), DataTypes::FILETYPE);
+        this->avaliableHosts[0]->connection.sendEncrypted(req.getData(), req.getDataLen());
+        this->hostsDiscovered = true;
+    }
 }
 
 std::string DownloadingFile::getFileID()
@@ -122,8 +127,8 @@ void OutgoingFile::sendNextPacket()
     this->lastByteSent += bytesRead;
 
 
-    // Check if this is the last packet 
-    
+    // Check if this is the last packet & remove this object if it is
+
 }
 
 RemoteUser* OutgoingFile::getRecipient()

@@ -1,4 +1,5 @@
 #include "OutgoingHandler.h"
+#include "FileHandler.h"
 
 OutgoingHandler::OutgoingHandler() {
     this->OutgoingHandlerThread = std::thread(&OutgoingHandler::OutgoingLoop, this);
@@ -41,6 +42,10 @@ void OutgoingHandler::OutgoingLoop() {
                 }
             }
         }
+
+
+        // File Manager
+        client->fileHandler->manageFiles();
 
         
 

@@ -41,6 +41,7 @@ public:
 
 
     Q_INVOKABLE void createNewFileIndicator(QString filePath);
+    Q_INVOKABLE void downloadFile(QString fileID);
 
 
     void GUIloadServer(Server* server);

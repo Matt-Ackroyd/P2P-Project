@@ -9,25 +9,6 @@
 
 
 
-class FileHandler {
-public: 
-    std::unordered_map<std::string, DownloadingFile> incomingFiles;
-    std::unordered_set<OutgoingFile> outgoingFiles;
-    int maxOutgoingPackets = 30;
-    int hostClaimDelay = 3000;
-
-    // Adds a file to be downloaded
-    void downloadFile(std::string fileID);
-
-    // Sends Download Requests after a short Period inorder to give time for host claims to be returned & also manages outgoing files
-    void manageFiles();
-
-
-    static void onFilePacketRecieved();
-
-};
-
-
 class DownloadingFile {
     std::string fileID;
     FileIndicator* fileInfo;
@@ -64,4 +45,26 @@ public:
 
     void sendNextPacket();
     RemoteUser* getRecipient();
+};
+
+
+
+
+class FileHandler {
+public: 
+    FileHandler();
+    std::unordered_map<std::string, DownloadingFile*> incomingFiles;
+    std::unordered_set<OutgoingFile*> outgoingFiles;
+    int maxOutgoingPackets = 30;
+    int hostClaimDelay = 3000;
+
+    // Adds a file to be downloaded
+    void downloadFile(std::string fileID);
+
+    // Sends Download Requests after a short Period inorder to give time for host claims to be returned & also manages outgoing files
+    void manageFiles();
+
+
+    static void onFilePacketRecieved();
+
 };

@@ -66,6 +66,26 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         anchors.rightMargin: 88
+
+        Connections {
+            target: button
+            function onClicked() { console.log("clicked") }
+        }
+    }
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+
+        Connections {
+            target: mouseArea
+            function onDoubleClicked() { CppInterface.downloadFile(uuid) }
+        }
+
+        Connections {
+            target: mouseArea
+            function onClicked() { console.log("clicked") }
+        }
     }
 
 }

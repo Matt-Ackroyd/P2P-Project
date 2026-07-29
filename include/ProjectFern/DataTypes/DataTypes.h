@@ -111,7 +111,7 @@ class FileContainer : public Container{
 private:
     std::string fileID;
     int byteLocation; // Could use a better name (it means which byte of the file is this packet starting at)
-    int datalen;
+    int fileDataLen;
     unsigned char* fileData = nullptr;
     void serialize();
 
@@ -123,8 +123,8 @@ public:
 
     std::string getFileID();
     int getByteLocation();
-    int getDatalen();
-    unsigned char* getData();
+    int getFileDatalen();
+    unsigned char* getFileData();
 };
 
 // a class containing meta data about a file

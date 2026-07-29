@@ -6,7 +6,7 @@ Container(type, UUID_BYTE_SIZE + sizeof(int) + sizeof(int) + datalenth) {
     this->fileID = ID::clean(id);
     this->byteLocation = byteLocation;
     this->fileData = data;
-    this->datalen = datalen;
+    this->fileDataLen = fileDataLen;
     
     if (type == FILETYPE) {
         serialize();
@@ -30,12 +30,12 @@ void FileContainer::serialize() {
     offset += sizeof(this->byteLocation);
 
     // Data Length
-    memcpy(data+offset, &this->datalen, sizeof(this->datalen));
-    offset += sizeof(this->datalen);
+    memcpy(data+offset, &this->fileDataLen, sizeof(this->fileDataLen));
+    offset += sizeof(this->fileDataLen);
 
     // Data
-    memcpy(data+offset, this->fileData, this->datalen);
-    offset += this->datalen;
+    memcpy(data+offset, this->fileData, this->fileDataLen);
+    offset += this->fileDataLen;
 }
 
 // Input a serialized array of data and get back an unserilized Filecontainer structure
@@ -52,14 +52,22 @@ FileContainer FileContainer::deserialize(unsigned char* serializedata) {
     offset += sizeof(bytelocation);
 
     // Datalen
-    int datalen;
-    memcpy(&datalen, serializedata+offset, sizeof(datalen));
-    offset += sizeof(datalen);
+    int fileDataLen;
+    memcpy(&fileDataLen, serializedata+offset, sizeof(fileDataLen));
+    offset += sizeof(fileDataLen);
 
     // Data
-    unsigned char* filedata = new unsigned char[datalen];
-    memcpy(filedata, serializedata+offset, datalen);
-    offset += datalen;
+    unsigned char* filedata = new unsigned char[fileDataLen];
+    memcpy(filedata, serializedata+offset, fileDataLen);
+    offset += fileDataLen;
 
-    return FileContainer(fileID, bytelocation, filedata, datalen, DataTypes::EMPTY);
+    return FileContainer(fileID, bytelocation, filedata, fileDataLen, DataTypes::EMPTY);
+}
+
+unsigned char* FileContainer::getFileData() {
+    return this->fileData;
+}
+
+int FileContainer::getFileDatalen() {
+    return this->fileDataLen;
 }
