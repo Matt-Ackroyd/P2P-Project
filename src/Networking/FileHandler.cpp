@@ -198,7 +198,7 @@ void FileHandler::onFilePacketRecieved(unsigned char* output)
     
 
     std::filesystem::path path(fileInfo->getLocalFilePath());
-    std::ofstream file(path, std::ios::binary);
+    std::ofstream file(path, std::ios::binary | std::ios::app | std::ios::out );
     
     if (!file.is_open()) {
         return;
@@ -206,10 +206,12 @@ void FileHandler::onFilePacketRecieved(unsigned char* output)
 
     file.seekp(filedata.getByteLocation());
     file.write((char*)filedata.getFileData(), filedata.getFileDatalen());
+    int filesize = file.tellp();
+    file.close();
     
     
     // If this is the last of the file
-    if (file.tellp() >= fileInfo->getFileSize()) {
+    if (filesize >= fileInfo->getFileSize()) {
         delete fileHandler->incomingFiles[filedata.getFileID()];
         fileHandler->incomingFiles.erase(filedata.getFileID());
     }
