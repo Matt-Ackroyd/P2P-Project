@@ -85,7 +85,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     RemoteUser *packetAuthor = onIncomingPacket(incomingPacket, cliaddr);
 
     // If this packet doesn't need an acknowledgement just handle and dont worry about any queues
-    if (incomingPacket->getPacketType() <= 3) {
+    if (incomingPacket->getPacketType() <= 3 || incomingPacket->getSeqNum() == 0) {
         handleIncoming(incomingPacket, cliaddr);
         return;
     }
@@ -109,10 +109,10 @@ void IncomingHandler::IncomingLoop(char* buffer) {
         if (front->getSeqNum() != userConnection->incomingSeqNum) {
             break;
         }
-        userConnection->sendAck(incomingPacket->getSeqNum());   // Send Ack
-        userConnection->incommingBuffer.pop_front();
         this->handleIncoming(front, cliaddr);
         userConnection->incomingSeqNum++;
+        userConnection->sendAck(incomingPacket->getSeqNum());   // Send Ack
+        userConnection->incommingBuffer.pop_front();
         
     }
 }
