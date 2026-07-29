@@ -107,15 +107,16 @@ void FileHandler::OutgoingFile::sendNextPacket()
     // Read data into the buffer
     file.seekg(this->lastByteSent);
 
-    char buffer[this->fileSizePerPacket];
+    char *buffer = new char[this->fileSizePerPacket];
     file.read(buffer, this->fileSizePerPacket);
     int bytesRead = file.gcount();
 
     file.close();
     
     // Send the File Data
-    FileContainer a(fileInfo->getFileID(), lastByteSent, (unsigned char*)buffer, bytesRead);
-    recipient->connection.sendEncrypted(a.getData(), a.getDataLen());
+    FileContainer* container = new FileContainer(fileInfo->getFileID(), lastByteSent, (unsigned char*)buffer, bytesRead);
+    recipient->connection.sendEncrypted(container->getData(), container->getDataLen());
+    delete container;
 
     // Update the last byte sent
     this->lastByteSent += bytesRead;
@@ -174,6 +175,9 @@ void FileHandler::manageFiles()
 
     // Manage outgoing files 
     for (OutgoingFile* file: this->outgoingFiles) {
+        if (outgoingFiles.empty()) {
+            break;
+        }
         if (file->getRecipient()->connection.outgoingBuffer.size() < maxOutgoingPackets) {
             file->sendNextPacket();
         }

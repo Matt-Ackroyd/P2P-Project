@@ -96,7 +96,7 @@ FileIndicator FileIndicator::deserialize(unsigned char* serializedData) {
     // Path string
     std::string path(reinterpret_cast<char const*>(serializedData+offset), len);
 
-    return FileIndicator(path, filelen, serverID, fileAuthor, signature, "", fileID, DataTypes::EMPTY);
+    return FileIndicator(path, filelen, serverID, fileAuthor, signature, path, fileID, DataTypes::EMPTY);
 }
 
 

@@ -7,7 +7,7 @@ Container(type, UUID_BYTE_SIZE + sizeof(int) + sizeof(int) + datalenth) {
     this->fileID = ID::clean(id);
     this->byteLocation = byteLocation;
     this->fileData = data;
-    this->fileDataLen = fileDataLen;
+    this->fileDataLen = datalenth;
     
     if (type == FILETYPE) {
         serialize();
