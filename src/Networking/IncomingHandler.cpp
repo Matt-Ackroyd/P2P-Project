@@ -113,7 +113,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
         userConnection->incommingBuffer[i] = nullptr;           // Clear this entry from the buffer
 
                                                     
-        userConnection->sendAck(userConnection->incomingSeqNum);   // Send Ack for this packet
+        userConnection->sendAck(seqNum);           // Send Ack for this packet
         userConnection->incomingSeqNum++;          // Update the next expected seqence number
 
     }

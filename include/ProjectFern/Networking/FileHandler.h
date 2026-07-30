@@ -50,7 +50,7 @@ public:
     FileHandler();
     std::unordered_map<std::string, DownloadingFile*> incomingFiles;
     std::unordered_set<OutgoingFile*> outgoingFiles;
-    int maxOutgoingPackets = 280;
+    int maxOutgoingPackets = 30;
     int hostClaimDelay = 3000;
 
     // Adds a file to be downloaded

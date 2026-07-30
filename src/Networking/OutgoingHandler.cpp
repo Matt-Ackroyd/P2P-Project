@@ -39,7 +39,7 @@ void OutgoingHandler::OutgoingLoop() {
                 if (packet->timeToSend <= std::chrono::system_clock::now()) {
                     recipient->connection.sendPacket(packet);
                     packet->timesResent += 1;
-                    packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(2000);
+                    packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(5000);
                 }
 
                 i = (i+1) % recipient->connection.windowSize;
