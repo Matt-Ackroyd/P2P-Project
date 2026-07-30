@@ -97,7 +97,8 @@ void UDPConnection::sendHandshakeRequest() {
 }
 
 void UDPConnection::sendPacket(Packet* packet) {
-    sendto(this->sock, packet->getData(), packet->getPacketlength(), 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
+    int a = sendto(this->sock, packet->getData(), packet->getPacketlength(), 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
+    std::cout << " Bind Return: " << a << "\n";
 }
 
 unsigned char* UDPConnection::getSharedSecret() {

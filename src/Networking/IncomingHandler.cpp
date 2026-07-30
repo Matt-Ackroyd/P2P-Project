@@ -96,7 +96,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
 
     // Duplicate Packets 
     if (userConnection->incommingBuffer[incomingPacket->getSeqNum() % userConnection->windowSize]) {
-        userConnection->sendAck(userConnection->incomingSeqNum);
+        userConnection->sendAck(userConnection->incomingSeqNum-1);
         return;
     }
 
@@ -112,8 +112,9 @@ void IncomingHandler::IncomingLoop(char* buffer) {
         this->handleIncoming(front, cliaddr);                   // Handle the packet (This Will Delete it from memory)
         userConnection->incommingBuffer[i] = nullptr;           // Clear this entry from the buffer
 
-        userConnection->incomingSeqNum++;                       // Update the next expected seqence number
-        userConnection->sendAck(seqNum);   // Send Ack for this packet
+                                                    
+        userConnection->sendAck(userConnection->incomingSeqNum);   // Send Ack for this packet
+        userConnection->incomingSeqNum++;          // Update the next expected seqence number
 
     }
 }
@@ -417,7 +418,7 @@ RemoteUser* IncomingHandler::onIncomingPacket(Packet* incomingPacket, sockaddr_i
             throw std::runtime_error("User Not Registered");
         }
         packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
-        packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
+        //packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
     }
 
     packetAuthor->connection.lastHeardFrom = std::chrono::system_clock::now();
