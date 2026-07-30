@@ -5,6 +5,10 @@
 UDPConnection::UDPConnection() {
     this->sock = PrimaryClient::getInstance()->socketfd;
     this->incommingBuffer = new Packet*[windowSize];
+
+    for (int i = 0; i < windowSize; i++) {
+        this->incommingBuffer[i] = nullptr;
+    }
 }
 
 UDPConnection::~UDPConnection() {
