@@ -8,6 +8,7 @@
 #include <deque>
 #include <fstream>
 #include <vector>
+#include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -25,6 +26,8 @@ private:
     int sock;
     unsigned char* sharedSecret = NULL;
     int outgoingSeqNum = 1; // Next packet number we should send to them
+
+    std::mutex mtx;
     
     
 public:    

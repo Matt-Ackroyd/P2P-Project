@@ -32,7 +32,7 @@ void OutgoingHandler::OutgoingLoop() {
 
 
             // Send Any Outgoing packets
-            int i = recipient->connection.lastAcknowlagedSeqNum % recipient->connection.windowSize;
+            int i = recipient->connection.lastAcknowlagedSeqNum+1 % recipient->connection.windowSize;
             while (recipient->connection.outgoingBuffer[i] != nullptr) {
                 Packet* packet = recipient->connection.outgoingBuffer[i];
                 // Add timers for each packet

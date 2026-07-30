@@ -44,7 +44,7 @@ void IncomingHandler::incomingStartup(int ReceivingPort)
     while (this->acceptIncoming) {
         try {
             IncomingLoop(buffer);
-        } catch (std::runtime_error e) {
+        } catch (...) {
             // TODO Make more infomative 
             std::cout << "Incoming Exception";
         }

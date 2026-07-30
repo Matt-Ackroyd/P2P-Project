@@ -13,6 +13,8 @@ UDPConnection::UDPConnection() {
     for (int i = 0; i < windowSize; i++) {
         this->outgoingBuffer[i] = nullptr;
     }
+
+    this->mtx;
 }
 
 UDPConnection::~UDPConnection() {
@@ -107,6 +109,12 @@ void UDPConnection::setSharedSecret(unsigned char* secret) {
 
     
 void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent race conditions
+    mtx.lock();
+
+    if (seqNum > lastAcknowlagedSeqNum) {
+        lastAcknowlagedSeqNum = seqNum;
+    }
+
     // Manage outgoing packets
     int i = seqNum % windowSize;
     while (outgoingBuffer[i] != nullptr) {
@@ -115,19 +123,23 @@ void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent r
         delete packet;
         outgoingBuffer[i] = nullptr;
 
-        // Update the number of acks we have recived
-        this->lastAcknowlagedSeqNum++;
+        // Update the number of packets
         numOfOutgoingPackets--;
 
         // Also Acknowlage any former packets
         i = (i - 1) % windowSize;
     }
+
+    mtx.unlock();
 }
 
 void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
+    mtx.lock();
     // if the buffer is empty just add the packet to it
     int i = incomingPacket->getSeqNum() % this->windowSize;
     incommingBuffer[i] = incomingPacket;
+
+    mtx.unlock();
 }
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
@@ -137,9 +149,10 @@ void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO a
 
 // Returns a seqnum and increments it by one for the next call
 int UDPConnection::newSeqNum() {
-    // TODO ADD mtuxed Guard to prevent race conditions
+    mtx.lock();
     int output = this->outgoingSeqNum;
     this->outgoingSeqNum++;
+    mtx.unlock();
     return output;
 }
 
