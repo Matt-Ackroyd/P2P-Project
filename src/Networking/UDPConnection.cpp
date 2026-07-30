@@ -122,6 +122,7 @@ void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent r
 
     // Manage outgoing packets
     int i = seqNum % windowSize;
+
     while (outgoingBuffer[i] != nullptr) {
         // Delete the packet & Clear it from the buffer
         delete outgoingBuffer[i];
@@ -132,6 +133,7 @@ void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent r
 
         // Also Acknowlage any former packets
         i = (i - 1) % windowSize;
+        if (i == -1) {i = windowSize-1;}
     }
 
     mtx.unlock();
