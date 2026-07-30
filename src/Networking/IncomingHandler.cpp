@@ -95,8 +95,8 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     UDPConnection* userConnection = &packetAuthor->connection;
 
     // Duplicate Packets 
-    if (userConnection->incomingSeqNum > incomingPacket->getSeqNum()) {
-        //userConnection->sendAck(userConnection->incomingSeqNum);
+    if (userConnection->incommingBuffer[incomingPacket->getSeqNum() % userConnection->windowSize]) {
+        userConnection->sendAck(userConnection->incomingSeqNum);
         return;
     }
 

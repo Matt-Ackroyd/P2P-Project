@@ -112,7 +112,7 @@ void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent r
     if (seqNum < 0) {
         return;
     }
-    
+
     mtx.lock();
 
     if (seqNum > lastAcknowlagedSeqNum) {
@@ -140,7 +140,10 @@ void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
     mtx.lock();
     // if the buffer is empty just add the packet to it
     int i = incomingPacket->getSeqNum() % this->windowSize;
-    incommingBuffer[i] = incomingPacket;
+    if (incommingBuffer[i] == nullptr) {
+        incommingBuffer[i] = incomingPacket;
+    }
+    
 
     mtx.unlock();
 }

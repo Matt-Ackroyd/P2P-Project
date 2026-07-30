@@ -92,7 +92,7 @@ int Packet::deserialize(char* serializedData) {
     shaw256Hash((unsigned char*)serializedData+SHAW_256_HASH_SIZE, Packet::MIN_PACKET_SIZE-SHAW_256_HASH_SIZE, (unsigned char*)hashToCompare);
 
     // Check if the two hashes match
-    for (int i = 0; i > SHAW_256_HASH_SIZE; i++) {
+    for (int i = 0; i < SHAW_256_HASH_SIZE; i++) {
         if (hashToCompare[i] != packetHash[i]) {
             throw std::runtime_error("Bad Packet Buffer\n");
         }
