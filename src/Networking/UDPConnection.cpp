@@ -109,6 +109,10 @@ void UDPConnection::setSharedSecret(unsigned char* secret) {
 
     
 void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent race conditions
+    if (seqNum < 0) {
+        return;
+    }
+    
     mtx.lock();
 
     if (seqNum > lastAcknowlagedSeqNum) {

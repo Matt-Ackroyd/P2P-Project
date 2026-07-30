@@ -58,5 +58,5 @@ public:
     unsigned char* getTag();
 
     // PacketType(4) + SeqNum(4) + UUID(16) + dataLen(4) + ControlVar(1)
-    static int const MIN_PACKET_SIZE = sizeof(packetType) + sizeof(seqNum) + UUID_BYTE_SIZE + sizeof(int) + sizeof(char);
+    static int const MIN_PACKET_SIZE = SHAW_256_HASH_SIZE + sizeof(packetType) + sizeof(seqNum) + UUID_BYTE_SIZE + sizeof(int) + sizeof(char);
 };

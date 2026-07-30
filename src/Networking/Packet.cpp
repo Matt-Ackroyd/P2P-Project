@@ -27,10 +27,11 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
         controlVar += (char)2;
     }
 
+    // Clean Buffer
     this->data = new char[packetLength]; 
     memset(this->data, 0, packetLength);
     
-    long unsigned int offset = 0;
+    long unsigned int offset = SHAW_256_HASH_SIZE;
 
     // Add Packet Type to Output
     memcpy(this->data+offset, &this->packetType, sizeof(this->packetType));
@@ -67,7 +68,12 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
     // MAC
     if (MAC != NULL) {
         memcpy(this->data+offset, MAC, AES_256_GCM_TAG_LENGTH);
+        offset += AES_256_GCM_TAG_LENGTH;
     }
+
+    // Hashcheck creation
+    // hashes packet type, seqNum, senderID & dataLen, to ensure they are the same on the other end
+    shaw256Hash((unsigned char*)data+SHAW_256_HASH_SIZE, Packet::MIN_PACKET_SIZE-SHAW_256_HASH_SIZE, (unsigned char*)data);
 
     return this->packetLength;
 }
@@ -75,6 +81,22 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
 // Returns data length
 int Packet::deserialize(char* serializedData) {
     long unsigned int offset = 0;
+
+    //Hash
+    unsigned char packetHash[SHAW_256_HASH_SIZE];
+    memcpy(packetHash, serializedData+offset, SHAW_256_HASH_SIZE);
+    offset += SHAW_256_HASH_SIZE;
+
+    // hash Check
+    unsigned char hashToCompare[SHAW_256_HASH_SIZE];
+    shaw256Hash((unsigned char*)serializedData+SHAW_256_HASH_SIZE, Packet::MIN_PACKET_SIZE-SHAW_256_HASH_SIZE, (unsigned char*)hashToCompare);
+
+    // Check if the two hashes match
+    for (int i = 0; i > SHAW_256_HASH_SIZE; i++) {
+        if (hashToCompare[i] != packetHash[i]) {
+            throw std::runtime_error("Bad Packet Buffer\n");
+        }
+    }
 
     // PacketType
     memcpy(&this->packetType, serializedData+offset, sizeof(this->packetType));
@@ -91,11 +113,6 @@ int Packet::deserialize(char* serializedData) {
     // DataLength
     memcpy(&this->dataLen, serializedData+offset, sizeof(this->dataLen));
     offset += sizeof(this->dataLen);
-
-    if (0 > this->dataLen || this->dataLen > MAXLINE) {
-        this->data = nullptr;
-        throw std::runtime_error("Bad Packet Buffer\n");
-    }
     
     // Data
     this->data = new char[this->dataLen];
