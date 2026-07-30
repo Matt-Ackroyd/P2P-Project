@@ -418,7 +418,7 @@ RemoteUser* IncomingHandler::onIncomingPacket(Packet* incomingPacket, sockaddr_i
             throw std::runtime_error("User Not Registered");
         }
         packetAuthor = PrimaryClient::getInstance()->getUser(incomingPacket->packetAuthorID);
-        //packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
+        packetAuthor->connection.setAddr(inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
     }
 
     packetAuthor->connection.lastHeardFrom = std::chrono::system_clock::now();

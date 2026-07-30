@@ -144,9 +144,7 @@ void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
     if (incommingBuffer[i] == nullptr) {
         incommingBuffer[i] = incomingPacket;
     }
-    
-
-    
+    mtx.unlock();
 }
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
