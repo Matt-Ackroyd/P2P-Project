@@ -24,7 +24,7 @@ private:
     struct sockaddr_in connectionAddr;
     int sock;
     unsigned char* sharedSecret = NULL;
-    int outgoingSeqNum = 1;
+    int outgoingSeqNum = 1; // Next packet number we should send to them
     
     
 public:    
@@ -64,10 +64,12 @@ public:
 
     void sendSyncRequest(Server *server);
 
-    int incomingSeqNum = 1;
-    std::deque<Packet*> outgoingBuffer;
+    int incomingSeqNum = 1; // Next Seq Num that this client is expecting to recive
+    int lastAcknowlagedSeqNum = 0;
+    Packet** outgoingBuffer;
     Packet** incommingBuffer; 
-    int windowSize = 100;
+    int windowSize = 300;
+    int numOfOutgoingPackets = 0;
 
     std::unordered_map<std::string, SyncRequest*> syncRequests;
     std::unordered_set<std::string> listOfRequestedIDs;

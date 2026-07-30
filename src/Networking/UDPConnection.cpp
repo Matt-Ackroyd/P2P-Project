@@ -5,9 +5,13 @@
 UDPConnection::UDPConnection() {
     this->sock = PrimaryClient::getInstance()->socketfd;
     this->incommingBuffer = new Packet*[windowSize];
+    this->outgoingBuffer = new Packet*[windowSize];
 
     for (int i = 0; i < windowSize; i++) {
         this->incommingBuffer[i] = nullptr;
+    }
+    for (int i = 0; i < windowSize; i++) {
+        this->outgoingBuffer[i] = nullptr;
     }
 }
 
@@ -102,14 +106,21 @@ void UDPConnection::setSharedSecret(unsigned char* secret) {
 }
 
     
-void UDPConnection::receivedAck(int seqNum) {
-    for (auto packet: outgoingBuffer) {
-        if (packet->getSeqNum() > seqNum) {
-            return;
-        }
-        // Get the oldest packet & delete it
-        outgoingBuffer.pop_front();
+void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent race conditions
+    // Manage outgoing packets
+    int i = seqNum % windowSize;
+    while (outgoingBuffer[i] != nullptr) {
+        // Delete the packet & Clear it from the buffer
+        Packet* packet = outgoingBuffer[i];
         delete packet;
+        outgoingBuffer[i] = nullptr;
+
+        // Update the number of acks we have recived
+        this->lastAcknowlagedSeqNum++;
+        numOfOutgoingPackets--;
+
+        // Also Acknowlage any former packets
+        i = (i - 1) % windowSize;
     }
 }
 
@@ -119,8 +130,9 @@ void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
     incommingBuffer[i] = incomingPacket;
 }
 
-void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) {
-    this->outgoingBuffer.push_back(outgoingPacket);
+void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
+    outgoingBuffer[outgoingPacket->getSeqNum()] = outgoingPacket;
+    numOfOutgoingPackets++;
 }
 
 // Returns a seqnum and increments it by one for the next call
@@ -158,10 +170,20 @@ void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server)
 
 void UDPConnection::resetConnection()
 {
-    this->outgoingBuffer.clear();
+    //this->outgoingBuffer.clear();
     //this->incommingBuffer.clear();
+    // Clear the buffers
+    for (int i = 0; i < windowSize; i++) {
+        this->incommingBuffer[i] = nullptr;
+    }
+    for (int i = 0; i < windowSize; i++) {
+        this->outgoingBuffer[i] = nullptr;
+    }
+
     this->outgoingSeqNum = 1;
     this->incomingSeqNum = 1;
+    this->lastAcknowlagedSeqNum = 0;
+    
     this->synced = false;
 }
 

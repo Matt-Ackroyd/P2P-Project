@@ -32,14 +32,17 @@ void OutgoingHandler::OutgoingLoop() {
 
 
             // Send Any Outgoing packets
-            for (auto& packet: recipient->connection.outgoingBuffer) {
-
+            int i = recipient->connection.lastAcknowlagedSeqNum % recipient->connection.windowSize;
+            while (recipient->connection.outgoingBuffer[i] != nullptr) {
+                Packet* packet = recipient->connection.outgoingBuffer[i];
                 // Add timers for each packet
                 if (packet->timeToSend <= std::chrono::system_clock::now()) {
                     recipient->connection.sendPacket(packet);
                     packet->timesResent += 1;
                     packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(2000);
                 }
+
+                i = (i+1) % recipient->connection.windowSize;
             }
         }
 
@@ -79,7 +82,7 @@ void OutgoingHandler::OutgoingLoop() {
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         
         
     }
