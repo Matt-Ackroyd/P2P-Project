@@ -96,7 +96,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
 
     // Duplicate Packets 
     if (userConnection->incomingSeqNum > incomingPacket->getSeqNum()) {
-        userConnection->sendAck(userConnection->incomingSeqNum);
+        //userConnection->sendAck(userConnection->incomingSeqNum);
         return;
     }
 
@@ -107,12 +107,13 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     while (userConnection->incommingBuffer[userConnection->incomingSeqNum % userConnection->windowSize] != nullptr) {
         int i = userConnection->incomingSeqNum % userConnection->windowSize;
         Packet* front = userConnection->incommingBuffer[i];
+        int seqNum = incomingPacket->getSeqNum();
 
         this->handleIncoming(front, cliaddr);                   // Handle the packet (This Will Delete it from memory)
         userConnection->incommingBuffer[i] = nullptr;           // Clear this entry from the buffer
 
         userConnection->incomingSeqNum++;                       // Update the next expected seqence number
-        userConnection->sendAck(incomingPacket->getSeqNum());   // Send Ack for this packet
+        userConnection->sendAck(seqNum);   // Send Ack for this packet
 
     }
 }

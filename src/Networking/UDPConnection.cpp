@@ -119,8 +119,7 @@ void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent r
     int i = seqNum % windowSize;
     while (outgoingBuffer[i] != nullptr) {
         // Delete the packet & Clear it from the buffer
-        Packet* packet = outgoingBuffer[i];
-        delete packet;
+        delete outgoingBuffer[i];
         outgoingBuffer[i] = nullptr;
 
         // Update the number of packets
