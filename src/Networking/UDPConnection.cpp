@@ -146,12 +146,14 @@ void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
     }
     
 
-    mtx.unlock();
+    
 }
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
-    outgoingBuffer[outgoingPacket->getSeqNum()] = outgoingPacket;
+    mtx.lock();
+    outgoingBuffer[outgoingPacket->getSeqNum() % this->windowSize] = outgoingPacket;
     numOfOutgoingPackets++;
+    mtx.unlock();
 }
 
 // Returns a seqnum and increments it by one for the next call
