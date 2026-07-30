@@ -85,7 +85,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     RemoteUser *packetAuthor = onIncomingPacket(incomingPacket, cliaddr);
 
     // If this packet doesn't need an acknowledgement just handle and dont worry about any queues
-    if (incomingPacket->getPacketType() <= 3 || incomingPacket->getSeqNum() == 0) {
+    if (incomingPacket->getPacketType() <= 3) {
         handleIncoming(incomingPacket, cliaddr);
         return;
     }
@@ -101,19 +101,19 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     }
 
     
-    userConnection->addPacketToIncomingQueue(incomingPacket);  //Add the packet in sorted order
+    userConnection->addPacketToIncomingQueue(incomingPacket);  //Add the packet into the buffer
 
-    // Keep handling packets as long as there as some and we have the next expected packet
-    while (!userConnection->incommingBuffer.empty()) {
-        Packet* front = userConnection->incommingBuffer.front();
-        if (front->getSeqNum() != userConnection->incomingSeqNum) {
-            break;
-        }
-        this->handleIncoming(front, cliaddr);
-        userConnection->incomingSeqNum++;
-        userConnection->sendAck(incomingPacket->getSeqNum());   // Send Ack
-        userConnection->incommingBuffer.pop_front();
-        
+    // check if the next expected packet in in the buffer & keep checking until the next expected packet isn't in the buffer
+    while (userConnection->incommingBuffer[userConnection->incomingSeqNum % userConnection->windowSize] != nullptr) {
+        int i = userConnection->incomingSeqNum % userConnection->windowSize;
+        Packet* front = userConnection->incommingBuffer[i];
+
+        this->handleIncoming(front, cliaddr);                   // Handle the packet (This Will Delete it from memory)
+        userConnection->incommingBuffer[i] = nullptr;           // Clear this entry from the buffer
+
+        userConnection->incomingSeqNum++;                       // Update the next expected seqence number
+        userConnection->sendAck(incomingPacket->getSeqNum());   // Send Ack for this packet
+
     }
 }
 

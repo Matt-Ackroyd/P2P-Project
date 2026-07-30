@@ -4,12 +4,14 @@
 
 UDPConnection::UDPConnection() {
     this->sock = PrimaryClient::getInstance()->socketfd;
+    this->incommingBuffer = new Packet*[windowSize];
 }
 
 UDPConnection::~UDPConnection() {
     if (this->sharedSecret != NULL) {
         delete[] this->sharedSecret;
     }
+    delete[] this->incommingBuffer;
 }
 
 void UDPConnection::setAddr(char const *addr, int port) {
@@ -109,21 +111,8 @@ void UDPConnection::receivedAck(int seqNum) {
 
 void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
     // if the buffer is empty just add the packet to it
-    if (incommingBuffer.empty()) {
-        incommingBuffer.push_back(incomingPacket);
-        return;
-    }
-    // if its not empty then insert it in sorted order
-    // Loop until the new packet's seq num is less than the element that we are looking, we then insert it before that element
-    for (std::deque<Packet*>::iterator it = incommingBuffer.begin(); it != incommingBuffer.end(); ++it){
-        Packet* packetInQueue = *it; 
-        
-        if (packetInQueue->getSeqNum() > incomingPacket->getSeqNum()) {
-            incommingBuffer.insert(it, incomingPacket);
-            return;
-        }
-    
-    }
+    int i = incomingPacket->getSeqNum() % this->windowSize;
+    incommingBuffer[i] = incomingPacket;
 }
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) {
@@ -166,7 +155,7 @@ void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server)
 void UDPConnection::resetConnection()
 {
     this->outgoingBuffer.clear();
-    this->incommingBuffer.clear();
+    //this->incommingBuffer.clear();
     this->outgoingSeqNum = 1;
     this->incomingSeqNum = 1;
     this->synced = false;

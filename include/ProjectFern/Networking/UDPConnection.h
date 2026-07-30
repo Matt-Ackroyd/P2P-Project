@@ -66,7 +66,8 @@ public:
 
     int incomingSeqNum = 1;
     std::deque<Packet*> outgoingBuffer;
-    std::deque<Packet*> incommingBuffer; 
+    Packet** incommingBuffer; 
+    int windowSize = 100;
 
     std::unordered_map<std::string, SyncRequest*> syncRequests;
     std::unordered_set<std::string> listOfRequestedIDs;
