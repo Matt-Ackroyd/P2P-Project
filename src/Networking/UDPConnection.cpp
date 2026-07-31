@@ -107,8 +107,9 @@ void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to
        return;
     }
 
-    delete this->outgoingBuffer[packetID];
+    Packet* packet = this->outgoingBuffer[packetID];
     this->outgoingBuffer.erase(packetID);
+    delete this->outgoingBuffer[packetID];
 
     mtx.unlock();
 }

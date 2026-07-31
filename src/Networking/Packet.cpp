@@ -39,6 +39,7 @@ int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, un
 
     // Add PacketID to Output 
     ID::BytesFromString(this->packetID, (unsigned char*)this->data+offset);
+    offset += UUID_BYTE_SIZE;
 
     // Sender Id
     unsigned char uuid[UUID_BYTE_SIZE];
