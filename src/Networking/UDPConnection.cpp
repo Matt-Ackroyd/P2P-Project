@@ -116,10 +116,6 @@ void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent r
 
     mtx.lock();
 
-    if (seqNum > lastAcknowlagedSeqNum) {
-        lastAcknowlagedSeqNum = seqNum;
-    }
-
     // Manage outgoing packets
     int i = seqNum % windowSize;
 
@@ -127,6 +123,8 @@ void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent r
         // Delete the packet & Clear it from the buffer
         delete outgoingBuffer[i];
         outgoingBuffer[i] = nullptr;
+
+        this->posOfFirstOutgoingPacket = (this->posOfFirstOutgoingPacket+1) % windowSize;
 
         // Update the number of packets
         numOfOutgoingPackets--;

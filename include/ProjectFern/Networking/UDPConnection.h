@@ -70,8 +70,9 @@ public:
     std::mutex mtx;
     Packet** outgoingBuffer;
     Packet** incommingBuffer; 
-    int windowSize = 300;
+    int windowSize = 700;
     int numOfOutgoingPackets = 0;
+    int posOfFirstOutgoingPacket = 1;
 
     std::unordered_map<std::string, SyncRequest*> syncRequests;
     std::unordered_set<std::string> listOfRequestedIDs;

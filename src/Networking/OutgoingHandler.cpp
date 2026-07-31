@@ -32,15 +32,16 @@ void OutgoingHandler::OutgoingLoop() {
 
 
             // Send Any Outgoing packets
-            int i = (recipient->connection.lastAcknowlagedSeqNum+1) % recipient->connection.windowSize;
+            
             recipient->connection.mtx.lock(); // Mtx lock because packets would be deleted at any time otherwise
+            int i = recipient->connection.posOfFirstOutgoingPacket;
             while (recipient->connection.outgoingBuffer[i] != nullptr) {
                 Packet* packet = recipient->connection.outgoingBuffer[i];
                 // Add timers for each packet
                 if (packet->timeToSend <= std::chrono::system_clock::now()) {
                     recipient->connection.sendPacket(packet);
-                    packet->timesResent += 1;
-                    packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(5000);
+                        packet->timesResent += 1;
+                    packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(500);
                 }
 
                 i = (i+1) % recipient->connection.windowSize;
