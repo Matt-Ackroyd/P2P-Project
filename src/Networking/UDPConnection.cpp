@@ -101,7 +101,7 @@ void UDPConnection::setSharedSecret(unsigned char* secret) {
 
     
 void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to prevent race conditions
-    mtx.lock();
+    std::lock_guard<std::mutex> lock(mtx);
 
     if (!this->outgoingBuffer.contains(packetID)) {
        return;
@@ -110,16 +110,14 @@ void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to
     Packet* packet = this->outgoingBuffer[packetID];
     this->outgoingBuffer.erase(packetID);
     delete packet;
-
-    mtx.unlock();
 }
 
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
-    mtx.lock();
+    std::lock_guard<std::mutex> lock(mtx);
     
     outgoingBuffer[outgoingPacket->getPacketID()] = outgoingPacket;
-    mtx.unlock();
+    
 }
 
 void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
@@ -129,10 +127,10 @@ void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
 
 // Returns a seqnum and increments it by one for the next call
 int UDPConnection::newSeqNum() {
-    mtx.lock();
+    std::lock_guard<std::mutex> lock(mtx);
+    
     int output = this->outgoingSeqNum;
     this->outgoingSeqNum++;
-    mtx.unlock();
     return output;
 }
 
@@ -166,6 +164,8 @@ void UDPConnection::resetConnection()
     mtx.lock();
     this->outgoingBuffer.clear();    
     mtx.unlock();
+
+    this->incommingBuffer.clear();
     
     this->synced = false;
     
