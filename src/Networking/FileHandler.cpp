@@ -178,7 +178,7 @@ void FileHandler::manageFiles()
         if (outgoingFiles.empty()) {
             break;
         }
-        if (file->getRecipient()->connection.numOfOutgoingPackets < maxOutgoingPackets) {
+        if (file->getRecipient()->connection.outgoingBuffer.size() < maxOutgoingPackets) {
             file->sendNextPacket();
         }
     }

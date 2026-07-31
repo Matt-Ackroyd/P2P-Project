@@ -23,7 +23,7 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
     file.close();
 
     // Send the original requester the connection info of the requsted user
-    Packet packet1(-1, PacketType::RELAY_USER_INFO, &userID);
+    Packet packet1(PacketType::RELAY_USER_INFO, &userID);
     int packet1Len = packet1.serialize(connection_buffer, CONNECTION_INFO_SIZE, NULL, NULL);
     sendto(socketfd, packet1.getData(), packet1Len, 0, (struct sockaddr*)cliaddr, clientlen);
 
@@ -50,7 +50,7 @@ void RelayServer::onUserConnectionInfoReqest(Packet* packet, SOCKTYPE socketfd, 
     memcpy(outgoingBuffer+sizeof(int), &cliaddr->sin_port, sizeof(cliaddr->sin_port));                 // Copy Port
 
     // Encapsulate the data in a packet, (the author of the packet is the id of the owner of the connection info)
-    Packet packet2(-1, PacketType::RELAY_USER_INFO, &packet->packetAuthorID);
+    Packet packet2(PacketType::RELAY_USER_INFO, &packet->packetAuthorID);
     int packet2Len = packet2.serialize(outgoingBuffer, CONNECTION_INFO_SIZE, NULL, NULL);
     sendto(socketfd, packet2.getData(), packet2Len, 0, (struct sockaddr*)&addrToInform, sizeof(addrToInform));
 }
@@ -211,6 +211,7 @@ void RelayServer::UdpHandler(int udpPort) {
     char buffer[MAXLINE]; 
     struct sockaddr_in servaddr, cliaddr; 
     socklen_t clientlen = sizeof(cliaddr);
+    std::string uuid = "";
 
     SOCKTYPE socketfd = socket(AF_INET, SOCK_DGRAM, 0); 
     
@@ -232,7 +233,7 @@ void RelayServer::UdpHandler(int udpPort) {
 
         if (packetlen > Packet::MIN_PACKET_SIZE) {
             try {
-                Packet packet(-1, PacketType::NONE, NULL);
+                Packet packet(PacketType::NONE, NULL);
                 int datalen = packet.deserialize(buffer);
 
                 if (packet.getPacketType() == PacketType::RELAY_REGISTER_REQUEST) {
@@ -246,6 +247,14 @@ void RelayServer::UdpHandler(int udpPort) {
                 else if (packet.getPacketType() == PacketType::RELAY_USER_INFO && datalen == UUID_BYTE_SIZE) {    
                     RelayServer::onUserConnectionInfoReqest(&packet, socketfd, &cliaddr, clientlen);
                 }
+
+
+                // Send Ack
+                Packet ack(PacketType::ACK, &uuid, packet.getPacketID());
+
+                int packetlen = ack.serialize(NULL, 0, NULL, NULL);
+                sendto(socketfd, ack.getData(), packetlen, 0, (struct sockaddr*)&cliaddr, clientlen);
+
             } catch (std::runtime_error e) {
                 std::cout << "UDP Exception Caught: " << e.what();
             }

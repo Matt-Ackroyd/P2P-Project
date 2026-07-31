@@ -43,16 +43,16 @@ public:
 
     unsigned char handshakeRandBuffer[ML_KEM_HANDSHAKE_RANDSIZE];
     
-    void setAddr(char const *addr, int port);  
-    void sendEncrypted(unsigned char* data, int datalen);
+    void setAddr(char const *addr, int port);
+    void sendAck(std::string packetID);
+    void sendEncrypted(unsigned char *data, int datalen);
     void sendKeepAlive();
-    void sendAck(int seqNum);
     void sendHello();
     void sendPacket(Packet *packet);
     void sendHandshakeRequest();
     unsigned char* getSharedSecret();
     void setSharedSecret(unsigned char* secret);
-    void receivedAck(int seqNum);
+    void receivedAck(std::string packetID);
 
     void addPacketToOutgoingQueue(Packet* outgoingPacket);
     void addPacketToIncomingQueue(Packet* incomingPacket);
@@ -65,14 +65,14 @@ public:
 
     void sendSyncRequest(Server *server);
 
-    int incomingSeqNum = 1; // Next Seq Num that this client is expecting to recive
-    int lastAcknowlagedSeqNum = 0;
     std::mutex mtx;
-    Packet** outgoingBuffer;
-    Packet** incommingBuffer; 
+
+    std::unordered_map<std::string, Packet*> outgoingBuffer;
+    std::unordered_map<std::string, std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration>> incommingBuffer; 
+
     int windowSize = 700;
-    int numOfOutgoingPackets = 0;
-    int posOfFirstOutgoingPacket = 1;
+    //int numOfOutgoingPackets = 0;
+    //int posOfFirstOutgoingPacket = 1;
 
     std::unordered_map<std::string, SyncRequest*> syncRequests;
     std::unordered_set<std::string> listOfRequestedIDs;

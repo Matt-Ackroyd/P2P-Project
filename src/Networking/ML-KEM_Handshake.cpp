@@ -1,7 +1,7 @@
 #include "ML-KEM_Handshake.h"
 
 Packet* ML_KEM_Handshake::startHandshake(unsigned char* randomBuffer, EVP_PKEY* keyPair, std::string* yourID, int seqenceNumber, EVP_PKEY* yourDSAkey) {
-    Packet *packet = new Packet(seqenceNumber, PacketType::HANDSHAKE_REQUEST, yourID);
+    Packet *packet = new Packet(PacketType::HANDSHAKE_REQUEST, yourID);
     int size = ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH + ML_DSA_87_PUBLIC_KEY_BYTE_SIZE;
     unsigned char data[size];
     int offset = 0;
@@ -96,7 +96,7 @@ Packet* ML_KEM_Handshake::onRequest(Packet* packet, std::string* yourID, unsigne
     }
 
     // Create Return Packet
-    Packet* returnPacket = new Packet(seqenceNumber, type, yourID);
+    Packet* returnPacket = new Packet(type, yourID);
     returnPacket->serialize((char*)returnBuffer, returnLength, NULL, NULL);
 
     return returnPacket;

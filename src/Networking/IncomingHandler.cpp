@@ -68,11 +68,15 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     std::string ipa = inet_ntoa(cliaddr.sin_addr);
     int porta = ntohs(cliaddr.sin_port);
 
-    if (packetlen < Packet::MIN_PACKET_SIZE) {
-        throw std::runtime_error("Invalid Packet");
-    }
+    // Manage incoming buffer timeout
 
-    Packet* incomingPacket = new Packet(-1, PacketType::NONE, PrimaryClient::getInstance()->getClientID());
+    // Thread Manager
+
+
+
+
+
+    Packet* incomingPacket = new Packet(PacketType::NONE, PrimaryClient::getInstance()->getClientID());
     incomingPacket->deserialize(buffer);
 
     // Relays dont have a userID so we need to handle the packet early 
@@ -95,29 +99,15 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     UDPConnection* userConnection = &packetAuthor->connection;
 
     // Duplicate Packets 
-    if (userConnection->incommingBuffer[incomingPacket->getSeqNum() % userConnection->windowSize]) {
-        userConnection->sendAck(userConnection->incomingSeqNum-1);
+    if (userConnection->incommingBuffer.contains(incomingPacket->getPacketID())) {
+        userConnection->sendAck(incomingPacket->getPacketID());
         return;
     }
 
     
     userConnection->addPacketToIncomingQueue(incomingPacket);  //Add the packet into the buffer
 
-    // check if the next expected packet in in the buffer & keep checking until the next expected packet isn't in the buffer
-    int i = userConnection->incomingSeqNum % userConnection->windowSize;
-    while (userConnection->incommingBuffer[i] != nullptr) {
-        Packet* front = userConnection->incommingBuffer[i];
-        int seqNum = front->getSeqNum();
-
-        this->handleIncoming(front, cliaddr);                   // Handle the packet (This Will Delete it from memory)
-        userConnection->incommingBuffer[i] = nullptr;           // Clear this entry from the buffer
-
-                                                    
-        userConnection->sendAck(seqNum);           // Send Ack for this packet
-        userConnection->incomingSeqNum++;          // Update the next expected seqence number
-        i = userConnection->incomingSeqNum % userConnection->windowSize;
-
-    }
+    handleIncoming(incomingPacket, cliaddr);
 }
 
 
@@ -319,7 +309,7 @@ void IncomingHandler::handleAck(Packet* packet) {
     PrimaryClient* client = PrimaryClient::getInstance();
     RemoteUser* userRequesting = client->getUser(packet->packetAuthorID);
 
-    userRequesting->connection.receivedAck(packet->getSeqNum());
+    userRequesting->connection.receivedAck(packet->getPacketID());
 }
 
 

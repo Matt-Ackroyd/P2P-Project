@@ -4,15 +4,7 @@
 
 UDPConnection::UDPConnection() {
     this->sock = PrimaryClient::getInstance()->socketfd;
-    this->incommingBuffer = new Packet*[windowSize];
-    this->outgoingBuffer = new Packet*[windowSize];
-
-    for (int i = 0; i < windowSize; i++) {
-        this->incommingBuffer[i] = nullptr;
-    }
-    for (int i = 0; i < windowSize; i++) {
-        this->outgoingBuffer[i] = nullptr;
-    }
+    
 
     this->mtx;
 }
@@ -21,7 +13,6 @@ UDPConnection::~UDPConnection() {
     if (this->sharedSecret != NULL) {
         delete[] this->sharedSecret;
     }
-    delete[] this->incommingBuffer;
 }
 
 void UDPConnection::setAddr(char const *addr, int port) {
@@ -32,15 +23,15 @@ void UDPConnection::setAddr(char const *addr, int port) {
     this->connectionAddr.sin_family = AF_INET;
 }
 
-void UDPConnection::sendAck(int seqNum) {
-    Packet ack(seqNum, PacketType::ACK, PrimaryClient::getInstance()->getClientID());
+void UDPConnection::sendAck(std::string packetID) {
+    Packet ack(PacketType::ACK, PrimaryClient::getInstance()->getClientID(), packetID);
 
     int packetlen = ack.serialize(NULL, 0, NULL, NULL);
     sendto(this->sock, ack.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
 }
 
 void UDPConnection::sendHello() {
-    Packet* hello = new Packet(this->newSeqNum(), PacketType::HELLO, PrimaryClient::getInstance()->getClientID());
+    Packet* hello = new Packet(PacketType::HELLO, PrimaryClient::getInstance()->getClientID());
 
     hello->serialize(NULL, 0, NULL, NULL);
     addPacketToOutgoingQueue(hello);
@@ -49,7 +40,7 @@ void UDPConnection::sendHello() {
 // Send an Empty packet in order to keep the connection going 
 void UDPConnection::sendKeepAlive() {
     unsigned char* keepAlive[0];
-    Packet packet(-1, PacketType::KEEP_ALIVE, PrimaryClient::getInstance()->getClientID());
+    Packet packet(PacketType::KEEP_ALIVE, PrimaryClient::getInstance()->getClientID());
 
     int packetlen = packet.serialize((char*)keepAlive, 0, NULL, NULL);
     int a = sendto(this->sock, packet.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
@@ -62,7 +53,7 @@ void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
         return;
     }
 
-    Packet *packetToSend = new Packet(newSeqNum(), PacketType::PACKET, PrimaryClient::getInstance()->getClientID());
+    Packet *packetToSend = new Packet(PacketType::PACKET, PrimaryClient::getInstance()->getClientID());
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
@@ -109,49 +100,29 @@ void UDPConnection::setSharedSecret(unsigned char* secret) {
 }
 
     
-void UDPConnection::receivedAck(int seqNum) { // TODO add mtx Guard to prevent race conditions
-    if (seqNum < 0) {
-        return;
-    }
-
+void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to prevent race conditions
     mtx.lock();
 
-    // Manage outgoing packets
-    int i = seqNum % windowSize;
-
-    while (outgoingBuffer[i] != nullptr) {
-        // Delete the packet & Clear it from the buffer
-        delete outgoingBuffer[i];
-        outgoingBuffer[i] = nullptr;
-
-        this->posOfFirstOutgoingPacket = (this->posOfFirstOutgoingPacket+1) % windowSize;
-
-        // Update the number of packets
-        numOfOutgoingPackets--;
-
-        // Also Acknowlage any former packets
-        i = (i - 1) % windowSize;
-        if (i == -1) {i = windowSize-1;}
+    if (!this->outgoingBuffer.contains(packetID)) {
+       return;
     }
+
+    delete this->outgoingBuffer[packetID];
+    this->outgoingBuffer.erase(packetID);
 
     mtx.unlock();
 }
 
-void UDPConnection::addPacketToIncomingQueue(Packet* incomingPacket) {
-    mtx.lock();
-    // if the buffer is empty just add the packet to it
-    int i = incomingPacket->getSeqNum() % this->windowSize;
-    if (incommingBuffer[i] == nullptr) {
-        incommingBuffer[i] = incomingPacket;
-    }
-    mtx.unlock();
-}
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
     mtx.lock();
-    outgoingBuffer[outgoingPacket->getSeqNum() % this->windowSize] = outgoingPacket;
-    numOfOutgoingPackets++;
+    outgoingBuffer[outgoingPacket->getPacketID()] = outgoingPacket;
     mtx.unlock();
+}
+
+void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
+{
+    incommingBuffer[incomingPacket->getPacketID()] = std::chrono::system_clock::now();
 }
 
 // Returns a seqnum and increments it by one for the next call
@@ -190,19 +161,8 @@ void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server)
 
 void UDPConnection::resetConnection()
 {
-    //this->outgoingBuffer.clear();
-    //this->incommingBuffer.clear();
-    // Clear the buffers
-    for (int i = 0; i < windowSize; i++) {
-        this->incommingBuffer[i] = nullptr;
-    }
-    for (int i = 0; i < windowSize; i++) {
-        this->outgoingBuffer[i] = nullptr;
-    }
-
+    this->outgoingBuffer.clear();    
     this->outgoingSeqNum = 1;
-    this->incomingSeqNum = 1;
-    this->lastAcknowlagedSeqNum = 0;
     
     this->synced = false;
 }

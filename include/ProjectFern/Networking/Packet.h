@@ -31,7 +31,8 @@ enum PacketType
 class Packet {
 private:
     PacketType packetType;
-    int seqNum;
+    //int seqNum;
+    std::string packetID;
     unsigned char IV[AES_256_IV_LENGTH];
     unsigned char MAC[AES_256_GCM_TAG_LENGTH];
     char* data;
@@ -43,13 +44,13 @@ public:
     std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> timeToSend = std::chrono::system_clock::now();
     int timesResent = 0;
 
-    Packet(int seqNum, PacketType packetType, std::string* author);
+    Packet(PacketType packetType, std::string* author, std::string packetID = "");
     ~Packet();
 
     int serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
     int deserialize(char* serializedData);
 
-    int getSeqNum();
+    std::string getPacketID();
     PacketType getPacketType();
     char* getData();
     int getDataLength();
@@ -58,5 +59,5 @@ public:
     unsigned char* getTag();
 
     // PacketType(4) + SeqNum(4) + UUID(16) + dataLen(4) + ControlVar(1)
-    static int const MIN_PACKET_SIZE = SHAW_256_HASH_SIZE + sizeof(packetType) + sizeof(seqNum) + UUID_BYTE_SIZE + sizeof(int) + sizeof(char);
+    static int const MIN_PACKET_SIZE = SHAW_256_HASH_SIZE + sizeof(packetType) + UUID_BYTE_SIZE + UUID_BYTE_SIZE + sizeof(int) + sizeof(char);
 };

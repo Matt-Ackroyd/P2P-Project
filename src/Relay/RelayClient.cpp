@@ -20,7 +20,7 @@ void RelayClient::SendRelayRegisterRequest(std::string relayAddr, int relayPort,
         ConfigLoader::getInstance()->ReadBinaryFile(path, password, PASSWORD_BYTE_SIZE);
     }
 
-    Packet request(-1, PacketType::RELAY_REGISTER_REQUEST, PrimaryClient::getInstance()->getClientID());
+    Packet request(PacketType::RELAY_REGISTER_REQUEST, PrimaryClient::getInstance()->getClientID());
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
@@ -91,7 +91,7 @@ void RelayClient::UserConnectionInfoRequest(SOCKTYPE socketfd, std::string relay
     serverAddress.sin_port = htons(relayPort);
     serverAddress.sin_addr.s_addr = inet_addr(relayAddr.c_str());
 
-    Packet packet(-1, PacketType::RELAY_USER_INFO, yourID);
+    Packet packet(PacketType::RELAY_USER_INFO, yourID);
     unsigned char uuid[UUID_BYTE_SIZE];
     ID::BytesFromString(requestedUserID, uuid);
     int packetlen = packet.serialize((char*)uuid, UUID_BYTE_SIZE, NULL, NULL);
