@@ -33,6 +33,7 @@ void OutgoingHandler::OutgoingLoop() {
 
             // Send Any Outgoing packets
             int i = (recipient->connection.lastAcknowlagedSeqNum+1) % recipient->connection.windowSize;
+            recipient->connection.mtx.lock(); // Mtx lock because packets would be deleted at any time otherwise
             while (recipient->connection.outgoingBuffer[i] != nullptr) {
                 Packet* packet = recipient->connection.outgoingBuffer[i];
                 // Add timers for each packet
@@ -44,6 +45,7 @@ void OutgoingHandler::OutgoingLoop() {
 
                 i = (i+1) % recipient->connection.windowSize;
             }
+            recipient->connection.mtx.unlock();
         }
 
 

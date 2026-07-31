@@ -26,8 +26,6 @@ private:
     int sock;
     unsigned char* sharedSecret = NULL;
     int outgoingSeqNum = 1; // Next packet number we should send to them
-
-    std::mutex mtx;
     
     
 public:    
@@ -69,6 +67,7 @@ public:
 
     int incomingSeqNum = 1; // Next Seq Num that this client is expecting to recive
     int lastAcknowlagedSeqNum = 0;
+    std::mutex mtx;
     Packet** outgoingBuffer;
     Packet** incommingBuffer; 
     int windowSize = 300;

@@ -212,8 +212,9 @@ void FileHandler::onFilePacketRecieved(unsigned char* output)
     
     // If this is the last of the file
     if (filesize >= fileInfo->getFileSize()) {
-        delete fileHandler->incomingFiles[filedata.getFileID()];
+        DownloadingFile* file = fileHandler->incomingFiles[filedata.getFileID()];
         fileHandler->incomingFiles.erase(filedata.getFileID());
+        delete file;
     }
 
     delete fileInfo;
