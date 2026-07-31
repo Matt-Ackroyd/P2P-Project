@@ -104,10 +104,10 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     userConnection->addPacketToIncomingQueue(incomingPacket);  //Add the packet into the buffer
 
     // check if the next expected packet in in the buffer & keep checking until the next expected packet isn't in the buffer
-    while (userConnection->incommingBuffer[userConnection->incomingSeqNum % userConnection->windowSize] != nullptr) {
-        int i = userConnection->incomingSeqNum % userConnection->windowSize;
+    int i = userConnection->incomingSeqNum % userConnection->windowSize;
+    while (userConnection->incommingBuffer[i] != nullptr) {
         Packet* front = userConnection->incommingBuffer[i];
-        int seqNum = incomingPacket->getSeqNum();
+        int seqNum = front->getSeqNum();
 
         this->handleIncoming(front, cliaddr);                   // Handle the packet (This Will Delete it from memory)
         userConnection->incommingBuffer[i] = nullptr;           // Clear this entry from the buffer
@@ -115,6 +115,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
                                                     
         userConnection->sendAck(seqNum);           // Send Ack for this packet
         userConnection->incomingSeqNum++;          // Update the next expected seqence number
+        i = userConnection->incomingSeqNum % userConnection->windowSize;
 
     }
 }
