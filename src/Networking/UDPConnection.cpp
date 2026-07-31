@@ -109,7 +109,7 @@ void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to
 
     Packet* packet = this->outgoingBuffer[packetID];
     this->outgoingBuffer.erase(packetID);
-    delete this->outgoingBuffer[packetID];
+    delete packet;
 
     mtx.unlock();
 }
@@ -117,6 +117,7 @@ void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
     mtx.lock();
+    
     outgoingBuffer[outgoingPacket->getPacketID()] = outgoingPacket;
     mtx.unlock();
 }
