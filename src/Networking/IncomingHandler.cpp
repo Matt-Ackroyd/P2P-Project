@@ -87,6 +87,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
 
     // Get The User who Sent it, if they dont exist then create them & Send any Buffered actions now that there exists a connection
     RemoteUser *packetAuthor = onIncomingPacket(incomingPacket, cliaddr);
+    std::string packetID = incomingPacket->getPacketID();
 
     // If this packet doesn't need an acknowledgement just handle and dont worry about any queues
     if (incomingPacket->getPacketType() <= 3) {
@@ -99,8 +100,8 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     UDPConnection* userConnection = &packetAuthor->connection;
 
     // Duplicate Packets 
-    if (userConnection->incommingBuffer.contains(incomingPacket->getPacketID())) {
-        userConnection->sendAck(incomingPacket->getPacketID());
+    if (userConnection->incommingBuffer.contains(packetID)) {
+        userConnection->sendAck(packetID);
         return;
     }
 
@@ -108,6 +109,9 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     userConnection->addPacketToIncomingQueue(incomingPacket);  //Add the packet into the buffer
 
     handleIncoming(incomingPacket, cliaddr);
+
+    userConnection->sendAck(packetID);
+
 }
 
 

@@ -162,10 +162,12 @@ void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server)
 
 void UDPConnection::resetConnection()
 {
+    mtx.lock();
     this->outgoingBuffer.clear();    
-    this->outgoingSeqNum = 1;
+    mtx.unlock();
     
     this->synced = false;
+    
 }
 
 

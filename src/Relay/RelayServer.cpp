@@ -248,12 +248,14 @@ void RelayServer::UdpHandler(int udpPort) {
                     RelayServer::onUserConnectionInfoReqest(&packet, socketfd, &cliaddr, clientlen);
                 }
 
+                if (packet.getPacketType() != ACK) {
+                    // Send Ack
+                    Packet ack(PacketType::ACK, &uuid, packet.getPacketID());
 
-                // Send Ack
-                Packet ack(PacketType::ACK, &uuid, packet.getPacketID());
-
-                int packetlen = ack.serialize(NULL, 0, NULL, NULL);
-                sendto(socketfd, ack.getData(), packetlen, 0, (struct sockaddr*)&cliaddr, clientlen);
+                    int packetlen = ack.serialize(NULL, 0, NULL, NULL);
+                    sendto(socketfd, ack.getData(), packetlen, 0, (struct sockaddr*)&cliaddr, clientlen);
+                }
+                
 
             } catch (std::runtime_error e) {
                 std::cout << "UDP Exception Caught: " << e.what();

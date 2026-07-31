@@ -37,6 +37,7 @@ void OutgoingHandler::OutgoingLoop() {
             
             for (auto& [packetID, packet]: recipient->connection.outgoingBuffer) {
                 // Add timers for each packet
+                
                 if (packet->timeToSend <= std::chrono::system_clock::now()) {
                     recipient->connection.sendPacket(packet);
                         packet->timesResent += 1;
