@@ -39,10 +39,10 @@ void UDPConnection::sendHello() {
 
 // Send an Empty packet in order to keep the connection going 
 void UDPConnection::sendKeepAlive() {
-    unsigned char* keepAlive[0];
+    unsigned char keepAlive[1] = {(unsigned char)19};
     Packet packet(PacketType::KEEP_ALIVE, PrimaryClient::getInstance()->getClientID());
 
-    int packetlen = packet.serialize((char*)keepAlive, 0, NULL, NULL);
+    int packetlen = packet.serialize((char*)keepAlive, 1, NULL, NULL);
     int a = sendto(this->sock, packet.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
 }
 
