@@ -5,6 +5,10 @@
 
 IncomingHandler::IncomingHandler(int ReceivingPort) {
     this->IncomingHandlerThread = std::thread(&IncomingHandler::incomingStartup, this, ReceivingPort);
+
+    for (int i = 0; i < threadCount; i++) {
+        ThreadManager[i] = nullptr;
+    }
 }
 
 
@@ -44,9 +48,10 @@ void IncomingHandler::incomingStartup(int ReceivingPort)
     while (this->acceptIncoming) {
         try {
             IncomingLoop(buffer);
-        } catch (...) {
+        } catch (std::exception e) {
             // TODO Make more infomative 
-            std::cout << "Incoming Exception";
+            std::cout << "Incoming Exception: ";
+            std::cout << e.what();
         }
     }
     
@@ -72,12 +77,47 @@ void IncomingHandler::IncomingLoop(char* buffer) {
 
     // Thread Manager
 
+    char* buffercpy = new char[MAXLINE];
+    memcpy(buffercpy, buffer, MAXLINE);
 
+    int i = 0;
+    bool jobAllocated = false;
+    while (!jobAllocated) {
+        // Look for open thread
+        if (ThreadManager[i] == nullptr) {
+            threadMTX.lock();
+            std::thread* newThread = new std::thread(&IncomingHandler::threadStarter, this, buffercpy, cliaddr, i);
+            //newThread->detach();
+            ThreadManager[i] = newThread;
+            jobAllocated = true;
+            threadMTX.unlock();
+        }
+        i++;
+        if (i == threadCount) {
+            i = 0;
+        }
+    }
+}
 
+void IncomingHandler::threadStarter(char* buffer, sockaddr_in cliaddr, int threadNumber) {
+    try { 
+        onPacketRecived(buffer, cliaddr);
+    }
+    catch (std::exception e) {
+        
+    }
+    // Clean Up Thread
+    threadMTX.lock();
+    std::thread* threadPointer = this->ThreadManager[threadNumber];
+    this->ThreadManager[threadNumber] = nullptr;
+    threadMTX.unlock();
+    //delete threadPointer;
+}
 
-
+void IncomingHandler::onPacketRecived(char* buffer, sockaddr_in cliaddr) {
     Packet* incomingPacket = new Packet(PacketType::NONE, PrimaryClient::getInstance()->getClientID());
     incomingPacket->deserialize(buffer);
+    delete buffer;
 
     // Relays dont have a userID so we need to handle the packet early 
     if (incomingPacket->getPacketType() == PacketType::RELAY_USER_INFO || incomingPacket->getPacketType() == RELAY_HANDSHAKE_RESPONSE) {
@@ -111,8 +151,8 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     handleIncoming(incomingPacket, cliaddr);
 
     userConnection->sendAck(packetID);
-
 }
+
 
 
 void IncomingHandler::handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr) {

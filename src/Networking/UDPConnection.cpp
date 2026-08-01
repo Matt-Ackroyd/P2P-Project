@@ -88,8 +88,7 @@ void UDPConnection::sendHandshakeRequest() {
 }
 
 void UDPConnection::sendPacket(Packet* packet) {
-    int a = sendto(this->sock, packet->getData(), packet->getPacketlength(), 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
-    std::cout << " Bind Return: " << a << "\n";
+    sendto(this->sock, packet->getData(), packet->getPacketlength(), 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
 }
 
 unsigned char* UDPConnection::getSharedSecret() {
@@ -122,6 +121,7 @@ void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO a
 
 void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
 {
+    std::lock_guard<std::mutex> lock(mtx);
     incommingBuffer[incomingPacket->getPacketID()] = std::chrono::system_clock::now();
 }
 
@@ -163,10 +163,9 @@ void UDPConnection::resetConnection()
 {
     mtx.lock();
     this->outgoingBuffer.clear();    
-    mtx.unlock();
-
     this->incommingBuffer.clear();
-    
+    mtx.unlock();
+ 
     this->synced = false;
     
 }

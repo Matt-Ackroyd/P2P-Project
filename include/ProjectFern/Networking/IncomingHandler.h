@@ -24,6 +24,10 @@ class IncomingHandler {
     public:     
         std::thread IncomingHandlerThread;
 
+        static const int threadCount = 30;
+        std::thread* ThreadManager[threadCount];
+        std::mutex threadMTX;
+
         IncomingHandler(int ReceivingPort);
         void acknowledgePacket(Packet packet, UDPConnection connectedUser);
     private:
@@ -32,7 +36,9 @@ class IncomingHandler {
         bool acceptIncoming;
         void incomingStartup(int ReceivingPort);
         void IncomingLoop(char* buffer);
-        void handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr);
+        void threadStarter(char *buffer, sockaddr_in cliaddr, int threadNumber);
+        void onPacketRecived(char *buffer, sockaddr_in cliaddr);
+        void handleIncoming(Packet *incomingPacket, sockaddr_in cliaddr);
         std::deque<Packet> ReceivingBuffer;
 
         void handleAck(Packet* packet);
