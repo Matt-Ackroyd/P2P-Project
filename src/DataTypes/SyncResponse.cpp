@@ -134,9 +134,11 @@ void SyncResponse::onSyncResponse(unsigned char* decryptedData, RemoteUser* send
         return;
     }
     SyncRequest* syncrequest = sender->connection.syncRequests[response.getSyncID()];
+    std::string serverID = syncrequest->getserverID();
+    
     sender->connection.syncRequests.erase(response.getSyncID());
 
-    std::string serverID = syncrequest->getserverID();
+    
 
     // If this request was full then send another one 
     if (response.getListOfIDs().size() >= MAX_SYNC_REQUEST) {

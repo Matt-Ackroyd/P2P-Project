@@ -74,13 +74,9 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     int porta = ntohs(cliaddr.sin_port);
 
     // Thread Manager
-    Packet* incomingPacket = new Packet(PacketType::NONE, PrimaryClient::getInstance()->getClientID());
-    incomingPacket->deserialize(buffer);
 
     char* buffercpy = new char[MAXLINE];
     memcpy(buffercpy, buffer, MAXLINE);
-
-
     std::function<void()> newTask = std::bind(&IncomingHandler::threadStarter, this, buffercpy, cliaddr);
 
     ThreadManager.enqueue(newTask);
@@ -428,9 +424,10 @@ RemoteUser* IncomingHandler::onIncomingPacket(Packet* incomingPacket, sockaddr_i
     // Manage incoming buffer timeout
     {
         std::lock_guard<std::mutex> lock(packetAuthor->connection.incomingmtx);
-        for (auto& [packetID, timestamp] : packetAuthor->connection.incommingBuffer) {
-            if (timestamp + std::chrono::milliseconds(10000) < std::chrono::system_clock::now()) {
+        for (auto [packetID, timestamp] : packetAuthor->connection.incommingBuffer) {
+            if (timestamp + std::chrono::milliseconds(1000) < std::chrono::system_clock::now()) {
                 packetAuthor->connection.removePacketFromIncomingQueue(packetID);
+                break;
             }
         }
     }
