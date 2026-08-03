@@ -5,7 +5,7 @@
 
 // Public contructor
 UserContainer::UserContainer(DataTypes datatype, RemoteUser* user, Server* server) 
-: Container(datatype, (UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(short int) + sizeof(bool))) {
+: Container(datatype, USER_CONTAINER_SIZE) {
     this->userID = *user->getID();
     this->serverID = *server->getID();
     this->contactAddress = user->contactAddress;
@@ -116,7 +116,7 @@ void UserContainer::onReceived(unsigned char* decryptedData) {
 
 void UserContainer::onReceived(UserContainer request) {
     // Add check that the user creating this channel has the permision to do so
-    
+
     PrimaryClient* client = PrimaryClient::getInstance();
 
     client->registerNewUser(request.getUserID());

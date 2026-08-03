@@ -238,6 +238,8 @@ public:
     bool getRelayRequired();
     static void onReceived(unsigned char *decryptedData);
     static void onReceived(UserContainer request);
+
+    static const int USER_CONTAINER_SIZE = (UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(short int) + sizeof(bool));
 };
 
 class ServerContainer : public Container {

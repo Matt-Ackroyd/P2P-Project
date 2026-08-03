@@ -3,7 +3,7 @@
 #include "PrimaryClient.h"
 
 // Public Constructor
-ServerContainer::ServerContainer(DataTypes datatype, Server* server, RemoteUser* user) : serverUser(DataTypes::USER, user, server), Container(datatype, UUID_BYTE_SIZE) {
+ServerContainer::ServerContainer(DataTypes datatype, Server* server, RemoteUser* user) : serverUser(DataTypes::USER, user, server), Container(datatype, UUID_BYTE_SIZE + UserContainer::USER_CONTAINER_SIZE) {
     this->serverID = *server->getID();    
 
     serialize();
@@ -23,7 +23,7 @@ void ServerContainer::serialize() {
     offset += UUID_BYTE_SIZE;
 
     // Connected User info (offset by length of datatypes because we already know this is a)
-    memcpy(data+offset+sizeof(DataTypes), this->serverUser.getData(), this->serverUser.getDataLen()-sizeof(DataTypes));
+    memcpy(data+offset, this->serverUser.getData(), this->serverUser.getDataLen());
     offset += this->serverUser.getDataLen();
 }
 
