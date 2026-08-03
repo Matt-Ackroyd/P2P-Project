@@ -175,7 +175,6 @@ RemoteUser *PrimaryClient::getThisUser()
 void PrimaryClient::loadUser(RemoteUser* user) {
     if (this->knownConnections.contains(*user->getID())) {
         std::cout << "User " << user->getID() << " already Exists\n";
-        delete user;
         return;
     }
 

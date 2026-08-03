@@ -19,7 +19,7 @@ std::string* Server::getID() {
 
 void Server::addNewUser(RemoteUser *user) {
     // If the User is already in this server abort
-    if (this->knownUsers.contains(*user->getID())) {
+    if (this->knownUsers.contains(*user->getID()) || user == nullptr) {
         return;
     }
 

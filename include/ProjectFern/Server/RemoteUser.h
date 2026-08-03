@@ -16,7 +16,7 @@ public:
     std::string Username = "Unknown";
     bool requiresRelay;
     int contactAddress;
-    short int contactPort;
+    u_short contactPort;
 
     std::string* getID();
     static void onRequest(std::string serverID, std::string id, RemoteUser *requestee);
