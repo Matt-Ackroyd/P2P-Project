@@ -33,19 +33,20 @@ void OutgoingHandler::OutgoingLoop() {
 
             // Send Any Outgoing packets
             
-            recipient->connection.mtx.lock(); // Mtx lock because packets would be deleted at any time otherwise
-            
-            for (auto& [packetID, packet]: recipient->connection.outgoingBuffer) {
-                // Add timers for each packet
+            // Mtx lock because packets would be deleted at any time otherwise
+            {
+                std::lock_guard<std::mutex> lock(recipient->connection.outgoingmtx);
+                for (auto& [packetID, packet]: recipient->connection.outgoingBuffer) {
+                    // Add timers for each packet
 
-                if (packet->timeToSend <= std::chrono::system_clock::now()) {
-                    recipient->connection.sendPacket(packet);
-                    packet->timesResent += 1;
-                    packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(1000);
+                    if (packet->timeToSend <= std::chrono::system_clock::now()) {
+                        recipient->connection.sendPacket(packet);
+                        packet->timesResent += 1;
+                        packet->timeToSend = std::chrono::system_clock::now() + std::chrono::milliseconds(1000);
+                    }
+
                 }
-
             }
-            recipient->connection.mtx.unlock();
         }
 
 

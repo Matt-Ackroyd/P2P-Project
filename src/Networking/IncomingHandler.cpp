@@ -246,7 +246,7 @@ void IncomingHandler::handleConnectionRequest(Packet *packet) {
     }
     
     unsigned char* hashOutput = new unsigned char[SHAW_256_HASH_SIZE];
-    Packet* responsePacket = ML_KEM_Handshake::onRequest(packet, client->getClientID(), hashOutput, userRequesting->connection.newSeqNum(), client->getDSAkey(), &userRequesting->connection.DSAkey);
+    Packet* responsePacket = ML_KEM_Handshake::onRequest(packet, client->getClientID(), hashOutput, 0, client->getDSAkey(), &userRequesting->connection.DSAkey);
     userRequesting->connection.addPacketToOutgoingQueue(responsePacket);
 
     // set shared secret
@@ -351,6 +351,11 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
     Server* server = client->getServer(*msg->getServerID());
     TextChannel* channel = server->knownChannels[*msg->getChannelID()];
 
+    if (channel == nullptr) {
+        delete msg;
+        return;
+    }
+
     channel->receiveMessage(msg);
     CppInterface::instancePtr->GUIloadMessage(msg);
     
@@ -424,13 +429,14 @@ RemoteUser* IncomingHandler::onIncomingPacket(Packet* incomingPacket, sockaddr_i
 
 
     // Manage incoming buffer timeout
-    packetAuthor->connection.mtx.lock();
-    for (auto& [packetID, timestamp] : packetAuthor->connection.incommingBuffer) {
-        if (timestamp + std::chrono::milliseconds(10000) < std::chrono::system_clock::now()) {
-            packetAuthor->connection.removePacketFromIncomingQueue(packetID);
+    {
+        std::lock_guard<std::mutex> lock(packetAuthor->connection.incomingmtx);
+        for (auto& [packetID, timestamp] : packetAuthor->connection.incommingBuffer) {
+            if (timestamp + std::chrono::milliseconds(10000) < std::chrono::system_clock::now()) {
+                packetAuthor->connection.removePacketFromIncomingQueue(packetID);
+            }
         }
     }
-    packetAuthor->connection.mtx.unlock();
 
     return packetAuthor;
 }

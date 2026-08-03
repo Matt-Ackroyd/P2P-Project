@@ -4,9 +4,7 @@
 
 UDPConnection::UDPConnection() {
     this->sock = PrimaryClient::getInstance()->socketfd;
-    
 
-    this->mtx;
 }
 
 UDPConnection::~UDPConnection() {
@@ -83,7 +81,7 @@ void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
 
 void UDPConnection::sendHandshakeRequest() {
     PrimaryClient* client = PrimaryClient::getInstance();
-    Packet* requestPacket = ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->getClientID(), newSeqNum(), client->getDSAkey());
+    Packet* requestPacket = ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->getClientID(), 0, client->getDSAkey());
     addPacketToOutgoingQueue(requestPacket);
 }
 
@@ -100,7 +98,7 @@ void UDPConnection::setSharedSecret(unsigned char* secret) {
 
     
 void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to prevent race conditions
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(outgoingmtx);
 
     if (!this->outgoingBuffer.contains(packetID)) {
        return;
@@ -113,7 +111,7 @@ void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to
 
 
 void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(outgoingmtx);
     
     outgoingBuffer[outgoingPacket->getPacketID()] = outgoingPacket;
     
@@ -121,24 +119,24 @@ void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO a
 
 void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(incomingmtx);
     incommingBuffer[incomingPacket->getPacketID()] = std::chrono::system_clock::now();
 }
 
 void UDPConnection::removePacketFromIncomingQueue(std::string packetID)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(incomingmtx);
     incommingBuffer.erase(packetID);
 }
 
 // Returns a seqnum and increments it by one for the next call
-int UDPConnection::newSeqNum() {
-    std::lock_guard<std::mutex> lock(mtx);
+// int UDPConnection::newSeqNum() {
+//     std::lock_guard<std::mutex> lock(mtx);
     
-    int output = this->outgoingSeqNum;
-    this->outgoingSeqNum++;
-    return output;
-}
+//     int output = this->outgoingSeqNum;
+//     this->outgoingSeqNum++;
+//     return output;
+// }
 
 // Sends this connection information about this server as well as your user info for establishing a connection
 void UDPConnection::sendServer(Server* server) {
@@ -170,10 +168,15 @@ void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server)
 
 void UDPConnection::resetConnection()
 {
-    mtx.lock();
-    this->outgoingBuffer.clear();    
-    this->incommingBuffer.clear();
-    mtx.unlock();
+    {
+        std::lock_guard<std::mutex> lock(outgoingmtx);
+        this->outgoingBuffer.clear();   
+    }
+    {
+        std::lock_guard<std::mutex> lock(incomingmtx);
+        this->incommingBuffer.clear();
+    }
+  
  
     this->synced = false;
     

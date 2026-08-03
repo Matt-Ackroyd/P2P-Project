@@ -66,7 +66,8 @@ public:
 
     void sendSyncRequest(Server *server);
 
-    std::mutex mtx;
+    std::mutex incomingmtx;
+    std::mutex outgoingmtx;
 
     std::unordered_map<std::string, Packet*> outgoingBuffer;
     std::unordered_map<std::string, std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration>> incommingBuffer; 
