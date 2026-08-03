@@ -166,6 +166,11 @@ Server* PrimaryClient::getServer(std::string id) {
     return this->allServers[id];
 }
 
+RemoteUser *PrimaryClient::getThisUser()
+{
+    return this->thisUser;
+}
+
 void PrimaryClient::loadUser(RemoteUser* user) {
     if (this->knownConnections.contains(*user->getID())) {
         std::cout << "User " << user->getID() << " already Exists\n";

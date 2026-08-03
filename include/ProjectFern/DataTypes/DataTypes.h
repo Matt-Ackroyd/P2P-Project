@@ -202,19 +202,6 @@ public:
 };
 
 
-class ServerContainer : public Container {
-    std::string serverID;
-    void serialize();
-    // MoreToCome
-    ServerContainer(std::string id);
-public:
-    ServerContainer(DataTypes datatype, Server* server);
-    static ServerContainer deserialize(unsigned char* serializedData);
-
-    std::string getServerID();
-};
-
-
 class TextChannelContainer : public Container {
     std::string serverID;
     std::string channelID;
@@ -249,4 +236,21 @@ public:
     int getContactAddress();
     short int getContactPort();
     bool getRelayRequired();
+    static void onReceived(unsigned char *decryptedData);
+    static void onReceived(UserContainer request);
+};
+
+class ServerContainer : public Container {
+    std::string serverID;
+    UserContainer serverUser;
+    void serialize();
+    // MoreToCome
+    ServerContainer(std::string id, UserContainer user);
+public:
+    ServerContainer(DataTypes datatype, Server* server, RemoteUser* user);
+    static ServerContainer deserialize(unsigned char* serializedData);
+
+    std::string getServerID();
+    UserContainer getServerUser();
+    static void onReceived(unsigned char *decryptedData);
 };

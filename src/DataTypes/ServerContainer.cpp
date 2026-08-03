@@ -1,14 +1,16 @@
 #include "DataTypes.h"
 #include "Server.h"
+#include "PrimaryClient.h"
 
 // Public Constructor
-ServerContainer::ServerContainer(DataTypes datatype, Server* server) : Container(datatype, UUID_BYTE_SIZE) {
-    this->serverID = *server->getID();
+ServerContainer::ServerContainer(DataTypes datatype, Server* server, RemoteUser* user) : serverUser(DataTypes::USER, user, server), Container(datatype, UUID_BYTE_SIZE) {
+    this->serverID = *server->getID();    
+
     serialize();
 }
 
 // Private Constructor
-ServerContainer::ServerContainer(std::string id) : Container(DataTypes::EMPTY, 0) {
+ServerContainer::ServerContainer(std::string id, UserContainer user) : serverUser(user), Container(DataTypes::EMPTY, 0) {
     this->serverID = id;
 }
 
@@ -19,6 +21,10 @@ void ServerContainer::serialize() {
     ID::BytesFromString(this->serverID, uuid);
     memcpy(data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
+
+    // Connected User info
+    memcpy(data+offset, this->serverUser.getData(), this->serverUser.getDataLen());
+    offset += this->serverUser.getDataLen();
 }
 
 ServerContainer ServerContainer::deserialize(unsigned char* serializedData) {
@@ -29,9 +35,28 @@ ServerContainer ServerContainer::deserialize(unsigned char* serializedData) {
     std::string serverID = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
-    return ServerContainer(serverID);
+    UserContainer user = UserContainer::deserialize(serializedData+offset);
+
+    return ServerContainer(serverID, user);
 }
 
 std::string ServerContainer::getServerID() {
     return this->serverID;
 }
+
+UserContainer ServerContainer::getServerUser() {
+    return this->serverUser;
+}
+
+
+
+void ServerContainer::onReceived(unsigned char* decryptedData) {
+    // Add some sort of check to ensure that we asked to join this server before making it
+
+    ServerContainer server = ServerContainer::deserialize(decryptedData);
+
+    PrimaryClient::getInstance()->createNewServer(server.getServerID());
+
+    UserContainer::onReceived(server.getServerUser());
+}
+

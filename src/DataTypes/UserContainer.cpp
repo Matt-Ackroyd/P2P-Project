@@ -1,6 +1,7 @@
 #include "DataTypes.h"
 #include "Server.h"
 #include "RemoteUser.h"
+#include "PrimaryClient.h"
 
 // Public contructor
 UserContainer::UserContainer(DataTypes datatype, RemoteUser* user, Server* server) 
@@ -93,4 +94,36 @@ short int UserContainer::getContactPort() {
 }
 bool UserContainer::getRelayRequired() {
     return this->requiresRelay;
+}
+
+
+
+
+void UserContainer::onReceived(unsigned char* decryptedData) {
+    // Add check that the user creating this channel has the permision to do so
+    UserContainer request = UserContainer::deserialize(decryptedData);
+
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    client->registerNewUser(request.getUserID());
+    RemoteUser* newUser = client->getUser(request.getUserID());
+
+    newUser->contactAddress = request.getContactAddress();
+    newUser->contactPort = request.getContactPort();
+
+    client->getServer(request.getServerID())->addNewUser(newUser);
+}
+
+void UserContainer::onReceived(UserContainer request) {
+    // Add check that the user creating this channel has the permision to do so
+    
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    client->registerNewUser(request.getUserID());
+    RemoteUser* newUser = client->getUser(request.getUserID());
+
+    newUser->contactAddress = request.getContactAddress();
+    newUser->contactPort = request.getContactPort();
+
+    client->getServer(request.getServerID())->addNewUser(newUser);
 }

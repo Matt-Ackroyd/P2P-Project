@@ -87,7 +87,7 @@ void IncomingHandler::IncomingLoop(char* buffer) {
             memcpy(buffercpy, buffer, MAXLINE);
 
             std::thread* newThread = new std::thread(&IncomingHandler::threadStarter, this, buffercpy, cliaddr, i);
-            //newThread->detach();
+            newThread->detach();
             ThreadManager[i] = newThread;
             jobAllocated = true;
             threadMTX.unlock();
@@ -235,10 +235,10 @@ void IncomingHandler::handlePacket(Packet *incomingPacket) {
             handleJoinRequest(output, packetAuthor);
             break;
         case DataTypes::USER:
-            handleAddNewUserToServerRequest(output);
+            UserContainer::onReceived(output);
             break;
         case DataTypes::SERVER:
-            handleNewServer(output);
+            ServerContainer::onReceived(output);
             break;
         case DataTypes::TEXT_CHANNEL:
             handleNewTextChannel(output);
@@ -375,13 +375,7 @@ void IncomingHandler::handleMessage(unsigned char* decryptedData) {
     
 }
 
-void IncomingHandler::handleNewServer(unsigned char* decryptedData) {
-    // Add some sort of check to ensure that we asked to join this server before making it
 
-    ServerContainer server = ServerContainer::deserialize(decryptedData);
-
-    PrimaryClient::getInstance()->createNewServer(server.getServerID());
-}
 
 void IncomingHandler::handleNewTextChannel(unsigned char* decryptedData) {
     // Add check that the user creating this channel has the permision to do so
@@ -391,20 +385,7 @@ void IncomingHandler::handleNewTextChannel(unsigned char* decryptedData) {
     client->getServer(channel.getServerID())->createNewTextChannel(channel.getChannelID());
 }
 
-void IncomingHandler::handleAddNewUserToServerRequest(unsigned char* decryptedData) {
-    // Add check that the user creating this channel has the permision to do so
-    UserContainer request = UserContainer::deserialize(decryptedData);
 
-    PrimaryClient* client = PrimaryClient::getInstance();
-
-    client->registerNewUser(request.getUserID());
-    RemoteUser* newUser = client->getUser(request.getUserID());
-
-    newUser->contactAddress = request.getContactAddress();
-    newUser->contactPort = request.getContactPort();
-
-    client->getServer(request.getServerID())->addNewUser(newUser);
-}
 
 void IncomingHandler::handleJoinRequest(unsigned char* decryptedData, RemoteUser* requestee) {
     // Add check to make sure we have the permission to accept invitations
@@ -430,16 +411,6 @@ void IncomingHandler::handleJoinRequest(unsigned char* decryptedData, RemoteUser
 
     // Send Server Info
     requestee->connection.sendServer(server);
-
-    // Send TextChannel Info
-    for (auto [id, channel]: server->knownChannels) {
-        requestee->connection.sendTextChannel(channel);
-    }
-
-    // Send Server Members to the new member
-    for (auto [id, user]: server->knownUsers) {
-        requestee->connection.sendAddUserToServerRequest(user, server);
-    }
 
     server->addNewUser(requestee);
 }

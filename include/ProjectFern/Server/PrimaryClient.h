@@ -83,6 +83,7 @@ public:
     void createNewServer(std::string id = "");
 
     Server* getServer(std::string id);
+    RemoteUser* getThisUser();
 
     sockaddr_in getPreferedRelay();
     OutgoingHandler* getOutgoingHandler();

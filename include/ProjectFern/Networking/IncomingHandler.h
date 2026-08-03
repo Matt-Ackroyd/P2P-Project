@@ -49,9 +49,7 @@ class IncomingHandler {
         void handleKeepAlive(Packet *packet);
 
         void handleMessage(unsigned char* decryptedData);
-        void handleNewServer(unsigned char *decryptedData);
         void handleNewTextChannel(unsigned char *decryptedData);
-        void handleAddNewUserToServerRequest(unsigned char *decryptedData);
         void handleJoinRequest(unsigned char *decryptedData, RemoteUser *requestee);
         RemoteUser *onIncomingPacket(Packet *incomingPacket, sockaddr_in cliaddr);
 };
