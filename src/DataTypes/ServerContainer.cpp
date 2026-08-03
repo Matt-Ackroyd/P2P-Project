@@ -22,8 +22,8 @@ void ServerContainer::serialize() {
     memcpy(data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
-    // Connected User info (offset by length of datatypes because we already know this is a user)
-    memcpy(data+offset, this->serverUser.getData()+sizeof(DataTypes), this->serverUser.getDataLen()-sizeof(DataTypes));
+    // Connected User info (offset by length of datatypes because we already know this is a)
+    memcpy(data+offset+sizeof(DataTypes), this->serverUser.getData(), this->serverUser.getDataLen()-sizeof(DataTypes));
     offset += this->serverUser.getDataLen();
 }
 
