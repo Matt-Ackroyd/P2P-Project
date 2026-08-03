@@ -84,27 +84,6 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     std::function<void()> newTask = std::bind(&IncomingHandler::threadStarter, this, buffercpy, cliaddr);
 
     ThreadManager.enqueue(newTask);
-
-    // int i = 0;
-    // bool jobAllocated = false;
-    // while (!jobAllocated) {
-    //     // Look for open thread
-    //     if (ThreadManager[i] == nullptr) {
-    //         threadMTX.lock();
-    //         char* buffercpy = new char[MAXLINE];
-    //         memcpy(buffercpy, buffer, MAXLINE);
-
-    //         std::thread* newThread = new std::thread(&IncomingHandler::threadStarter, this, buffercpy, cliaddr, i);
-    //         newThread->detach();
-    //         ThreadManager[i] = newThread;
-    //         jobAllocated = true;
-    //         threadMTX.unlock();
-    //     }
-    //     i++;
-    //     if (i == threadCount) {
-    //         i = 0;
-    //     }
-    // }
 }
 
 void IncomingHandler::threadStarter(char* buffer, sockaddr_in cliaddr) {
@@ -114,11 +93,6 @@ void IncomingHandler::threadStarter(char* buffer, sockaddr_in cliaddr) {
     catch (std::exception e) {
         
     }
-    // // Clean Up Thread
-    // std::lock_guard<std::mutex> lock(threadMTX);
-    // std::thread* threadPointer = this->ThreadManager[threadNumber];
-    // this->ThreadManager[threadNumber] = nullptr;
-    // delete threadPointer;
 }
 
 void IncomingHandler::onPacketRecived(char* buffer, sockaddr_in cliaddr) {
