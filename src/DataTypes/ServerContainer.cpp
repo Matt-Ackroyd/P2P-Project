@@ -52,11 +52,17 @@ UserContainer ServerContainer::getServerUser() {
 
 void ServerContainer::onReceived(unsigned char* decryptedData) {
     // Add some sort of check to ensure that we asked to join this server before making it
+    PrimaryClient* client = PrimaryClient::getInstance();
 
-    ServerContainer server = ServerContainer::deserialize(decryptedData);
+    ServerContainer serverContainer = ServerContainer::deserialize(decryptedData);
 
-    PrimaryClient::getInstance()->createNewServer(server.getServerID());
+    client->createNewServer(serverContainer.getServerID());
 
-    UserContainer::onReceived(server.getServerUser());
+    UserContainer::onReceived(serverContainer.getServerUser());
+
+    RemoteUser* serverUser = client->getUser(serverContainer.getServerUser().getUserID());
+    Server* server = client->getServer(serverContainer.getServerID());
+    
+    serverUser->connection.sendSyncRequest(server);
 }
 
