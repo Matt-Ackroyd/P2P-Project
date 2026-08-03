@@ -125,6 +125,12 @@ void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
     incommingBuffer[incomingPacket->getPacketID()] = std::chrono::system_clock::now();
 }
 
+void UDPConnection::removePacketFromIncomingQueue(std::string packetID)
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    incommingBuffer.erase(packetID);
+}
+
 // Returns a seqnum and increments it by one for the next call
 int UDPConnection::newSeqNum() {
     std::lock_guard<std::mutex> lock(mtx);

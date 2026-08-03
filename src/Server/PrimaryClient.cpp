@@ -60,7 +60,7 @@ int PrimaryClient::init() {
 
     //Temp Until we load from file
     this->preferedRelayAdress.sin_family = AF_INET;
-    this->preferedRelayAdress.sin_port = htons(7777);
+    this->preferedRelayAdress.sin_port = htons(15777);
     this->preferedRelayAdress.sin_addr.s_addr = inet_addr("192.168.0.17");
 
     // TODO clean this up

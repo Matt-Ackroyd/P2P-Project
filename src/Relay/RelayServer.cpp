@@ -272,7 +272,7 @@ void RelayServer::UdpHandler(int udpPort) {
 int main(int argc, char *argv[]) {
     int port = 0;
     if (argc < 2) {
-        port = 7777;
+        port = 15777;
     } else {
         port = atoi(argv[1]);
     }

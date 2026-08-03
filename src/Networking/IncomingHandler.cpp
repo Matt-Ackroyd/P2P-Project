@@ -73,12 +73,9 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     std::string ipa = inet_ntoa(cliaddr.sin_addr);
     int porta = ntohs(cliaddr.sin_port);
 
-    // Manage incoming buffer timeout
-
     // Thread Manager
-
-    char* buffercpy = new char[MAXLINE];
-    memcpy(buffercpy, buffer, MAXLINE);
+    Packet* incomingPacket = new Packet(PacketType::NONE, PrimaryClient::getInstance()->getClientID());
+    incomingPacket->deserialize(buffer);
 
     int i = 0;
     bool jobAllocated = false;
@@ -86,6 +83,9 @@ void IncomingHandler::IncomingLoop(char* buffer) {
         // Look for open thread
         if (ThreadManager[i] == nullptr) {
             threadMTX.lock();
+            char* buffercpy = new char[MAXLINE];
+            memcpy(buffercpy, buffer, MAXLINE);
+
             std::thread* newThread = new std::thread(&IncomingHandler::threadStarter, this, buffercpy, cliaddr, i);
             //newThread->detach();
             ThreadManager[i] = newThread;
@@ -111,7 +111,7 @@ void IncomingHandler::threadStarter(char* buffer, sockaddr_in cliaddr, int threa
     std::thread* threadPointer = this->ThreadManager[threadNumber];
     this->ThreadManager[threadNumber] = nullptr;
     threadMTX.unlock();
-    //delete threadPointer;
+    delete threadPointer;
 }
 
 void IncomingHandler::onPacketRecived(char* buffer, sockaddr_in cliaddr) {
@@ -469,6 +469,16 @@ RemoteUser* IncomingHandler::onIncomingPacket(Packet* incomingPacket, sockaddr_i
         packetAuthor->connection.sendJoinRequest(packetAuthor->connection.bufferedServerInvitation);
         packetAuthor->connection.bufferedServerInvitation = "";
     }
+
+
+    // Manage incoming buffer timeout
+    packetAuthor->connection.mtx.lock();
+    for (auto& [packetID, timestamp] : packetAuthor->connection.incommingBuffer) {
+        if (timestamp + std::chrono::milliseconds(10000) < std::chrono::system_clock::now()) {
+            packetAuthor->connection.removePacketFromIncomingQueue(packetID);
+        }
+    }
+    packetAuthor->connection.mtx.unlock();
 
     return packetAuthor;
 }

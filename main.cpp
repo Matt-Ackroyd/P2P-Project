@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     DatabaseConnection::startup();
     DatabaseConnection::getUsersFromDB();
     DatabaseConnection::getServersFromDB();
-    RelayClient::RegisterUser("192.168.0.17", 7777);
+    RelayClient::RegisterUser("192.168.0.17", 15777);
 
     for (auto& [userid, user]: client->knownConnections) {
         if (userid != *client->getClientID()) {

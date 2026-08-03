@@ -56,6 +56,7 @@ public:
 
     void addPacketToOutgoingQueue(Packet* outgoingPacket);
     void addPacketToIncomingQueue(Packet* incomingPacket);
+    void removePacketFromIncomingQueue(std::string packetID);
     int newSeqNum();
     void sendServer(Server *server);
     void sendTextChannel(TextChannel *channel);

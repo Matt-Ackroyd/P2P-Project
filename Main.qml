@@ -175,7 +175,7 @@ Window {
                 id: port
                 x: 0
                 y: 0
-                text: "7777"
+                text: "15777"
                 anchors.fill: parent
                 font.pixelSize: 12
             }

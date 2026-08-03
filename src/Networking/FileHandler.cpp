@@ -105,7 +105,7 @@ void FileHandler::OutgoingFile::sendNextPacket()
     }
 
     // Read data into the buffer
-    file.seekg(this->lastByteSent);
+    file.seekg(this->lastByteSent+1);
 
     char *buffer = new char[this->fileSizePerPacket];
     file.read(buffer, this->fileSizePerPacket);
@@ -114,7 +114,7 @@ void FileHandler::OutgoingFile::sendNextPacket()
     file.close();
     
     // Send the File Data
-    FileContainer* container = new FileContainer(fileInfo->getFileID(), lastByteSent, (unsigned char*)buffer, bytesRead);
+    FileContainer* container = new FileContainer(fileInfo->getFileID(), lastByteSent+1, (unsigned char*)buffer, bytesRead);
     recipient->connection.sendEncrypted(container->getData(), container->getDataLen());
     delete container;
 
