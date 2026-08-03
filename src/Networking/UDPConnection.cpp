@@ -125,7 +125,6 @@ void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
 
 void UDPConnection::removePacketFromIncomingQueue(std::string packetID)
 {
-    std::lock_guard<std::mutex> lock(incomingmtx);
     incommingBuffer.erase(packetID);
 }
 

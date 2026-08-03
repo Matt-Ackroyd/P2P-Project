@@ -3,7 +3,7 @@
 #include "FileHandler.h"
 
 
-IncomingHandler::IncomingHandler(int ReceivingPort) {
+IncomingHandler::IncomingHandler(int ReceivingPort) : ThreadManager(this->threadCount) {
     this->IncomingHandlerThread = std::thread(&IncomingHandler::incomingStartup, this, ReceivingPort);
 
     // for (int i = 0; i < threadCount; i++) {
@@ -162,9 +162,6 @@ void IncomingHandler::handleIncoming(Packet* incomingPacket, sockaddr_in cliaddr
         case PacketType::PACKET:
             this->handlePacket(incomingPacket);
             break;
-        default:
-            std::cout << "Something is not right\n";
-            exit(1);
     }
     delete incomingPacket;
 }

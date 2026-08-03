@@ -25,7 +25,7 @@ class IncomingHandler {
     public:     
         std::thread IncomingHandlerThread;
 
-        static const size_t threadCount = 30;
+        size_t threadCount = 30;
         ThreadPool ThreadManager;
         //std::mutex threadMTX;
 
