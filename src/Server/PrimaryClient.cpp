@@ -44,6 +44,7 @@ int PrimaryClient::init() {
         ConfigLoader::getInstance()->WriteBinaryFile("Configs/PrimaryClient/uuid", uuid, UUID_BYTE_SIZE);
     }
     this->registerNewUser(this->clientID);
+    this->thisUser = this->getUser(this->clientID);
     
     std::cout << "Your ID: " << this->clientID << "\n";
     
@@ -64,8 +65,8 @@ int PrimaryClient::init() {
     this->preferedRelayAdress.sin_addr.s_addr = inet_addr("192.168.0.17");
 
     // TODO clean this up
-    this->getUser(*this->getClientID())->contactAddress = preferedRelayAdress.sin_addr.s_addr;
-    this->getUser(*this->getClientID())->contactPort = preferedRelayAdress.sin_port;
+    this->thisUser->contactAddress = preferedRelayAdress.sin_addr.s_addr;
+    this->thisUser->contactPort = preferedRelayAdress.sin_port;
 
     this->incomingHandler = new IncomingHandler(10346);
     this->outgoingHandler = new OutgoingHandler();

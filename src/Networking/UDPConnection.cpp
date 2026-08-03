@@ -142,7 +142,9 @@ int UDPConnection::newSeqNum() {
 
 // Sends this connection information about this server as well as your user info for establishing a connection
 void UDPConnection::sendServer(Server* server) {
-    ServerContainer container(DataTypes::SERVER, server, PrimaryClient::getInstance()->getThisUser());
+
+    RemoteUser* thisUser = PrimaryClient::getInstance()->getThisUser();
+    ServerContainer container(DataTypes::SERVER, server, thisUser);
 
     this->sendEncrypted(container.getData(), container.getDataLen());
 }
