@@ -6,9 +6,9 @@
 IncomingHandler::IncomingHandler(int ReceivingPort) {
     this->IncomingHandlerThread = std::thread(&IncomingHandler::incomingStartup, this, ReceivingPort);
 
-    for (int i = 0; i < threadCount; i++) {
-        ThreadManager[i] = nullptr;
-    }
+    // for (int i = 0; i < threadCount; i++) {
+    //     ThreadManager[i] = nullptr;
+    // }
 }
 
 
@@ -77,41 +77,48 @@ void IncomingHandler::IncomingLoop(char* buffer) {
     Packet* incomingPacket = new Packet(PacketType::NONE, PrimaryClient::getInstance()->getClientID());
     incomingPacket->deserialize(buffer);
 
-    int i = 0;
-    bool jobAllocated = false;
-    while (!jobAllocated) {
-        // Look for open thread
-        if (ThreadManager[i] == nullptr) {
-            threadMTX.lock();
-            char* buffercpy = new char[MAXLINE];
-            memcpy(buffercpy, buffer, MAXLINE);
+    char* buffercpy = new char[MAXLINE];
+    memcpy(buffercpy, buffer, MAXLINE);
 
-            std::thread* newThread = new std::thread(&IncomingHandler::threadStarter, this, buffercpy, cliaddr, i);
-            newThread->detach();
-            ThreadManager[i] = newThread;
-            jobAllocated = true;
-            threadMTX.unlock();
-        }
-        i++;
-        if (i == threadCount) {
-            i = 0;
-        }
-    }
+
+    std::function<void()> newTask = std::bind(&IncomingHandler::threadStarter, this, buffercpy, cliaddr);
+
+    ThreadManager.enqueue(newTask);
+
+    // int i = 0;
+    // bool jobAllocated = false;
+    // while (!jobAllocated) {
+    //     // Look for open thread
+    //     if (ThreadManager[i] == nullptr) {
+    //         threadMTX.lock();
+    //         char* buffercpy = new char[MAXLINE];
+    //         memcpy(buffercpy, buffer, MAXLINE);
+
+    //         std::thread* newThread = new std::thread(&IncomingHandler::threadStarter, this, buffercpy, cliaddr, i);
+    //         newThread->detach();
+    //         ThreadManager[i] = newThread;
+    //         jobAllocated = true;
+    //         threadMTX.unlock();
+    //     }
+    //     i++;
+    //     if (i == threadCount) {
+    //         i = 0;
+    //     }
+    // }
 }
 
-void IncomingHandler::threadStarter(char* buffer, sockaddr_in cliaddr, int threadNumber) {
+void IncomingHandler::threadStarter(char* buffer, sockaddr_in cliaddr) {
     try { 
         onPacketRecived(buffer, cliaddr);
     }
     catch (std::exception e) {
         
     }
-    // Clean Up Thread
-    threadMTX.lock();
-    std::thread* threadPointer = this->ThreadManager[threadNumber];
-    this->ThreadManager[threadNumber] = nullptr;
-    threadMTX.unlock();
-    delete threadPointer;
+    // // Clean Up Thread
+    // std::lock_guard<std::mutex> lock(threadMTX);
+    // std::thread* threadPointer = this->ThreadManager[threadNumber];
+    // this->ThreadManager[threadNumber] = nullptr;
+    // delete threadPointer;
 }
 
 void IncomingHandler::onPacketRecived(char* buffer, sockaddr_in cliaddr) {

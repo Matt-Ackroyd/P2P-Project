@@ -19,24 +19,26 @@
 #include "OutgoingHandler.h"
 #include "RelayClient.h"
 #include "Sync.h"
+#include "ThreadPool.h"
 
 class IncomingHandler {
     public:     
         std::thread IncomingHandlerThread;
 
-        static const int threadCount = 30;
-        std::thread* ThreadManager[threadCount];
-        std::mutex threadMTX;
+        static const size_t threadCount = 30;
+        ThreadPool ThreadManager;
+        //std::mutex threadMTX;
 
         IncomingHandler(int ReceivingPort);
         void acknowledgePacket(Packet packet, UDPConnection connectedUser);
+
+        void threadStarter(char *buffer, sockaddr_in cliaddr);
     private:
         int nextExpectedSeqNum;
         // Bool to accept Incoming messages from other clients
         bool acceptIncoming;
         void incomingStartup(int ReceivingPort);
         void IncomingLoop(char* buffer);
-        void threadStarter(char *buffer, sockaddr_in cliaddr, int threadNumber);
         void onPacketRecived(char *buffer, sockaddr_in cliaddr);
         void handleIncoming(Packet *incomingPacket, sockaddr_in cliaddr);
         std::deque<Packet> ReceivingBuffer;
