@@ -105,7 +105,7 @@ void FileHandler::OutgoingFile::sendNextPacket()
     }
 
     // Read data into the buffer
-    file.seekg(this->lastByteSent+1);
+    file.seekg(this->lastByteSent);
 
     char *buffer = new char[this->fileSizePerPacket];
     file.read(buffer, this->fileSizePerPacket);
@@ -114,16 +114,15 @@ void FileHandler::OutgoingFile::sendNextPacket()
     file.close();
     
     // Send the File Data
-    FileContainer* container = new FileContainer(fileInfo->getFileID(), lastByteSent+1, (unsigned char*)buffer, bytesRead);
+    FileContainer* container = new FileContainer(fileInfo->getFileID(), lastByteSent, (unsigned char*)buffer, bytesRead);
     recipient->connection.sendEncrypted(container->getData(), container->getDataLen());
     delete container;
 
     // Update the last byte sent
     this->lastByteSent += bytesRead;
 
-
     // Check if this is the last packet & remove this object if it is
-    if (bytesRead != fileSizePerPacket) {
+    if (lastByteSent >= fileInfo->getFileSize()) {
         PrimaryClient::getInstance()->fileHandler->outgoingFiles.erase(this);
         delete this;
     }
@@ -195,26 +194,30 @@ void FileHandler::onFilePacketRecieved(unsigned char* output)
         return;
     }
 
-    
+    DownloadingFile* downloadingFile = fileHandler->incomingFiles[filedata.getFileID()];
 
-    std::filesystem::path path(fileInfo->getLocalFilePath());
-    std::ofstream file(path, std::ios::binary | std::ios::app | std::ios::out );
     
-    if (!file.is_open()) {
-        return;
+    {
+        std::lock_guard<std::mutex> lock(downloadingFile->mtx);
+
+        std::filesystem::path path(fileInfo->getLocalFilePath());
+        std::ofstream file(path, std::ios::binary | std::ios::app | std::ios::out );
+        
+        if (!file.is_open()) {
+            return;
+        }
+
+        file.seekp(filedata.getByteLocation());
+        file.write((char*)filedata.getFileData(), filedata.getFileDatalen());
+        downloadingFile->bytesWrittenSoFar += filedata.getFileDatalen();
+        file.close();
     }
-
-    file.seekp(filedata.getByteLocation());
-    file.write((char*)filedata.getFileData(), filedata.getFileDatalen());
-    int filesize = file.tellp();
-    file.close();
     
     
     // If this is the last of the file
-    if (filesize >= fileInfo->getFileSize()) {
-        DownloadingFile* file = fileHandler->incomingFiles[filedata.getFileID()];
+    if (downloadingFile->bytesWrittenSoFar >= fileInfo->getFileSize()) {
         fileHandler->incomingFiles.erase(filedata.getFileID());
-        delete file;
+        delete downloadingFile;
     }
 
     delete fileInfo;

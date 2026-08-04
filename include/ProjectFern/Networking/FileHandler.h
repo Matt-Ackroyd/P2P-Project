@@ -14,11 +14,11 @@ class FileHandler {
         FileIndicator* fileInfo;
         std::unordered_set<std::string> avaliableHosts;
 
-        std::mutex mtx;
-
     public: 
         DownloadingFile(std::string fileID);
         ~DownloadingFile();
+
+        std::mutex mtx;
 
         std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> downloadStarted = std::chrono::system_clock::now();
 
@@ -29,6 +29,7 @@ class FileHandler {
         void RemoveHost(RemoteUser*);
 
         bool hostsDiscovered = false;
+        int bytesWrittenSoFar = 0;
     };
 
     class OutgoingFile {
