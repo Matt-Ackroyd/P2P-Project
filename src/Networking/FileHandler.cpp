@@ -21,6 +21,27 @@ FileHandler::DownloadingFile::DownloadingFile(std::string fileID)
             user->connection.sendEncrypted(request.getData(), request.getDataLen());
         }
     }
+
+    // Create the file to hold the data
+    {
+        std::lock_guard<std::mutex> lock(this->mtx);
+
+        std::filesystem::path path(fileInfo->getLocalFilePath());
+
+        if (!std::filesystem::exists(path.parent_path())) {
+            std::filesystem::create_directories(path.parent_path());
+        }
+
+        std::ofstream file(path, std::ios::binary | std::ios::out | std::ios::trunc);
+        
+        if (!file.is_open()) {
+            return;
+        }
+
+        //file.seekp(fileInfo->getFileSize()-1);
+        //file.put('\0');
+        file.close();
+    }
 }
 
 FileHandler::DownloadingFile::~DownloadingFile()
@@ -201,7 +222,7 @@ void FileHandler::onFilePacketRecieved(unsigned char* output)
         std::lock_guard<std::mutex> lock(downloadingFile->mtx);
 
         std::filesystem::path path(fileInfo->getLocalFilePath());
-        std::ofstream file(path, std::ios::binary | std::ios::app | std::ios::out );
+        std::fstream file(path, std::ios::binary | std::ios::out | std::ios::in);
         
         if (!file.is_open()) {
             return;
