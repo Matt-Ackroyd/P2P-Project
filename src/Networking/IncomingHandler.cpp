@@ -383,15 +383,15 @@ void IncomingHandler::handleJoinRequest(unsigned char* decryptedData, RemoteUser
     requestee->contactPort = request.getContactPort();
     requestee->requiresRelay = request.getRelayRequired();
 
-    // Send Other Users this persons connecton info
-    for (auto [id, user]: server->knownUsers) {
-        user->connection.sendAddUserToServerRequest(requestee, server);
-    }
-
     // Send Server Info
     requestee->connection.sendServer(server);
 
     server->addNewUser(requestee);
+
+    // Send Other Users this persons connecton info
+    for (auto [id, user]: server->knownUsers) {
+        user->connection.sendAddUserToServerRequest(requestee, server);
+    }
 }
 
 

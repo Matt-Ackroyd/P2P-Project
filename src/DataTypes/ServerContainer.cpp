@@ -3,7 +3,7 @@
 #include "PrimaryClient.h"
 
 // Public Constructor
-ServerContainer::ServerContainer(DataTypes datatype, Server* server, RemoteUser* user) : serverUser(DataTypes::USER, user, server), Container(datatype, UUID_BYTE_SIZE + UserContainer::USER_CONTAINER_SIZE) {
+ServerContainer::ServerContainer(DataTypes datatype, Server* server, RemoteUser* user) : serverUser(DataTypes::USER, user, server), Container(datatype, UUID_BYTE_SIZE*2 + UserContainer::USER_CONTAINER_SIZE) {
     this->serverID = *server->getID();    
 
     serialize();
