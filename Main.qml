@@ -12,101 +12,6 @@ Window {
     title: qsTr("Project Fern")
 
 
-    Frame {
-        id: serverList
-        x: 0
-        y: 35
-        width: 54
-        height: 445
-
-        Rectangle {
-            id: rectangle
-            x: 0
-            y: 0
-            width: 52
-            height: 545
-            color: "#e0c8c8"
-        }
-
-        GridView {
-            id: gridView
-            x: 0
-            y: 5
-            width: 52
-            height: 540
-            model: ListModel {
-            }
-            delegate: Item {
-                id: serverSelection
-                x: 5
-                height: 50
-                property string serverID: serverid
-                Column {
-                    spacing: 5
-                    Rectangle {
-                        width: 40
-                        height: 40
-                        color: colorCode
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
-                    Text {
-                        x: 5
-                        text: name
-                        font.bold: true
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-
-                Button {
-                    id: button
-                    x: 0
-                    y: 0
-                    width: 44
-                    height: 41
-                    text: qsTr("Button")
-
-                    Connections {
-                        target: button
-                        function onClicked() { console.log(serverSelection.serverID) }
-                    }
-
-                    Connections {
-                        id: connections
-                        target: button
-                        function onClicked() {
-                            // if its the first load
-                            if (serverLoader.active === false) {
-                                serverLoader.active = true
-                                serverLoader.item.uuid = serverSelection.serverID
-                                CppInterface.requestServerInfo(serverSelection.serverID)
-                            }
-                            else {
-                                // Check if the server selected is diffrent from the current server if so change it
-                                if (serverLoader.item.uuid !== serverSelection.serverID) {
-                                    serverLoader.active = false
-                                    serverLoader.active = true
-                                    serverLoader.item.uuid = serverSelection.serverID
-                                    CppInterface.requestServerInfo(serverSelection.serverID)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            cellWidth: 70
-            cellHeight: 70
-
-            Connections {
-                target: CppInterface
-                function onServerLoad(server_id) {
-                    console.log(server_id)
-                    gridView.model.append({name: "test", colorCode: "red", serverid: server_id})
-                }
-            }
-        }
-    }
-
     Item {
         id: addServerMenu
         x: 262
@@ -324,12 +229,22 @@ Window {
 
     Loader {
         id: serverLoader
-        x: 52
-        y: 35
-        width: 688
-        height: 545
+        anchors.left: serverList.right
+        anchors.right: parent.right
+        anchors.top: toolBar.bottom
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 0
+        anchors.rightMargin: 0
+        anchors.topMargin: 0
+        anchors.bottomMargin: 0
         source: "QML/ServerStructure.qml"
         active: false
+
+        Rectangle {
+            id: rectangle8
+            color: "#3d3d3d"
+            anchors.fill: parent
+        }
     }
 
     ToolBar {
@@ -337,7 +252,7 @@ Window {
         x: 0
         y: 0
         width: 640
-        height: 21
+        height: 23
 
         ToolSeparator {
             id: toolSeparator
@@ -402,6 +317,100 @@ Window {
         }
     }
 
+    Item {
+        id: serverList
+        width: 55
+        anchors.left: parent.left
+        anchors.top: toolBar.bottom
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 0
+        anchors.topMargin: 0
+        anchors.bottomMargin: 0
+
+        Rectangle {
+            id: rectangle
+            color: "#717171"
+            border.width: 0
+            anchors.fill: parent
+        }
+
+        GridView {
+            id: gridView
+            anchors.fill: parent
+            anchors.rightMargin: 0
+            model: ListModel {
+            }
+            delegate: Item {
+                id: serverSelection
+                x: 5
+                height: 50
+                property string serverID: serverid
+                Column {
+                    spacing: 5
+                    Rectangle {
+                        width: 40
+                        height: 40
+                        color: colorCode
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
+                    Text {
+                        x: 5
+                        text: name
+                        font.bold: true
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+
+                Button {
+                    id: button
+                    x: 0
+                    y: 0
+                    width: 44
+                    height: 41
+                    text: qsTr("Button")
+
+                    Connections {
+                        target: button
+                        function onClicked() { console.log(serverSelection.serverID) }
+                    }
+
+                    Connections {
+                        id: connections
+                        target: button
+                        function onClicked() {
+                            // if its the first load
+                            if (serverLoader.active === false) {
+                                serverLoader.active = true
+                                serverLoader.item.uuid = serverSelection.serverID
+                                CppInterface.requestServerInfo(serverSelection.serverID)
+                            }
+                            else {
+                                // Check if the server selected is diffrent from the current server if so change it
+                                if (serverLoader.item.uuid !== serverSelection.serverID) {
+                                    serverLoader.active = false
+                                    serverLoader.active = true
+                                    serverLoader.item.uuid = serverSelection.serverID
+                                    CppInterface.requestServerInfo(serverSelection.serverID)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            cellWidth: 70
+            cellHeight: 70
+
+            Connections {
+                target: CppInterface
+                function onServerLoad(server_id) {
+                    console.log(server_id)
+                    gridView.model.append({name: "test", colorCode: "red", serverid: server_id})
+                }
+            }
+        }
+    }
+
 }
 
 
@@ -410,7 +419,7 @@ Window {
 
 /*##^##
 Designer {
-    D{i:0}D{i:13;invisible:true}D{i:24;locked:true}D{i:28;locked:true}D{i:29;locked:true}
-D{i:36;locked:true}
+    D{i:0}D{i:1;invisible:true}D{i:12;locked:true}D{i:16;locked:true}D{i:17;locked:true}
+D{i:24;locked:true}D{i:27}D{i:28}D{i:39}D{i:40;locked:true}D{i:41;locked:true}
 }
 ##^##*/

@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Multimedia)
+
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -43,6 +45,7 @@ target_include_directories(app_${PROJECT_NAME}
     PUBLIC include/ProjectFern/Networking/
     PUBLIC include/ProjectFern/Server/
     PUBLIC include/ProjectFern/GUI/
+    PUBLIC include/ProjectFern/GUI/Audio/
     PUBLIC include/ProjectFern/Relay/
     PUBLIC include/ProjectFern/
 )
@@ -61,6 +64,9 @@ qt_add_qml_module(app_${PROJECT_NAME}
     SOURCES
         ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h
         ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp
+        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/VoiceCapture.h
+        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/AudioHandler.h
+        ${PROJECT_SOURCE_DIR}/src/GUI/Audio/AudioHandler.cpp
 )
 
 
@@ -78,9 +84,9 @@ set_target_properties(app_${PROJECT_NAME} PROPERTIES
 find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 target_link_libraries(app_${PROJECT_NAME}
+    PRIVATE Qt6::Multimedia
     PRIVATE Qt6::Quick
     PRIVATE Qt6::Widgets
-    #FernLib
     PRIVATE OpenSSL::Crypto
     PRIVATE SQLite3::SQLite3
 )

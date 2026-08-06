@@ -8,6 +8,7 @@
 #include "OutgoingHandler.h"
 #include "DatabaseConnection.h"
 #include "Sync.h"
+#include "AudioHandler.h"
 
 int main(int argc, char *argv[])
 {
@@ -91,7 +92,8 @@ int main(int argc, char *argv[])
     //aasda->createNewServer();
 
     
-
+    AudioHandler aasda;
+    aasda.startVoiceCapture();
     
 
     //int a = ntohs(connectionAddr.sin_port);
