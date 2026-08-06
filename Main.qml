@@ -249,10 +249,11 @@ Window {
 
     ToolBar {
         id: toolBar
-        x: 0
         y: 0
-        width: 640
+        width: 740
         height: 23
+        anchors.right: parent.right
+        focusPolicy: Qt.TabFocus
 
         ToolSeparator {
             id: toolSeparator
@@ -315,6 +316,20 @@ Window {
                 }
             }
         }
+
+        ToolButton {
+            id: toolButton4
+            x: 662
+            y: 0
+            width: 78
+            height: 23
+            text: "Settings"
+
+            Connections {
+                target: toolButton4
+                function onClicked() { settingsLoader.active = true }
+            }
+        }
     }
 
     Item {
@@ -338,15 +353,30 @@ Window {
             id: gridView
             anchors.fill: parent
             anchors.rightMargin: 0
+            boundsMovement: Flickable.StopAtBounds
             model: ListModel {
             }
             delegate: Item {
                 id: serverSelection
                 x: 5
-                height: 50
+                height: 70
+
+                width: 50
+
                 property string serverID: serverid
-                Column {
-                    spacing: 5
+
+
+                Item {
+                    id: serverBoarder
+                    width: 50
+                    height: 50
+                    anchors.verticalCenterOffset: -5
+                    anchors.centerIn: parent
+
+                    Column {
+                        spacing: 5
+                    }
+
                     Rectangle {
                         width: 40
                         height: 40
@@ -355,29 +385,29 @@ Window {
                     }
 
                     Text {
-                        x: 5
+                        x: 13
+                        y: 45
                         text: name
                         font.bold: true
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
+
+                    Image {
+                        id: image
+                        anchors.fill: parent
+                        source: "qrc:/qtquickplugin/images/template_image.png"
+                        fillMode: Image.PreserveAspectFit
+                    }
                 }
 
-                Button {
-                    id: button
-                    x: 0
-                    y: 0
-                    width: 44
-                    height: 41
-                    text: qsTr("Button")
+                MouseArea {
+                    id: mouseArea
+                    x: 10
+                    y: 5
+                    anchors.fill: parent
 
                     Connections {
-                        target: button
-                        function onClicked() { console.log(serverSelection.serverID) }
-                    }
-
-                    Connections {
-                        id: connections
-                        target: button
+                        target: mouseArea
                         function onClicked() {
                             // if its the first load
                             if (serverLoader.active === false) {
@@ -411,6 +441,16 @@ Window {
         }
     }
 
+    Loader {
+        id: settingsLoader
+        x: 45
+        y: 37
+        width: 646
+        height: 500
+        source: "QML/Settings.qml"
+        active: false
+    }
+
 }
 
 
@@ -420,6 +460,6 @@ Window {
 /*##^##
 Designer {
     D{i:0}D{i:1;invisible:true}D{i:12;locked:true}D{i:16;locked:true}D{i:17;locked:true}
-D{i:24;locked:true}D{i:27}D{i:28}D{i:39}D{i:40;locked:true}D{i:41;locked:true}
+D{i:24;locked:true}D{i:29}D{i:42;locked:true}D{i:54;invisible:true}
 }
 ##^##*/

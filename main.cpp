@@ -8,7 +8,7 @@
 #include "OutgoingHandler.h"
 #include "DatabaseConnection.h"
 #include "Sync.h"
-#include "AudioHandler.h"
+///#include "AudioHandler.h"
 
 int main(int argc, char *argv[])
 {

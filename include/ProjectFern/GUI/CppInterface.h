@@ -17,9 +17,14 @@ class CppInterface : public QObject
     QML_SINGLETON
     QML_ELEMENT
 
+    Q_PROPERTY(QString username MEMBER username WRITE setUsername)
+    QString username = "default";
+
     std::string currentChannel = "";
     std::string currentFilePath = "";
     std::string currentServer = "";
+
+    void setUsername(QString text) {this->username = text;}
 public:
     explicit CppInterface(QObject *parent = nullptr) : QObject(parent) {}
     // Static pointer to the Singleton instance
