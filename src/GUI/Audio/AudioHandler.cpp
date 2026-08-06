@@ -1,5 +1,8 @@
 #include "AudioHandler.h"
+
 #include "VoiceCapture.h"
+#include "VoicePlayback.h"
+
 
 void AudioHandler::startVoiceCapture() {
     QAudioFormat format;
@@ -15,11 +18,32 @@ void AudioHandler::startVoiceCapture() {
 
     audioInput = new QAudioSource(format, this);
 
-    VoiceCapture* a = new VoiceCapture(this);
+    a = new VoiceCapture(this);
     a->start(audioInput);
     audioInput->start(a);
+
+
+    audioOutput = new QAudioSink(format, this);
+
+    //b = new VoicePlayback(this);
+    //b->start(audioInput);
+    b = audioOutput->start();
+
+    QObject::connect(a, &VoiceCapture::audioAvailable, this, &AudioHandler::onAudioAvailable);
+
 }
 
-void AudioHandler::voiceCaputureCallback()
+void AudioHandler::onAudioAvailable(const char *data, int count)
 {
+    this->b->write(data, count);
+}
+
+
+
+void AudioHandler::onAudioPacketRecived(unsigned char* output)
+{
+}
+
+void AudioHandler::voiceCaputureCallback(QSpan<float> interleavedAudioBuffer) {
+    
 }

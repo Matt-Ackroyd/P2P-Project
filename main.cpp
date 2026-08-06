@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
     //aasda->createNewServer();
 
     
-    AudioHandler aasda;
-    aasda.startVoiceCapture();
+    //AudioHandler aasda;
+    //aasda.startVoiceCapture();
     
 
     //int a = ntohs(connectionAddr.sin_port);

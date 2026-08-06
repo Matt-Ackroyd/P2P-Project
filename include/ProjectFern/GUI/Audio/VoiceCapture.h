@@ -19,9 +19,9 @@ public:
    qint64 readData(char *, qint64) override { return 0; }
    qint64 writeData(const char *data, qint64 count) override
    {
-      QAudioBuffer buffer({data, static_cast<int>(count)}, m_format);
-      emit audioAvailable(buffer);
+      //QAudioBuffer buffer({data, static_cast<int>(count)}, m_format);
+      emit audioAvailable(data, static_cast<int>(count), m_format);
       return count;
    }
-   Q_SIGNAL void audioAvailable(const QAudioBuffer &buffer);
+   Q_SIGNAL void audioAvailable(const char *data, int count, QAudioFormat m_format);
 };

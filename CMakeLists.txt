@@ -65,6 +65,7 @@ qt_add_qml_module(app_${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h
         ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp
         ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/VoiceCapture.h
+        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/VoicePlayback.h
         ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/AudioHandler.h
         ${PROJECT_SOURCE_DIR}/src/GUI/Audio/AudioHandler.cpp
 )
