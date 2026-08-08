@@ -1,457 +1,263 @@
 import QtQuick
-import QtQuick.Controls 2.15
+import QtCore
+import QtQuick.Controls
 import QtQuick.Layouts
-
 
 Window {
     id: mainWindow
     width: 740
     height: 580
     visible: true
+    color: "#3d3d3d"
     modality: Qt.ApplicationModal
     title: qsTr("Project Fern")
 
+    Settings {
+        id: settings
+        property alias x: mainWindow.x
+        property alias y: mainWindow.y
+        property alias width: mainWindow.width
+        property alias height: mainWindow.height
+        property var serverSelectionSplitView
+        property var serverSplitView
+        property var splitView
+        property var channelSplitView
+    }
 
-    Item {
-        id: addServerMenu
-        x: 262
-        y: 110
-        width: 201
-        height: 275
 
-        Rectangle {
-            id: rectangle1
-            color: "#decfcf"
-            anchors.fill: parent
-        }
+    Shortcut {
+        sequence: "Tab"
 
-        Text {
-            id: text1
-            x: 0
-            y: 0
-            width: 113
-            height: 20
-            text: "Contact Adress"
-            font.pixelSize: 12
-        }
+        onActivated: {
+            menuBar.visible = !menuBar.visible;
 
-        Item {
-            id: contactAdress
-            x: 0
-            y: 21
-            width: 113
-            height: 21
-
-            Rectangle {
-                id: rectangle2
-                x: 28
-                y: 85
-                color: "#a9a9a9"
-                border.color: "#a69d9d"
-                anchors.fill: parent
+            if (menuBar.height === 0) {
+                menuBar.height = 31;
+            } else {
+                menuBar.height = 0;
             }
-
-            TextInput {
-                id: ip
-                x: 0
-                y: 0
-                text: "192.168.0.17"
-                anchors.fill: parent
-                font.pixelSize: 12
-            }
-        }
-
-        Item {
-            id: contactPort
-            x: 0
-            y: 73
-            width: 113
-            height: 21
-            Rectangle {
-                id: rectangle3
-                x: 28
-                y: 85
-                color: "#a9a9a9"
-                border.color: "#a69d9d"
-                anchors.fill: parent
-            }
-
-            TextInput {
-                id: port
-                x: 0
-                y: 0
-                text: "15777"
-                anchors.fill: parent
-                font.pixelSize: 12
-            }
-        }
-
-        Text {
-            id: text2
-            x: 0
-            y: 48
-            width: 113
-            height: 20
-            text: "Contact Port"
-            font.pixelSize: 12
-        }
-
-        Item {
-            id: invitation
-            x: 0
-            y: 188
-            width: 113
-            height: 21
-            Rectangle {
-                id: rectangle4
-                x: 28
-                y: 85
-                color: "#a9a9a9"
-                border.color: "#a69d9d"
-                anchors.fill: parent
-            }
-
-            TextInput {
-                id: code
-                x: 0
-                y: 0
-                text: "48ca38ec6f1bc018a17f9369a44c7881"
-                anchors.fill: parent
-                anchors.leftMargin: -1
-                anchors.rightMargin: 1
-                anchors.topMargin: 0
-                anchors.bottomMargin: 0
-                font.pixelSize: 12
-            }
-        }
-
-        Text {
-            id: text3
-            x: 0
-            y: 162
-            width: 113
-            height: 20
-            text: "Invitation"
-            font.pixelSize: 12
-        }
-
-        Item {
-            id: item1
-            x: 1
-            y: 235
-            width: 200
-            height: 40
-
-
-            Rectangle {
-                id: rectangle5
-                x: 46
-                y: 155
-                color: "#e48989"
-                anchors.fill: parent
-            }
-            Button {
-                id: button1
-                text: "Join"
-                anchors.fill: parent
-
-                Connections {
-                    target: button1
-                    function onClicked() { CppInterface.joinServer(ip.text, port.text, userid.text, code.text) }
-                }
-            }
-        }
-
-        Item {
-            id: item2
-            x: 160
-            y: 0
-            width: 40
-            height: 42
-
-            Rectangle {
-                id: rectangle6
-                color: "#9c9393"
-                anchors.fill: parent
-            }
-
-            Button {
-                id: button2
-                text: "Close"
-                anchors.fill: parent
-
-                Connections {
-                    target: button2
-                    function onClicked() { addServerMenu.visible = false }
-                }
-            }
-        }
-
-        Item {
-            id: idEntry
-            x: 0
-            y: 127
-            width: 113
-            height: 21
-            Rectangle {
-                id: rectangle7
-                x: 28
-                y: 85
-                color: "#a9a9a9"
-                border.color: "#a69d9d"
-                anchors.fill: parent
-            }
-
-            TextInput {
-                id: userid
-                x: 0
-                y: 0
-                text: "58adb05c6196be187e44c75248057edd"
-                anchors.fill: parent
-                anchors.leftMargin: -1
-                anchors.rightMargin: 1
-                anchors.topMargin: 0
-                anchors.bottomMargin: 0
-                font.pixelSize: 12
-            }
-        }
-
-        Text {
-            id: text4
-            x: 0
-            y: 101
-            width: 113
-            height: 20
-            text: "userID"
-            font.pixelSize: 12
         }
     }
 
-    Loader {
-        id: serverLoader
-        anchors.left: serverList.right
+
+    MenuBar {
+        id: menuBar
+        height: 31
+        anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: toolBar.bottom
-        anchors.bottom: parent.bottom
+        anchors.top: parent.top
         anchors.leftMargin: 0
         anchors.rightMargin: 0
         anchors.topMargin: 0
-        anchors.bottomMargin: 0
-        source: "QML/ServerStructure.qml"
-        active: false
 
-        Rectangle {
-            id: rectangle8
-            color: "#3d3d3d"
-            anchors.fill: parent
-        }
-    }
-
-    ToolBar {
-        id: toolBar
-        y: 0
-        width: 740
-        height: 23
-        anchors.right: parent.right
-        focusPolicy: Qt.TabFocus
-
-        ToolSeparator {
-            id: toolSeparator
-            x: 112
-            y: 0
-            width: 13
-            height: 13
-
-            ToolButton {
-                id: toolButton
-                x: -108
-                y: 0
-                width: 115
-                height: 18
-                text: "Create Server"
-
-                Connections {
-                    target: toolButton
-                    function onClicked() { CppInterface.createNewServer() }
-                }
+        Menu {
+            title: qsTr("Acount")
+            Action { text: qsTr("Settings")
+                onTriggered: settingsLoader.active = !settingsLoader.active
             }
-
-            ToolButton {
-                id: toolButton1
-                x: 6
-                y: 0
-                width: 103
-                height: 18
-                text: " Create Channel"
-
-                Connections {
-                    target: toolButton1
-                    function onClicked() { CppInterface.createNewTextChannel(serverLoader.item.uuid) }
-                }
-            }
-
-            ToolButton {
-                id: toolButton2
-                x: 109
-                y: 2
-                width: 103
-                height: 18
-                text: "Join Server"
-                Connections {
-                    target: toolButton2
-                    function onClicked() { addServerMenu.visible = true }
-                }
-            }
-
-            ToolButton {
-                id: toolButton3
-                x: 218
-                y: 2
-                width: 103
-                height: 18
-                text: "Create Invitation"
-                Connections {
-                    target: toolButton3
-                    function onClicked() { CppInterface.createServerInvitation(serverLoader.item.uuid) }
-                }
+            MenuSeparator { }
+            Action {
+                text: qsTr("All Known Users")
+                //onTriggered:
             }
         }
-
-        ToolButton {
-            id: toolButton4
-            x: 662
-            y: 0
-            width: 78
-            height: 23
-            text: "Settings"
-
-            Connections {
-                target: toolButton4
-                function onClicked() { settingsLoader.active = true }
+        Menu {
+            title: qsTr("Server")
+            Action { text: qsTr("Create New Channel")
+                onTriggered: newChannelMenuLoader.active = !newChannelMenuLoader.active
             }
+            Action { text: qsTr("Manage Invitations") }
+
+            MenuSeparator { }
+            Action { text: qsTr("New Server")
+                onTriggered: newServerMenuLoader.active = !newServerMenuLoader.active
+            }
+            Action { text: qsTr("Join Server")
+                onTriggered: newServerMenuLoader.active = true
+            }
+
         }
-    }
-
-    Item {
-        id: serverList
-        width: 55
-        anchors.left: parent.left
-        anchors.top: toolBar.bottom
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 0
-        anchors.topMargin: 0
-        anchors.bottomMargin: 0
-
-        Rectangle {
-            id: rectangle
-            color: "#717171"
-            border.width: 0
-            anchors.fill: parent
-        }
-
-        GridView {
-            id: gridView
-            anchors.fill: parent
-            anchors.rightMargin: 0
-            boundsMovement: Flickable.StopAtBounds
-            model: ListModel {
-            }
-            delegate: Item {
-                id: serverSelection
-                x: 5
-                height: 70
-
-                width: 50
-
-                property string serverID: serverid
-
-
-                Item {
-                    id: serverBoarder
-                    width: 50
-                    height: 50
-                    anchors.verticalCenterOffset: -5
-                    anchors.centerIn: parent
-
-                    Column {
-                        spacing: 5
-                    }
-
-                    Rectangle {
-                        width: 40
-                        height: 40
-                        color: colorCode
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
-                    Text {
-                        x: 13
-                        y: 45
-                        text: name
-                        font.bold: true
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
-                    Image {
-                        id: image
-                        anchors.fill: parent
-                        source: "qrc:/qtquickplugin/images/template_image.png"
-                        fillMode: Image.PreserveAspectFit
-                    }
-                }
-
-                MouseArea {
-                    id: mouseArea
-                    x: 10
-                    y: 5
-                    anchors.fill: parent
-
-                    Connections {
-                        target: mouseArea
-                        function onClicked() {
-                            // if its the first load
-                            if (serverLoader.active === false) {
-                                serverLoader.active = true
-                                serverLoader.item.uuid = serverSelection.serverID
-                                CppInterface.requestServerInfo(serverSelection.serverID)
-                            }
-                            else {
-                                // Check if the server selected is diffrent from the current server if so change it
-                                if (serverLoader.item.uuid !== serverSelection.serverID) {
-                                    serverLoader.active = false
-                                    serverLoader.active = true
-                                    serverLoader.item.uuid = serverSelection.serverID
-                                    CppInterface.requestServerInfo(serverSelection.serverID)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            cellWidth: 70
-            cellHeight: 70
-
-            Connections {
-                target: CppInterface
-                function onServerLoad(server_id) {
-                    console.log(server_id)
-                    gridView.model.append({name: "test", colorCode: "red", serverid: server_id})
-                }
-            }
+        Menu {
+            title: qsTr("&Help")
+            Action { text: qsTr("&About") }
         }
     }
 
     Loader {
         id: settingsLoader
-        x: 45
-        y: 37
-        width: 646
-        height: 500
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: menuBar.bottom
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 31
+        anchors.rightMargin: 31
+        anchors.topMargin: 31
+        anchors.bottomMargin: 31
         source: "QML/Settings.qml"
         active: false
     }
 
+    Component.onCompleted: serverSelectionSplitView.restoreState(settings.serverSelectionSplitView)
+    Component.onDestruction: settings.serverSelectionSplitView = serverSelectionSplitView.saveState()
+
+    SplitView {
+        id: serverSelectionSplitView
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: menuBar.bottom
+        anchors.bottom: parent.bottom
+        anchors.topMargin: 0
+        orientation: Qt.Horizontal
+        handle: Rectangle {
+            id: handleDelegate
+            implicitWidth: 1
+            implicitHeight: 1
+            color: "#1F1F1F"
+
+            containmentMask: Item {
+                x: (handleDelegate.width - width) / 2
+                width: 20
+                height: serverSelectionSplitView.height
+            }
+        }
+
+        Item {
+            id: serverList
+            width: 55
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.leftMargin: 0
+            anchors.topMargin: 0
+            SplitView.minimumWidth: 50
+            //anchors.top: toolBar.bottom
+
+            Rectangle {
+                id: rectangle
+                color: "#717171"
+                border.width: 0
+                anchors.fill: parent
+            }
+
+            GridView {
+                id: gridView
+                anchors.fill: parent
+                anchors.rightMargin: 0
+                boundsMovement: Flickable.StopAtBounds
+                model: ListModel {
+                }
+                delegate: Item {
+                    id: serverSelection
+                    x: 5
+                    height: 70
+
+                    width: 50
+
+                    property string serverID: serverid
+
+
+                    Item {
+                        id: serverBoarder
+                        width: 50
+                        height: 50
+                        anchors.verticalCenterOffset: -5
+                        anchors.centerIn: parent
+
+                        Column {
+                            spacing: 5
+                        }
+
+                        Rectangle {
+                            width: 40
+                            height: 40
+                            color: colorCode
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+
+                        Text {
+                            x: 13
+                            y: 45
+                            text: name
+                            font.bold: true
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+
+                        Image {
+                            id: image
+                            anchors.fill: parent
+                            source: "qrc:/qtquickplugin/images/template_image.png"
+                            fillMode: Image.PreserveAspectFit
+                        }
+                    }
+
+                    MouseArea {
+                        id: mouseArea
+                        x: 10
+                        y: 5
+                        anchors.fill: parent
+
+                        Connections {
+                            target: mouseArea
+                            function onClicked() {
+                                // if its the first load
+                                if (serverLoader.active === false) {
+                                    serverLoader.active = true
+                                    serverLoader.item.uuid = serverSelection.serverID
+                                    CppInterface.requestServerInfo(serverSelection.serverID)
+                                }
+                                else {
+                                    // Check if the server selected is diffrent from the current server if so change it
+                                    if (serverLoader.item.uuid !== serverSelection.serverID) {
+                                        serverLoader.active = false
+                                        serverLoader.active = true
+                                        serverLoader.item.uuid = serverSelection.serverID
+                                        CppInterface.requestServerInfo(serverSelection.serverID)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                cellWidth: 70
+                cellHeight: 70
+
+                Connections {
+                    target: CppInterface
+                    function onServerLoad(server_id) {
+                        console.log(server_id)
+                        gridView.model.append({name: "test", colorCode: "red", serverid: server_id})
+                    }
+                }
+            }
+        }
+
+        Loader {
+            id: serverLoader
+            source: "QML/ServerStructure.qml"
+            active: false
+        }
+
+    }
+
+
+
+    Loader {
+        id: menuLoader
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 239
+        anchors.rightMargin: 239
+        anchors.topMargin: 143
+        anchors.bottomMargin: 227
+        active: false
+        sourceComponent: newServerMenu
+    }
 }
+
+
+
+
 
 
 
@@ -459,7 +265,6 @@ Window {
 
 /*##^##
 Designer {
-    D{i:0}D{i:1;invisible:true}D{i:12;locked:true}D{i:16;locked:true}D{i:17;locked:true}
-D{i:24;locked:true}D{i:29}D{i:42;locked:true}D{i:54;invisible:true}
+    D{i:0}D{i:16}D{i:20;locked:true}D{i:34}
 }
 ##^##*/

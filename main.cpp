@@ -15,6 +15,9 @@ int main(int argc, char *argv[])
     //qmlRegisterType<CppInterface>("", "CppInterface");
 
     QApplication app(argc, argv);
+    app.setOrganizationName("FernOrSomthingIDK");
+    app.setOrganizationDomain("thecove.sbs");
+    app.setApplicationName("Project Fern");
 
     QQmlApplicationEngine engine;
     QObject::connect(

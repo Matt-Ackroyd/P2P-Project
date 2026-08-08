@@ -4,79 +4,122 @@ import QtQuick.Controls 2.15
 Item {
     id: server
     property string uuid: "This is a string"
-    
 
-    Frame {
-        id: channelList2
-        x: 0
-        width: 163
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.topMargin: 0
-        anchors.bottomMargin: 0
-        
-
-
+    Component.onCompleted: {
+        splitView.restoreState(settings.splitView)
+        serverSplitView.restoreState(settings.serverSplitView)
     }
-    
-    Loader {
-        id: channelLoader
-        x: 163
-        y: 0
-        width: 423
-        height: 480
-        source: "ChannelStructure.qml"
-        active: false
+    Component.onDestruction: {
+        settings.splitView = splitView.saveState()
+        settings.serverSplitView = serverSplitView.saveState()
     }
 
-    Item {
-        id: channelList
-        width: 162
+
+    SplitView {
+        id: serverSplitView
         anchors.left: parent.left
+        anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 0
         anchors.topMargin: 0
-        anchors.bottomMargin: 0
+        orientation: Qt.Horizontal
+        handle: Rectangle {
+            id: serverHandleDelegate
+            implicitWidth: 1
+            implicitHeight: 1
+            color: "#1F1F1F"
 
-        Rectangle {
-            id: rectangle
-            color: "#676767"
-            anchors.fill: parent
+            containmentMask: Item {
+                x: (serverHandleDelegate.width - width) / 2
+                width: 20
+                height: serverSplitView.height
+            }
+        }
 
-            ListView {
-                id: listView
+
+        Item {
+            SplitView.minimumWidth: 50
+            SplitView.preferredWidth: 162
+            id: channelList
+            width: 162
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.topMargin: 0
+            anchors.bottomMargin: 0
+
+
+            Rectangle {
+                id: rectangle
+                color: "#444444"
+                anchors.fill: parent
+            }
+
+            Button {
+                id: filesChannelButton
                 x: 0
-                y: 24
+                width: parent ? parent.width : 0
+                height: 19
+                text: "FILES"
+                anchors.top: parent.top
+                anchors.topMargin: 0
+
+                Connections {
+                    target: filesChannelButton
+                    function onClicked() {
+                        channelLoader.setSource("FileStructure.qml")
+                        channelLoader.active = false
+                        channelLoader.active = true
+                        CppInterface.fillFileContainer(uuid, "Files/" + server.uuid + "/")
+                    }
+                }
+            }
+            SplitView {
+                id: splitView
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: parent.top
+                anchors.top: filesChannelButton.bottom
                 anchors.bottom: parent.bottom
-                anchors.leftMargin: 0
-                anchors.rightMargin: 0
-                anchors.topMargin: 24
-                anchors.bottomMargin: 0
-                model: ListModel {
-                }
-                delegate: Row {
-                    spacing: 5
+                anchors.topMargin: 0
+                orientation: Qt.Vertical
+                handle: Rectangle {
+                    id: handleDelegate
+                    implicitWidth: 1
+                    implicitHeight: 1
+                    color: "#1F1F1F"
 
-                    Item {
+                    containmentMask: Item {
+                        x: (handleDelegate.width - width) / 2
+                        width: 20
+                        height: splitView.height
+                    }
+                }
+
+                ListView {
+                    id: listView
+                    height: 55
+                    SplitView.preferredHeight: 250
+                    SplitView.minimumHeight: 50
+                    model: ListModel {
+                    }
+                    delegate: Item {
                         id: channelSelection
-                        width: 100
+                        width: parent ? parent.width : 0
                         height: 20
                         property string channelID: channelid
 
-                        Button {
-                            id: button
-                            x: 0
-                            y: 0
-                            width: 100
-                            height: 16
+
+                        Text {
+                            color: "#ffffff"
+                            text: name
+                            anchors.fill: parent
+                        }
+
+                        MouseArea {
+                            id: mouseArea
+                            anchors.fill: parent
 
                             Connections {
-                                id: connections
-                                target: button
+                                target: mouseArea
                                 function onClicked() {
                                     channelLoader.setSource("ChannelStructure.qml")
                                     // if its the first load
@@ -97,7 +140,22 @@ Item {
                                 }
                             }
                         }
+                    }
 
+                    Connections {
+                        target: CppInterface
+                        function onChannelLoad(channel_id) { listView.model.append({name: "test", colorCode: "yellow", channelid: channel_id}) }
+                    }
+                }
+
+                ListView {
+                    id: voiceChannels
+                    SplitView.minimumHeight: 50
+                    model: ListModel {
+
+                    }
+                    delegate: Row {
+                        spacing: 5
                         Rectangle {
                             width: 100
                             height: 20
@@ -108,34 +166,26 @@ Item {
                             width: 100
                             text: name
                         }
-
                     }
                 }
 
-                Connections {
-                    target: CppInterface
-                    function onChannelLoad(channel_id) { listView.model.append({name: "test", colorCode: "yellow", channelid: channel_id}) }
-                }
             }
         }
-
-        Button {
-            id: filesChannelButton
-            x: 0
-            y: 0
-            width: 162
-            height: 19
-            text: "FILES"
-
-            Connections {
-                target: filesChannelButton
-                function onClicked() {
-                    channelLoader.setSource("FileStructure.qml")
-                    channelLoader.active = false
-                    channelLoader.active = true
-                    CppInterface.fillFileContainer(uuid, "Files/" + server.uuid + "/")
-                }
-            }
+        Loader {
+            SplitView.minimumWidth: 50
+            id: channelLoader
+            width: 423
+            height: 480
+            source: "ChannelStructure.qml"
+            active: false
         }
     }
+
+
+
+
+
+    
 }
+
+
