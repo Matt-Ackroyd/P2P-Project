@@ -115,33 +115,30 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.leftMargin: 0
-                anchors.rightMargin: 0
-                anchors.bottomMargin: 0
                 height: flickable.height
+
 
                 Flickable {
                     id: flickable
-                    x: 0
-                    y: 0
                     height: Math.min(contentHeight, 150)
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: 0
-                    anchors.bottomMargin: 0
-                    contentWidth: parent.width
+                    boundsBehavior: Flickable.StopAtBounds
+                    flickableDirection: Flickable.VerticalFlick
+                    contentWidth: width
                     contentHeight: textArea.implicitHeight
 
                     TextArea.flickable: TextArea {
                         id: textArea
                         color: "#000000"
-                        anchors.fill: parent
-                        wrapMode: Text.WrapAnywhere
+                        //anchors.fill: parent
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         selectedTextColor: "#ffffff"
                         selectionColor: "#5f5f5f"
-                        placeholderText: "Enter Message"
+                        width: parent.width
+                        //placeholderText: "Enter Message"
+
 
                         Keys.onReturnPressed: function(event) {
                             if (event.modifiers & Qt.ShiftModifier) {
@@ -156,6 +153,8 @@ Item {
                             target: textArea
                             function onImplicitHeightChanged3() { messsageHistoryList.positionViewAtEnd() }
                         }
+
+
 
                     }
                     ScrollBar.vertical: ScrollBar {}
@@ -209,5 +208,22 @@ Item {
                 }
             }
         }
+    }
+
+    TextArea {
+        id: textArea1
+        x: 0
+        y: 0
+        width: 288
+        height: 201
+        wrapMode: Text.WrapAnywhere
+        placeholderText: qsTr("Text Area")
+
+        Connections {
+            target: textArea1
+            function onImplicitWidthChanged3() { console.log("clicked") }
+        }
+
+
     }
 }
