@@ -3,6 +3,13 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 2.15
 
 Item {
+    id: settings
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        drag.target: settings
+    }
 
     Rectangle {
         id: rectangle
@@ -12,8 +19,6 @@ Item {
 
     ColumnLayout {
         id: columnLayout
-        x: 0
-        y: 0
         width: 640
         height: 480
 
@@ -65,17 +70,20 @@ Item {
 
     Button {
         id: closeSettings
-        x: 565
-        y: 441
         width: 67
         height: 31
         text: "Close"
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: 8
+        anchors.bottomMargin: 8
 
         Connections {
             target: closeSettings
             function onClicked() { settingsLoader.active = false }
         }
     }
+
 
 
 }

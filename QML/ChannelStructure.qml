@@ -132,12 +132,11 @@ Item {
                     TextArea.flickable: TextArea {
                         id: textArea
                         color: "#000000"
-                        //anchors.fill: parent
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         selectedTextColor: "#ffffff"
                         selectionColor: "#5f5f5f"
                         width: parent.width
-                        //placeholderText: "Enter Message"
+                        placeholderText: "Enter Message"
 
 
                         Keys.onReturnPressed: function(event) {
@@ -208,22 +207,5 @@ Item {
                 }
             }
         }
-    }
-
-    TextArea {
-        id: textArea1
-        x: 0
-        y: 0
-        width: 288
-        height: 201
-        wrapMode: Text.WrapAnywhere
-        placeholderText: qsTr("Text Area")
-
-        Connections {
-            target: textArea1
-            function onImplicitWidthChanged3() { console.log("clicked") }
-        }
-
-
     }
 }

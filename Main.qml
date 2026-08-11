@@ -66,14 +66,16 @@ Window {
             Action { text: qsTr("Create New Channel")
                 onTriggered: newChannelMenuLoader.active = !newChannelMenuLoader.active
             }
-            Action { text: qsTr("Manage Invitations") }
+            Action { text: qsTr("Manage Invitations")
+                onTriggered: invitationManagerLoader.active = !invitationManagerLoader.active
+            }
 
             MenuSeparator { }
             Action { text: qsTr("New Server")
                 onTriggered: newServerMenuLoader.active = !newServerMenuLoader.active
             }
             Action { text: qsTr("Join Server")
-                onTriggered: newServerMenuLoader.active = true
+                onTriggered: joinServerMenuLoader.active = !joinServerMenuLoader.active
             }
 
         }
@@ -81,20 +83,6 @@ Window {
             title: qsTr("&Help")
             Action { text: qsTr("&About") }
         }
-    }
-
-    Loader {
-        id: settingsLoader
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: menuBar.bottom
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 31
-        anchors.rightMargin: 31
-        anchors.topMargin: 31
-        anchors.bottomMargin: 31
-        source: "QML/Settings.qml"
-        active: false
     }
 
     Component.onCompleted: serverSelectionSplitView.restoreState(settings.serverSelectionSplitView)
@@ -184,7 +172,7 @@ Window {
                         Image {
                             id: image
                             anchors.fill: parent
-                            source: "qrc:/qtquickplugin/images/template_image.png"
+                            source: "Files/" + serverid + "/icon.png"
                             fillMode: Image.PreserveAspectFit
                         }
                     }
@@ -240,19 +228,52 @@ Window {
 
 
 
-    Loader {
-        id: menuLoader
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 239
-        anchors.rightMargin: 239
-        anchors.topMargin: 143
-        anchors.bottomMargin: 227
-        active: false
-        sourceComponent: newServerMenu
+    Item {
+        id: menus
+        anchors.fill: parent
+
+        Loader {
+            id: settingsLoader
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 50
+            anchors.rightMargin: 50
+            anchors.topMargin: 50
+            anchors.bottomMargin: 50
+            source: "QML/Settings.qml"
+            active: false
+        }
+
+        Loader {
+            id: newChannelMenuLoader
+            source: "QML/NewChannelMenu.qml"
+            anchors.centerIn: parent
+            active: false
+        }
+
+        Loader {
+            id: newServerMenuLoader
+            source: "QML/NewServerMenu.qml"
+            anchors.centerIn: parent
+            active: false
+        }
+
+        Loader {
+            id: joinServerMenuLoader
+            source: "QML/AddServerMenu.qml"
+            anchors.centerIn: parent
+            active: false
+        }
+
+        Loader {
+            id: invitationManagerLoader
+            anchors.centerIn: parent
+            active: false
+        }
     }
+
 }
 
 
@@ -265,6 +286,6 @@ Window {
 
 /*##^##
 Designer {
-    D{i:0}D{i:16}D{i:20;locked:true}D{i:34}
+    D{i:0}D{i:19;locked:true}D{i:33}D{i:34}D{i:35}D{i:36}D{i:37}D{i:38}
 }
 ##^##*/

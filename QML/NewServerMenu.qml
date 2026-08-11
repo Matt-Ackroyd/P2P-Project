@@ -14,49 +14,44 @@ Item {
     Rectangle {
         id: rectangle4353
         color: "#5f5f5f"
+        border.color: "#1c1c1c"
+        border.width: 3
         anchors.fill: parent
     }
     
     Text {
         id: text1
-        x: 93
+        x: 8
         width: 78
         height: 21
+        color: "#ffffff"
         text: "Server Name:"
-        anchors.top: parent.verticalCenter
-        anchors.topMargin: -78
-        font.pixelSize: 12
-    }
-    
-    TextInput {
-        id: serverName
-        x: 57
-        width: 149
-        height: 20
-        anchors.top: parent.verticalCenter
-        anchors.topMargin: -41
+        anchors.top: parent.top
+        anchors.topMargin: 9
         font.pixelSize: 12
     }
     
     Text {
         id: text2
-        x: 107
-        y: 99
-        text: "Icon Path"
-        anchors.top: parent.verticalCenter
-        anchors.topMargin: -8
+        x: 8
+        width: 78
+        height: 16
+        color: "#ffffff"
+        text: "Icon Path:"
+        anchors.top: parent.top
+        anchors.topMargin: 81
         font.pixelSize: 12
     }
     
-    TextEdit {
+    TextField {
         id: serverIconPath
         x: 8
-        y: 137
         width: 247
         height: 20
-        anchors.top: parent.verticalCenter
-        anchors.topMargin: 30
+        anchors.top: parent.top
+        anchors.topMargin: 103
         font.pixelSize: 12
+        placeholderText: "Icon Path"
     }
     
     Button {
@@ -97,6 +92,16 @@ Item {
     DropArea {
         id: dropArea
         anchors.fill: parent
+    }
+
+    TextField {
+        id: serverName
+        x: 8
+        y: 36
+        width: 102
+        height: 15
+        color: "#ffffff"
+        placeholderText: "Server Name"
     }
     
 }

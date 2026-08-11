@@ -3,14 +3,20 @@ import QtQuick.Controls
 
 Item {
     id: addServerMenu
-    x: 262
-    y: 110
+    x: 0
+    y: 0
     width: 201
     height: 275
     
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        drag.target: addServerMenu
+    }
+
     Rectangle {
         id: rectangle1
-        color: "#decfcf"
+        color: "#4d4d4d"
         anchors.fill: parent
     }
     
@@ -20,6 +26,7 @@ Item {
         y: 0
         width: 113
         height: 20
+        color: "#ffffff"
         text: "Contact Adress"
         font.pixelSize: 12
     }
@@ -35,8 +42,8 @@ Item {
             id: rectangle2
             x: 28
             y: 85
-            color: "#a9a9a9"
-            border.color: "#a69d9d"
+            color: "#434343"
+            border.color: "#000000"
             anchors.fill: parent
         }
         
@@ -44,6 +51,7 @@ Item {
             id: ip
             x: 0
             y: 0
+            color: "#ffffff"
             text: "192.168.0.17"
             anchors.fill: parent
             font.pixelSize: 12
@@ -60,8 +68,8 @@ Item {
             id: rectangle3
             x: 28
             y: 85
-            color: "#a9a9a9"
-            border.color: "#a69d9d"
+            color: "#434343"
+            border.color: "#000000"
             anchors.fill: parent
         }
         
@@ -69,6 +77,7 @@ Item {
             id: port
             x: 0
             y: 0
+            color: "#ffffff"
             text: "15777"
             anchors.fill: parent
             font.pixelSize: 12
@@ -81,6 +90,7 @@ Item {
         y: 48
         width: 113
         height: 20
+        color: "#ffffff"
         text: "Contact Port"
         font.pixelSize: 12
     }
@@ -89,14 +99,14 @@ Item {
         id: invitation
         x: 0
         y: 188
-        width: 113
+        width: 201
         height: 21
         Rectangle {
             id: rectangle4
             x: 28
             y: 85
-            color: "#a9a9a9"
-            border.color: "#a69d9d"
+            color: "#434343"
+            border.color: "#000000"
             anchors.fill: parent
         }
         
@@ -104,6 +114,7 @@ Item {
             id: code
             x: 0
             y: 0
+            color: "#ffffff"
             text: "48ca38ec6f1bc018a17f9369a44c7881"
             anchors.fill: parent
             anchors.leftMargin: -1
@@ -120,6 +131,7 @@ Item {
         y: 162
         width: 113
         height: 20
+        color: "#ffffff"
         text: "Invitation"
         font.pixelSize: 12
     }
@@ -136,7 +148,8 @@ Item {
             id: rectangle5
             x: 46
             y: 155
-            color: "#e48989"
+            color: "#434343"
+            border.width: 1
             anchors.fill: parent
         }
         Button {
@@ -160,7 +173,8 @@ Item {
         
         Rectangle {
             id: rectangle6
-            color: "#9c9393"
+            color: "#434343"
+            border.width: 1
             anchors.fill: parent
         }
         
@@ -168,10 +182,11 @@ Item {
             id: button2
             text: "Close"
             anchors.fill: parent
+            icon.color: "#ffffff"
             
             Connections {
                 target: button2
-                function onClicked() { addServerMenu.visible = false }
+                function onClicked() { joinServerMenuLoader.active = false }
             }
         }
     }
@@ -180,27 +195,20 @@ Item {
         id: idEntry
         x: 0
         y: 127
-        width: 113
+        width: 201
         height: 21
         Rectangle {
             id: rectangle7
-            x: 28
-            y: 85
-            color: "#a9a9a9"
-            border.color: "#a69d9d"
+            color: "#434343"
+            border.color: "#000000"
             anchors.fill: parent
         }
         
         TextInput {
             id: userid
-            x: 0
-            y: 0
+            color: "#ffffff"
             text: "58adb05c6196be187e44c75248057edd"
             anchors.fill: parent
-            anchors.leftMargin: -1
-            anchors.rightMargin: 1
-            anchors.topMargin: 0
-            anchors.bottomMargin: 0
             font.pixelSize: 12
         }
     }
@@ -211,7 +219,9 @@ Item {
         y: 101
         width: 113
         height: 20
+        color: "#ffffff"
         text: "userID"
         font.pixelSize: 12
     }
+
 }
