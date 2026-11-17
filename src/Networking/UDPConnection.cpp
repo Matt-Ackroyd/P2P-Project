@@ -1,42 +1,63 @@
 #include "UDPConnection.h"
-#include <PrimaryClient.h>
+#include "PrimaryClient.h"
+#include "ML-KEM_Handshake.h"
 
-UDPConnection::UDPConnection(unsigned char* sharedSecret) {
-    this->sharedSecret = sharedSecret;
+UDPConnection::UDPConnection() {
     this->sock = PrimaryClient::getInstance()->socketfd;
-    //Temp set addr
-    this->setAddr("127.0.0.1");
+
 }
 
 UDPConnection::~UDPConnection() {
-    delete[] this->sharedSecret;
+    if (this->sharedSecret != NULL) {
+        delete[] this->sharedSecret;
+    }
 }
 
-void UDPConnection::setAddr(char const *addr) {
+void UDPConnection::setAddr(char const *addr, int port) {
     // clear servaddr
-    bzero(&this->connectionAddr, sizeof(this->connectionAddr));
+    memset(&this->connectionAddr, 0, sizeof(this->connectionAddr));
     this->connectionAddr.sin_addr.s_addr = inet_addr(addr);
-    this->connectionAddr.sin_port = htons(this->SendingPort);
+    this->connectionAddr.sin_port = htons(port);
     this->connectionAddr.sin_family = AF_INET;
 }
 
-void UDPConnection::send(unsigned char* data, int datalen) {
-    // // Update SeqNumbers
-    // packet.setSeqNum(this->currentSeqNum);
-    // this->currentSeqNum += 1;
+void UDPConnection::sendAck(std::string packetID) {
+    Packet ack(PacketType::ACK, PrimaryClient::getInstance()->getClientID(), packetID);
 
-    // // Add Packet to buffer until its acknowlaged
-    // this->sendingBuffer.push_back(packet);
+    int packetlen = ack.serialize(NULL, 0, NULL, NULL);
+    sendto(this->sock, ack.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
+}
 
-    // // Send Over Socket
+void UDPConnection::sendHello() {
+    Packet* hello = new Packet(PacketType::HELLO, PrimaryClient::getInstance()->getClientID());
 
+    hello->serialize(NULL, 0, NULL, NULL);
+    addPacketToOutgoingQueue(hello);
+}
 
-    //Gen IV
-    Packet *packetToSend = new Packet(123, PacketType::PACKET);
+// Send an Empty packet in order to keep the connection going 
+void UDPConnection::sendKeepAlive() {
+    unsigned char keepAlive[1] = {(unsigned char)19};
+    Packet packet(PacketType::KEEP_ALIVE, PrimaryClient::getInstance()->getClientID());
+
+    int packetlen = packet.serialize((char*)keepAlive, 1, NULL, NULL);
+    int a = sendto(this->sock, packet.getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr)); 
+}
+
+void UDPConnection::sendEncrypted(unsigned char* data, int datalen) {
+
+    // If this user hasn't created a shared secret yet then we can't send encrypted data
+    if (this->sharedSecret == NULL) {
+        return;
+    }
+
+    Packet *packetToSend = new Packet(PacketType::PACKET, PrimaryClient::getInstance()->getClientID());
 
     // AAD Gen for the senderID and incoming length of the data
     unsigned char aad[UUID_BYTE_SIZE + sizeof(datalen)];
-    memcpy(aad, packetToSend->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(packetToSend->packetAuthorID, uuid);
+    memcpy(aad, uuid, UUID_BYTE_SIZE);
     memcpy(aad+UUID_BYTE_SIZE, &datalen, sizeof(datalen));
 
 
@@ -53,31 +74,131 @@ void UDPConnection::send(unsigned char* data, int datalen) {
     
     
     // Encapsulate in a packet & send
-    int packetlen = packetToSend->serialize(ciphertext, datalen, iv, tag);
-    sendto(this->sock, packetToSend->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
-    delete packetToSend;
+    packetToSend->serialize((char*)ciphertext, datalen, iv, tag);
+    addPacketToOutgoingQueue(packetToSend);
 }
 
-void UDPConnection::sendConnectionRequest() {
-    Packet *packet = new Packet(-1, PacketType::CONNECTION_REQUEST);
-    unsigned char data[ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH];
 
-    // Generate Random Number for handshake & store it for later in Primary Client
-    RAND_bytes(PrimaryClient::getInstance()->handShakeRand, ML_KEM_HANDSHAKE_RANDSIZE);
-    memcpy(data, PrimaryClient::getInstance()->handShakeRand, ML_KEM_HANDSHAKE_RANDSIZE);
+void UDPConnection::sendHandshakeRequest() {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    Packet* requestPacket = ML_KEM_Handshake::startHandshake(this->handshakeRandBuffer, client->getKeyPair(), client->getClientID(), 0, client->getDSAkey());
+    addPacketToOutgoingQueue(requestPacket);
+}
 
-    // Get Public key & place in data(offset by the randsize)
-    size_t publen = ML_KEM_KEYLENGTH;
-    EVP_PKEY_get_raw_public_key(PrimaryClient::getInstance()->getKeyPair(), 
-        data+ML_KEM_HANDSHAKE_RANDSIZE, &publen);
+void UDPConnection::sendPacket(Packet* packet) {
+    sendto(this->sock, packet->getData(), packet->getPacketlength(), 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
+}
+
+unsigned char* UDPConnection::getSharedSecret() {
+    return this->sharedSecret;
+}
+void UDPConnection::setSharedSecret(unsigned char* secret) {
+    this->sharedSecret = secret;
+}
+
     
+void UDPConnection::receivedAck(std::string packetID) { // TODO add mtx Guard to prevent race conditions
+    std::lock_guard<std::mutex> lock(outgoingmtx);
 
-    int packetlen = packet->serialize(data, ML_KEM_HANDSHAKE_RANDSIZE + ML_KEM_KEYLENGTH, NULL, NULL);
-    sendto(this->sock, packet->getData(), packetlen, 0, (struct sockaddr*)&connectionAddr, sizeof(connectionAddr));
+    if (!this->outgoingBuffer.contains(packetID)) {
+       return;
+    }
+
+    Packet* packet = this->outgoingBuffer[packetID];
+    this->outgoingBuffer.erase(packetID);
     delete packet;
 }
 
 
-unsigned char* UDPConnection::getSharedSecret() {
-    return this->sharedSecret;
+void UDPConnection::addPacketToOutgoingQueue(Packet* outgoingPacket) { // TODO add mtx Guard to prevent race conditions
+    std::lock_guard<std::mutex> lock(outgoingmtx);
+    
+    outgoingBuffer[outgoingPacket->getPacketID()] = outgoingPacket;
+    
+}
+
+void UDPConnection::addPacketToIncomingQueue(Packet *incomingPacket)
+{
+    std::lock_guard<std::mutex> lock(incomingmtx);
+    incommingBuffer[incomingPacket->getPacketID()] = std::chrono::system_clock::now();
+}
+
+void UDPConnection::removePacketFromIncomingQueue(std::string packetID)
+{
+    incommingBuffer.erase(packetID);
+}
+
+// Returns a seqnum and increments it by one for the next call
+// int UDPConnection::newSeqNum() {
+//     std::lock_guard<std::mutex> lock(mtx);
+    
+//     int output = this->outgoingSeqNum;
+//     this->outgoingSeqNum++;
+//     return output;
+// }
+
+// Sends this connection information about this server as well as your user info for establishing a connection
+void UDPConnection::sendServer(Server* server) {
+
+    RemoteUser* thisUser = PrimaryClient::getInstance()->getThisUser();
+    ServerContainer container(DataTypes::SERVER, server, thisUser);
+
+    this->sendEncrypted(container.getData(), container.getDataLen());
+}
+
+void UDPConnection::sendTextChannel(TextChannel* channel) {
+    TextChannelContainer container(DataTypes::TEXT_CHANNEL, channel);
+
+    this->sendEncrypted(container.getData(), container.getDataLen());
+}
+
+void UDPConnection::sendJoinRequest(std::string invitationCode) {
+    sockaddr_in relay = PrimaryClient::getInstance()->getPreferedRelay();
+    JoinRequest request(DataTypes::JOIN_REQUEST, invitationCode, relay.sin_addr.s_addr, relay.sin_port, 1);
+
+    this->sendEncrypted(request.getData(), request.getDataLen());
+}
+
+void UDPConnection::sendAddUserToServerRequest(RemoteUser* user, Server* server) {
+    UserContainer request(DataTypes::USER, user, server);
+
+    this->sendEncrypted(request.getData(), request.getDataLen());
+}
+
+void UDPConnection::resetConnection()
+{
+    {
+        std::lock_guard<std::mutex> lock(outgoingmtx);
+        this->outgoingBuffer.clear();   
+    }
+    {
+        std::lock_guard<std::mutex> lock(incomingmtx);
+        this->incommingBuffer.clear();
+    }
+  
+ 
+    this->synced = false;
+    
+}
+
+
+void UDPConnection::sendSyncRequest(Server* server) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    SyncRequest* channelRequest = new SyncRequest(*server->getID(), DataTypes::TEXT_CHANNEL, 0, MAX_SYNC_REQUEST);
+    this->sendEncrypted(channelRequest->getData(), channelRequest->getDataLen());
+
+    SyncRequest* userRequest = new SyncRequest(*server->getID(), DataTypes::USER, 0, MAX_SYNC_REQUEST);
+    this->sendEncrypted(userRequest->getData(), userRequest->getDataLen());
+
+    SyncRequest* messageRequest = new SyncRequest(*server->getID(), DataTypes::MESSAGETYPE, 0, MAX_SYNC_REQUEST);
+    this->sendEncrypted(messageRequest->getData(), messageRequest->getDataLen());
+
+    SyncRequest* fileRequest = new SyncRequest(*server->getID(), DataTypes::FILE_INDICATOR, 0, MAX_SYNC_REQUEST);
+    this->sendEncrypted(fileRequest->getData(), fileRequest->getDataLen());
+
+    this->syncRequests[channelRequest->getSyncID()] = channelRequest;
+    this->syncRequests[userRequest->getSyncID()] = userRequest;
+    this->syncRequests[messageRequest->getSyncID()] = messageRequest;
+    this->syncRequests[fileRequest->getSyncID()] = fileRequest;
 }

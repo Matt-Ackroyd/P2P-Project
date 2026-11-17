@@ -1,43 +1,50 @@
 #include "Packet.h"
-#include <PrimaryClient.h>
 
 
-Packet::Packet(int seqNum, PacketType packetType) {
-    this->packetAuthorID = PrimaryClient::getInstance()->getClientID();
-    this->seqNum = seqNum;
+Packet::Packet(PacketType packetType, std::string* author, std::string packetID) {
+    if (author != NULL) {
+        this->packetAuthorID = *author;
+    }
+    
+    this->packetID = ID::clean(packetID);
     this->packetType = packetType;
     //this->data = new unsigned char[10];
 }
 
 
-int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
+int Packet::serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC) {
+    this->dataLen = dataLen;
     unsigned char controlVar = (char)0;
-    size_t packetLength = sizeof(this->packetType) + sizeof(this->seqNum) + sizeof(this->packetAuthorID) + sizeof(dataLen) + dataLen + sizeof(controlVar);
+    this->packetLength = Packet::MIN_PACKET_SIZE + dataLen;
 
     // Control variable to let the reciver know to expect the IV(1), MAC(2) or both(3)
     if (IV != NULL) {
-        packetLength += AES_256_IV_LENGTH;
+        this->packetLength += AES_256_IV_LENGTH;
         controlVar += (char)1;
     }
     if (MAC != NULL) {
-        packetLength += AES_256_GCM_TAG_LENGTH;
+        this->packetLength += AES_256_GCM_TAG_LENGTH;
         controlVar += (char)2;
     }
 
-    this->data = new unsigned char[packetLength];    
+    // Clean Buffer
+    this->data = new char[packetLength]; 
+    memset(this->data, 0, packetLength);
     
-    long unsigned int offset = 0;
+    long unsigned int offset = SHAW_256_HASH_SIZE;
 
     // Add Packet Type to Output
     memcpy(this->data+offset, &this->packetType, sizeof(this->packetType));
     offset += sizeof(this->packetType);
 
-    // Add SeqNum to Output 
-    memcpy(this->data+offset, &this->seqNum, sizeof(this->seqNum));
-    offset += sizeof(this->seqNum);
+    // Add PacketID to Output 
+    ID::BytesFromString(this->packetID, (unsigned char*)this->data+offset);
+    offset += UUID_BYTE_SIZE;
 
     // Sender Id
-    memcpy(this->data+offset, this->packetAuthorID.getRaw(), UUID_BYTE_SIZE);
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(this->packetAuthorID, uuid);
+    memcpy(this->data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Add Data Length to Output
@@ -61,36 +68,55 @@ int Packet::serialize(unsigned char* unserializedData, int dataLen, unsigned cha
     // MAC
     if (MAC != NULL) {
         memcpy(this->data+offset, MAC, AES_256_GCM_TAG_LENGTH);
+        offset += AES_256_GCM_TAG_LENGTH;
     }
 
-    return packetLength;
+    // Hashcheck creation
+    // hashes packet type, seqNum, senderID & dataLen, to ensure they are the same on the other end
+    shaw256Hash((unsigned char*)data+SHAW_256_HASH_SIZE, Packet::MIN_PACKET_SIZE-SHAW_256_HASH_SIZE, (unsigned char*)data);
+
+    return this->packetLength;
 }
 
 // Returns data length
-int Packet::deserialize(unsigned char* serializedData) {
-    int dataLen;
+int Packet::deserialize(char* serializedData) {
     long unsigned int offset = 0;
-    this->packetAuthorID.GenerateNewID();
+
+    //Hash
+    unsigned char packetHash[SHAW_256_HASH_SIZE];
+    memcpy(packetHash, serializedData+offset, SHAW_256_HASH_SIZE);
+    offset += SHAW_256_HASH_SIZE;
+
+    // hash Check
+    unsigned char hashToCompare[SHAW_256_HASH_SIZE];
+    shaw256Hash((unsigned char*)serializedData+SHAW_256_HASH_SIZE, Packet::MIN_PACKET_SIZE-SHAW_256_HASH_SIZE, (unsigned char*)hashToCompare);
+
+    // Check if the two hashes match
+    for (int i = 0; i < SHAW_256_HASH_SIZE; i++) {
+        if (hashToCompare[i] != packetHash[i]) {
+            throw std::runtime_error("Bad Packet Buffer\n");
+        }
+    }
 
     // PacketType
     memcpy(&this->packetType, serializedData+offset, sizeof(this->packetType));
     offset += sizeof(this->packetType);
 
-    // Seqence Number
-    memcpy(&this->seqNum, serializedData+offset, sizeof(this->seqNum));
-    offset += sizeof(this->seqNum);
+    // PacketID
+    this->packetID = ID::stringFromBytes((unsigned char*)serializedData+offset);
+    offset += UUID_BYTE_SIZE;
 
     // Sender Id
-    this->packetAuthorID.set(serializedData+offset);
+    this->packetAuthorID = ID::stringFromBytes((unsigned char*)serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // DataLength
-    memcpy(&dataLen, serializedData+offset, sizeof(dataLen));
-    offset += sizeof(dataLen);
+    memcpy(&this->dataLen, serializedData+offset, sizeof(this->dataLen));
+    offset += sizeof(this->dataLen);
     
     // Data
-    this->data = new unsigned char[dataLen];
-    memcpy(this->data, serializedData+offset, dataLen);
+    this->data = new char[this->dataLen];
+    memcpy(this->data, serializedData+offset, this->dataLen);
     offset += dataLen;
 
     // Iv/Mac Control val
@@ -114,13 +140,13 @@ int Packet::deserialize(unsigned char* serializedData) {
     return dataLen;
 }
 
-int Packet::getSeqNum() {
-    return this->seqNum;
+std::string Packet::getPacketID() {
+    return this->packetID;
 }
 PacketType Packet::getPacketType() {
     return this->packetType;
 }
-unsigned char* Packet::getData() {
+char* Packet::getData() {
     return this->data;
 }
 unsigned char* Packet::getTag() {
@@ -128,6 +154,12 @@ unsigned char* Packet::getTag() {
 }
 unsigned char* Packet::getIV() {
     return this->IV;
+}
+int Packet::getDataLength() {
+    return this->dataLen;
+}
+int Packet::getPacketlength() {
+    return this->packetLength;
 }
 
 

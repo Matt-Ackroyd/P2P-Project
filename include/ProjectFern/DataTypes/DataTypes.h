@@ -1,59 +1,258 @@
 #pragma once
-#include "UUID.h"
+#include "ID.h"
+#include "Encryption.h"
+
+#define SIGNITURE_SIZE 32
+
+class Server;
+class TextChannel;
+class RemoteUser;
 
 enum DataTypes {
+    EMPTY,
     MESSAGETYPE,
     FILETYPE,
-    FILEINDICATOR
+    FILE_INDICATOR,
+    FILE_HOST_CLAIM,
+    SERVER,
+    TEXT_CHANNEL,
+    VOICE_CHANNEL,
+    USER,
+    JOIN_REQUEST,
+    ADD_OR_MODIFY_REQUEST,
+    DELETE_REQUEST,
+    SYNC_REQUEST,
+    SYNC_RESPONSE,
+    DELETED
 };
 
-// class to contain infomation about a message as well as the message itself
-class MessageContainer {
-private:
-    UUID messageID;
-    UUID *channelID;
-    UUID *author;
-    char* message;
-    int messageLength;
+class Container {
+protected: 
+    DataTypes datatype;
+    int offset = sizeof(DataTypes);
+    unsigned char* data = nullptr;
+    int datalen;
     
+
+public:
+    Container(DataTypes type, int len) {
+        this->datatype = type;
+        this->datalen = sizeof(DataTypes) + len;
+
+        if (datatype != DataTypes::EMPTY) {
+            this->data = new unsigned char[this->datalen];
+            // DataType
+            memcpy(this->data, &datatype, sizeof(DataTypes));
+        }
+    }
+    ~Container() { 
+        delete[] this->data;
+        this->data = nullptr;
+    }
+
+    unsigned char* getData() {return this->data;}
+    int getDataLen() {return this->datalen;}
+};
+
+
+class Request : public Container {
+private:
+    std::string serverID;
+    std::string requestedID;
+    DataTypes requestedDatatype;
+    void serialize();
+
+    Request(DataTypes dataTypeOfThisObject, std::string serverID, std::string requestedID, DataTypes requestedDatatype);
+public:
+    Request(std::string serverID, std::string requestedID, DataTypes requestedDatatype);
+    static Request deserialize(unsigned char* serializedData);
+
+    DataTypes getRequestedDatatype();
+    std::string getServerID();
+    std::string getRequestedID();
+
+    static void onRequest(unsigned char *decryptedData, RemoteUser *requestee);
+};
+
+
+
+// class to contain infomation about a message as well as the message itself
+class MessageContainer : public Container{
+private:
+    std::string messageID;
+    std::string serverID;
+    std::string channelID;
+    std::string author;
+    std::string message;
+    int messageLength;
+    unsigned char* signature = nullptr;
+    void serialize();
     
 public:
-    int createNew(UUID* channel, UUID* author, char* message, int msgLen); // Returns the required length of the buffer to hold this structure
+    MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageID = "", unsigned char* sig = nullptr); 
+    static MessageContainer* deserialize(unsigned char* data);
+    ~MessageContainer();
 
-    void serialize(unsigned char* serializedData);
-    static MessageContainer deserialize(unsigned char* data);
+    std::string* getMessageID();
+    std::string* getServerID();
+    std::string* getChannelID();
+    std::string* getAuthor();
+    std::string getMessage();
+    unsigned char* getSignature();
+    void clearSignature();
 
-    UUID* getMessageID();
-    UUID* getChannel();
-    UUID* getAuthor();
-    char* getMessage();
+    bool verify();
+
+    static void onRequest(std::string serverID, std::string id, RemoteUser *requestee);
 };
 
 // a class to contain file data along side its ID
-class FileContainer {
+class FileContainer : public Container{
 private:
-    UUID fileID;
+    std::string fileID;
     int byteLocation; // Could use a better name (it means which byte of the file is this packet starting at)
-    int datalen;
-    unsigned char* data;
+    int fileDataLen;
+    unsigned char* fileData = nullptr;
+    void serialize();
+
 public:
-    int createNew(UUID id, int byteLocation, unsigned char* data, int datalenth);
-    void serialize(unsigned char* serializedData);
+    FileContainer(std::string id, int byteLocation, unsigned char* data, int datalenth, DataTypes type = FILETYPE);
+    ~FileContainer();
+
     static FileContainer deserialize(unsigned char* serializedData);
+
+    std::string getFileID();
+    int getByteLocation();
+    int getFileDatalen();
+    static void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+    unsigned char *getFileData();
 };
 
 // a class containing meta data about a file
-class FileIndicator {
+class FileIndicator : public Container{
 private:
-    UUID fileID;
+    std::string fileID;
+    std::string fileAuthor;
+    std::string serverID;
     int fileSize;
-    string relativeFileLocation;
+    std::string relativeFileLocation;
     // File Signiture
+    unsigned char* signature = nullptr;
 
     // Will not be serilized as this is ment for the original person who uploaded the file so we dont copy to the relitive path
-    string localFileLocation;
+    std::string localFileLocation;
+    void serialize();
 public:
-    int createNew(UUID id, int fileSize, string path);
-    void serialize(unsigned char* serializedData);
+    FileIndicator(std::string relativePath, int fileSize, std::string serverID, std::string fileAuthor,
+        unsigned char* signature, std::string localPath = "", std::string id = "", DataTypes type = DataTypes::FILE_INDICATOR);
     static FileIndicator deserialize(unsigned char* serializedData);
+
+    ~FileIndicator();
+
+    static void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+    static void onRemoveRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+
+    static void onReceived(unsigned char *output, RemoteUser *sender);
+
+    std::string getFileID();
+    std::string getFileAuthor();
+    std::string getServerID();
+    std::string getFilePath();
+    std::string getLocalFilePath();
+    int getFileSize();
+    unsigned char* getFileSignature();
+};  
+
+
+class FileHostClaim : public Container {
+    std::string fileID;
+    bool hasFile;
+
+public:
+    FileHostClaim(std::string fileID, bool hasFile, DataTypes type = DataTypes::FILE_HOST_CLAIM);
+
+    static FileHostClaim deserialize(unsigned char* serializedData);
+
+    bool hostHasFile();
+    std::string getFileID();
+
+    static void onRequest(std::string serverID, std::string fileID, RemoteUser *requestee);
+    static void onReceived(unsigned char *output, RemoteUser *sender);
+    static void onRemoveRequest();
+};
+
+
+class JoinRequest : public Container{
+    std::string invitation;
+    int contactAddress;
+    short int contactPort;
+    bool requiresRelay;
+
+    JoinRequest(std::string givenInvitation, int contactAddress, short int contactPort, bool requiresRelay);
+    void serialize();
+
+public:
+    JoinRequest(DataTypes datatype, std::string givenInvitation, int contactAddress, short int contactPort, bool requiresRelay);
+    static JoinRequest deserialize(unsigned char* serializedData);
+
+    std::string getInvitation();
+    int getContactAddress();
+    short int getContactPort();
+    bool getRelayRequired();
+};
+
+
+class TextChannelContainer : public Container {
+    std::string serverID;
+    std::string channelID;
+    // MoreToCome
+    TextChannelContainer(std::string serverid, std::string channelid);
+    void serialize();
+public:
+
+    TextChannelContainer(DataTypes datatype, TextChannel* channel);
+    
+    static TextChannelContainer deserialize(unsigned char* serializedData);
+
+    std::string getServerID();
+    std::string getChannelID();
+};
+
+class UserContainer : public Container{
+    std::string userID;
+    std::string serverID;
+    int contactAddress;
+    short int contactPort;
+    bool requiresRelay;
+
+    void serialize();
+    UserContainer(std::string userID, std::string serverID, int contactAddress, short int contactPort, bool requiresRelay);
+public:
+    UserContainer(DataTypes datatype, RemoteUser* user, Server* server);
+    static UserContainer deserialize(unsigned char* serializedData);
+
+    std::string getUserID();
+    std::string getServerID();
+    int getContactAddress();
+    short int getContactPort();
+    bool getRelayRequired();
+    static void onReceived(unsigned char *decryptedData);
+    static void onReceived(UserContainer request);
+
+    static const int USER_CONTAINER_SIZE = (UUID_BYTE_SIZE*2 + sizeof(int) + sizeof(short int) + sizeof(bool));
+};
+
+class ServerContainer : public Container {
+    std::string serverID;
+    UserContainer serverUser;
+    void serialize();
+    // MoreToCome
+    ServerContainer(std::string id, UserContainer user);
+public:
+    ServerContainer(DataTypes datatype, Server* server, RemoteUser* user);
+    static ServerContainer deserialize(unsigned char* serializedData);
+
+    std::string getServerID();
+    UserContainer getServerUser();
+    static void onReceived(unsigned char *decryptedData);
 };

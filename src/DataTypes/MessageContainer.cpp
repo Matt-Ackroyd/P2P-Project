@@ -1,75 +1,168 @@
 #include "DataTypes.h"
+#include "PrimaryClient.h"
+#include "DatabaseConnection.h"
 
- // Returns the required length of the buffer to hold this structure
-int MessageContainer::createNew(UUID* channel, UUID* author, char* message, int msgLen) {
-    this->messageID.GenerateNewID();
+MessageContainer::MessageContainer(DataTypes datatype, std::string server, std::string channel, std::string author, std::string message, std::string messageid, unsigned char* sig) 
+    : Container(datatype, (UUID_BYTE_SIZE*4 + sizeof(int) + message.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE)) {
+    this->serverID = server;
     this->channelID = channel;
     this->author = author;
     this->message = message;
-    this->messageLength = msgLen;
-    return UUID_BYTE_SIZE*3 + sizeof(int) + this->messageLength;
+    this->messageLength = message.length();
+    this->messageID = ID::clean(messageid);
+    this->signature = sig;
+
+    if (datatype == DataTypes::MESSAGETYPE) {
+        serialize();
+    }
+    
 }
 
-void MessageContainer::serialize(unsigned char* serializedData) {
-    int offset = 0;
+MessageContainer::~MessageContainer() {
+    delete[] this->signature;
+}
+
+
+void MessageContainer::serialize() {
+    unsigned char uuid[UUID_BYTE_SIZE];    
+
+    // Sign the message if this message is being sent out to someone and has not been signed yet
+    if (this->signature == nullptr) {
+        this->signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        signMessage(PrimaryClient::getInstance()->getDSAkey(), (unsigned char*)this->message.data(), messageLength, this->signature);
+    } 
+    memcpy(this->data+offset, this->signature, ML_DSA_87_SIGNATURE_BYTE_SIZE); 
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
 
     // MessageID
-    memcpy(serializedData+offset, this->messageID.getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->messageID, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
+    offset += UUID_BYTE_SIZE;
+
+    // ServerID
+    ID::BytesFromString(this->serverID, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // ChannelID
-    memcpy(serializedData+offset, this->channelID->getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->channelID, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Author
-    memcpy(serializedData+offset, this->author->getRaw(), UUID_BYTE_SIZE);
+    ID::BytesFromString(this->author, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
     offset += UUID_BYTE_SIZE;
 
     // Message Length
-    memcpy(serializedData+offset, &this->messageLength, sizeof(this->messageLength));
+    memcpy(data+offset, &this->messageLength, sizeof(this->messageLength));
     offset += sizeof(this->messageLength);
 
     // Message
-    memcpy(serializedData+offset, this->message, this->messageLength);
+    memcpy(data+offset, this->message.data(), this->messageLength);
     offset += this->messageLength;
 }
 
-MessageContainer MessageContainer::deserialize(unsigned char* data) {
-    MessageContainer newMessage;
-    int offset = 0;
+MessageContainer* MessageContainer::deserialize(unsigned char* serializedData) {
+    // The dataType has been removed by now
+    int offset = sizeof(DataTypes);
+
+    // Signature
+    unsigned char* signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    memcpy(signature, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
 
     // MessageID
-    newMessage.messageID.set(data+offset);
+    std::string messageID = ID::stringFromBytes(serializedData+offset);
+    offset += UUID_BYTE_SIZE;
+
+    // ServerID
+    std::string serverID = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // ChannelID
-    newMessage.channelID->set(data+offset);
+    std::string channelID = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // Author
-    newMessage.author->set(data+offset);
+    std::string author = ID::stringFromBytes(serializedData+offset);
     offset += UUID_BYTE_SIZE;
 
     // Message Length
-    memcpy(&newMessage.messageLength, data+offset, sizeof(newMessage.messageLength));
-    offset += sizeof(newMessage.messageLength);
+    int msglen = 0;
+    memcpy(&msglen, serializedData+offset, sizeof(msglen));
+    offset += sizeof(msglen);
 
     // Message
-    newMessage.message[newMessage.messageLength];
-    memcpy(newMessage.message, data+offset, newMessage.messageLength);
-    offset += newMessage.messageLength;
-    return newMessage;
+    std::string msg(reinterpret_cast<char const*>(serializedData+offset), msglen);
+    offset += msglen;
+
+    return new MessageContainer(DataTypes::EMPTY, serverID, channelID, author, msg, messageID, signature);
 }
 
-UUID* MessageContainer::getMessageID() {
+std::string* MessageContainer::getMessageID() {
     return &this->messageID;
 }
-UUID* MessageContainer::getChannel() {
-    return this->channelID;
+
+std::string* MessageContainer::getServerID() {
+    return &this->serverID;
 }
-UUID* MessageContainer::getAuthor() {
-    return this->author;
+std::string* MessageContainer::getChannelID() {
+    return &this->channelID;
 }
-char* MessageContainer::getMessage() {
+std::string* MessageContainer::getAuthor() {
+    return &this->author;
+}
+std::string MessageContainer::getMessage() {
     return this->message;
+}
+
+unsigned char *MessageContainer::getSignature() {
+    return this->signature;
+}
+
+void MessageContainer::clearSignature()
+{
+    delete[] this->signature;
+    this->signature = nullptr;
+}
+
+bool MessageContainer::verify() {
+    PrimaryClient* client = PrimaryClient::getInstance();
+    RemoteUser* author = client->getUser(this->author);
+
+    if (author == NULL || this->signature == nullptr) {
+        return false;
+    }
+
+    return verifyMessage(author->connection.DSAkey, this->signature, (unsigned char*)this->message.data(), messageLength);
+}
+
+void MessageContainer::onRequest(std::string serverID, std::string id, RemoteUser *requestee) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    Server* server = client->getServer(serverID);
+
+    try {
+        MessageContainer* message = DatabaseConnection::getMessageFromDB(id);
+        // Check requesting users perms
+        if (message->serverID != serverID) {
+            return;
+        }
+        
+        if (!server->knownUsers.contains(*requestee->getID())) { // If they dont belong to this server dont send them anything
+            return;
+        }
+
+        requestee->connection.sendEncrypted(message->getData(), message->getDataLen());
+
+        delete message;
+
+
+    } catch (std::runtime_error e) {
+        return;
+    }
+
+    
+
 }

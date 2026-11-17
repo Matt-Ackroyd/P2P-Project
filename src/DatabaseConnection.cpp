@@ -1,0 +1,598 @@
+#include "DatabaseConnection.h"
+
+std::mutex DatabaseConnection::mtx;
+
+
+void DatabaseConnection::startup() {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    std::string sql = "CREATE TABLE Users("
+                      "userID BLOB(16) PRIMARY KEY    NOT NULL, "
+                      "username        TEXT,"
+                      "contactAddress  INT(4)       NOT NULL, "
+                      "contactPort     INT(2)       NOT NULL, "
+                      "relayRequired   BOOLEAN      NOT NULL, "
+                      "secret          BLOB(32),"
+                      "public_ML_DSA_key BLOB(2592),"
+                      "UNIQUE(userID));";
+    char* messaggeError;
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
+
+    sql = "CREATE TABLE Servers("
+            "serverID BLOB(16) PRIMARY KEY    NOT NULL,"
+            "UNIQUE(serverID));";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);  
+
+    sql = "CREATE TABLE TextChannels("
+            "channelID BLOB(16) PRIMARY KEY        NOT NULL, "
+            "serverID  BLOB(16) NOT NULL,"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID)"
+            "UNIQUE(channelID));";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
+    sql = "CREATE TABLE Messages("
+            "messageID  BLOB(16)    PRIMARY KEY NOT NULL, "
+            "channelID  BLOB(16)    NOT NULL,"
+            "authorID   BLOB(16)    NOT NULL,"
+            "contents   TEXT        NOT NULL,"
+            "timestamp  UNSIGNED BIG INT         NOT NULL,"
+            "signature  BLOB(4627)         NOT NULL,"
+            "FOREIGN KEY(authorID) REFERENCES Users(userID),"
+            "FOREIGN KEY(channelID) REFERENCES Channels(channelID)"
+            "UNIQUE(messageID));";
+
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
+    sql = "CREATE TABLE ServerUsers("
+            "serverID BLOB(16), "
+            "userID BLOB(16)," 
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID),"
+            "FOREIGN KEY(userID) REFERENCES Users(userID)"
+        ");";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
+    sql = "CREATE TABLE Invitations("
+            "invitationCode BLOB(16) PRIMARY KEY        NOT NULL, "
+            "serverID  BLOB(16) NOT NULL,"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID),"
+            "UNIQUE(invitationCode));";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
+
+    sql = "CREATE TABLE Files("
+            "fileID BLOB(16) PRIMARY KEY        NOT NULL, "
+            "serverID  BLOB(16) NOT NULL,"
+            "authorID  BLOB(16) NOT NULL,"
+            "path  TEXT NOT NULL,"
+            "localPath  TEXT NOT NULL,"
+            "size  INT NOT NULL,"
+            "signature  BLOB(4627) NOT NULL,"
+            "FOREIGN KEY(serverID) REFERENCES Servers(serverID),"
+            "FOREIGN KEY(authorID) REFERENCES Users(userID),"
+            "UNIQUE(fileID));";
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &messaggeError);
+
+
+    // Foren key table for Roles & User Role Links to servers
+
+    sqlite3_close_v2(db);
+
+}
+
+void DatabaseConnection::addUserToDB(RemoteUser* user) {
+    std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO Users (userID, username, contactAddress, contactPort, relayRequired, secret, public_ML_DSA_key) VALUES (?, ?, ?, ?, ?, ?, ?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*user->getID(), uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+    sqlite3_bind_text(stmt, 2, user->Username.c_str(), user->Username.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 3, user->contactAddress);
+    sqlite3_bind_int(stmt, 4, user->contactPort);
+    sqlite3_bind_int(stmt, 5, user->requiresRelay);
+    sqlite3_bind_blob(stmt, 6, user->connection.getSharedSecret(), SHAW_256_HASH_SIZE, nullptr);
+
+    if (user->connection.DSAkey != NULL) {
+        size_t len;
+        EVP_PKEY_get_raw_public_key(user->connection.DSAkey, NULL, &len);
+        unsigned char publicKey[len];
+        EVP_PKEY_get_raw_public_key(user->connection.DSAkey, publicKey, &len);
+        sqlite3_bind_blob(stmt, 7, publicKey, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE, SQLITE_TRANSIENT);
+    }
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::getUsersFromDB() {
+    //std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql("SELECT * FROM Users");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string id = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+
+        RemoteUser* user = new RemoteUser(id);
+        user->Username = (char*)sqlite3_column_text(stmt, 1);
+        user->contactAddress = sqlite3_column_int(stmt, 2);
+        user->contactPort = sqlite3_column_int(stmt, 3);
+        user->requiresRelay = sqlite3_column_int(stmt, 4);
+        
+
+        if (sqlite3_column_type(stmt, 5) != SQLITE_NULL) {
+            unsigned char* secret = new unsigned char[SHAW_256_HASH_SIZE];
+            memcpy(secret, (unsigned char*)sqlite3_column_blob(stmt, 5), SHAW_256_HASH_SIZE);
+            user->connection.setSharedSecret(secret);
+        }
+
+        if (sqlite3_column_type(stmt, 6) != SQLITE_NULL) {
+            unsigned char* buffer = (unsigned char*)sqlite3_column_blob(stmt, 6);
+
+            user->connection.DSAkey = EVP_PKEY_new_raw_public_key_ex(NULL, "ML-DSA-87", NULL, buffer, ML_DSA_87_PUBLIC_KEY_BYTE_SIZE);
+        }
+
+        PrimaryClient::getInstance()->loadUser(user);
+    }
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::addServerToDB(Server* server) {
+    std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO Servers (serverID) VALUES (?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+}
+
+void DatabaseConnection::getServersFromDB() {
+    //std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql("SELECT * FROM Servers");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string id = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+
+        Server* server = new Server(id);
+
+        PrimaryClient::getInstance()->loadServer(server);
+    }
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::addTextChannelToDB(Server* server, TextChannel* channel) {
+    std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO TextChannels (channelID, serverID) VALUES (?, ?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char channeluuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*channel->getID(), channeluuid);
+    sqlite3_bind_blob(stmt, 1, (char*)channeluuid, UUID_BYTE_SIZE, nullptr);
+
+    unsigned char serveruuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), serveruuid);
+    sqlite3_bind_blob(stmt, 2, (char*)serveruuid, UUID_BYTE_SIZE, nullptr);
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::getTextChannelsFromDB(Server* server) {
+    //std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql("SELECT * FROM TextChannels WHERE serverID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only Channels assosiated with this server
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string id = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+
+        TextChannel* textchannel = new TextChannel(server, id);
+
+        server->loadChannel(textchannel);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::addMessageToDB(TextChannel* channel, MessageContainer* message) {
+    std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO Messages (messageID, channelID, authorID, contents, timestamp, signature) VALUES ("
+        "?, ?, ?, ?, ?, ?"
+    ");";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char messageuuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*message->getMessageID(), messageuuid);
+    sqlite3_bind_blob(stmt, 1, (char*)messageuuid, UUID_BYTE_SIZE, nullptr);      // MessageID
+
+    unsigned char channeluuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*channel->getID(), channeluuid);
+    sqlite3_bind_blob(stmt, 2, (char*)channeluuid, UUID_BYTE_SIZE, nullptr);      // ChannelID
+
+    unsigned char authoruuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*message->getAuthor(), authoruuid);
+    sqlite3_bind_blob(stmt, 3, (char*)authoruuid, UUID_BYTE_SIZE, nullptr);      // AuthorID
+
+    sqlite3_bind_text(stmt, 4, message->getMessage().c_str(), message->getMessage().length()+1, SQLITE_TRANSIENT); // Message Contents
+    sqlite3_bind_int64(stmt, 5, ID::getTimestamp(*message->getMessageID()));                              // TimeStamp
+    
+    sqlite3_bind_blob(stmt, 6, message->getSignature(), ML_DSA_87_SIGNATURE_BYTE_SIZE, nullptr);    // Signature
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::getMessagesFromDB(TextChannel* channel, int amount) {
+    //std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql("SELECT * FROM Messages WHERE channelID = ? ORDER BY timestamp LIMIT ?;");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only messages assosiated with this channel
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*channel->getID(), uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+    sqlite3_bind_int(stmt, 2, amount);
+
+    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string id = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+        std::string author = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 2));
+        std::string contents = (char*)sqlite3_column_text(stmt, 3);
+
+        MessageContainer* message = new MessageContainer(DataTypes::EMPTY, *channel->getServer()->getID(), *channel->getID(), author, contents, id);
+
+        channel->loadMessage(message);
+    }
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+MessageContainer* DatabaseConnection::getMessageFromDB(std::string id) {
+    //std::lock_guard<std::mutex> lock(mtx);
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    std::string sql("SELECT m.messageID, m.channelID, tc.serverID, m.authorID, m.contents, m.signature "
+                    "FROM Messages as m "
+                    "INNER JOIN TextChannels as tc "
+                    "ON m.channelID=tc.channelID "
+                    "WHERE m.messageID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only messages assosiated with this channel
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(id, uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    MessageContainer* message;
+
+    int ret = sqlite3_step(stmt);
+    if (ret == SQLITE_ROW) {
+        std::string id = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+        std::string channel = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 1));
+        std::string server = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 2));
+        std::string author = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 3));
+        std::string contents = (char*)sqlite3_column_text(stmt, 4);
+
+        unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        memcpy(sig, (unsigned char*)sqlite3_column_blob(stmt, 5), ML_DSA_87_SIGNATURE_BYTE_SIZE);
+
+        message = new MessageContainer(DataTypes::MESSAGETYPE, server, channel, author, contents, id, sig);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
+
+    return message;
+}
+
+void DatabaseConnection::addUserToServerDB(RemoteUser* user, Server* server) {
+    std::lock_guard<std::mutex> lock(mtx);
+
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO ServerUsers (serverID, userID) VALUES (?, ?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char serveruuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), serveruuid);
+    sqlite3_bind_blob(stmt, 1, (char*)serveruuid, UUID_BYTE_SIZE, nullptr);      // ServerID
+
+    unsigned char useruuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*user->getID(), useruuid);
+    sqlite3_bind_blob(stmt, 2, (char*)useruuid, UUID_BYTE_SIZE, nullptr);      // UserID
+
+    
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::getUsersInServerFromDB(Server* server) {
+    //std::lock_guard<std::mutex> lock(mtx);
+
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql("SELECT userID FROM ServerUsers WHERE serverID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only users in this server
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+    
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string userid = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+
+        server->loadUser(PrimaryClient::getInstance()->getUser(userid));
+    }
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+void DatabaseConnection::addServerInvitationToDB(std::string invitation, Server* server) {
+    std::lock_guard<std::mutex> lock(mtx);
+    
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO Invitations (invitationCode, serverID) VALUES (?, ?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char inviationCode[UUID_BYTE_SIZE];
+    ID::BytesFromString(invitation, inviationCode);
+    sqlite3_bind_blob(stmt, 1, (char*)inviationCode, UUID_BYTE_SIZE, nullptr);      
+
+    unsigned char serverid[UUID_BYTE_SIZE];
+    ID::BytesFromString(*server->getID(), serverid);
+    sqlite3_bind_blob(stmt, 2, (char*)serverid, UUID_BYTE_SIZE, nullptr);
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+std::string DatabaseConnection::getInvitationsServerFromDB(std::string invitationCode) {
+    //std::lock_guard<std::mutex> lock(mtx);
+
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql("SELECT serverID FROM Invitations WHERE invitationCode = ? LIMIT 1;");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects only messages assosiated with this channel
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(invitationCode, uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    while(int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string serverid = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+
+        sqlite3_finalize(stmt);
+        sqlite3_close_v2(db);
+
+        return serverid;
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
+
+    return "";
+}
+
+void DatabaseConnection::addFileIndicatorToDB(FileIndicator* file) {
+    std::lock_guard<std::mutex> lock(mtx);
+    
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    char* errMsg;
+    std::string sql = "INSERT INTO Files (fileID, serverID, authorID, path, localPath, size, signature) VALUES (?, ?, ?, ? ,? ,?, ?);";
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    exit = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);      
+                        
+    // UUID
+    unsigned char fileID[UUID_BYTE_SIZE];
+    ID::BytesFromString(file->getFileID(), fileID);
+    sqlite3_bind_blob(stmt, 1, (char*)fileID, UUID_BYTE_SIZE, nullptr);      
+
+    unsigned char serverid[UUID_BYTE_SIZE];
+    ID::BytesFromString(file->getServerID(), serverid);
+    sqlite3_bind_blob(stmt, 2, (char*)serverid, UUID_BYTE_SIZE, nullptr);
+
+    unsigned char author[UUID_BYTE_SIZE];
+    ID::BytesFromString(file->getFileAuthor(), author);
+    sqlite3_bind_blob(stmt, 3, (char*)author, UUID_BYTE_SIZE, nullptr);
+
+    sqlite3_bind_text(stmt, 4, file->getFilePath().c_str(), file->getFilePath().length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, file->getLocalFilePath().c_str(), file->getLocalFilePath().length(), SQLITE_TRANSIENT);
+
+    sqlite3_bind_int(stmt, 6, file->getFileSize());
+
+    sqlite3_bind_blob(stmt, 7, file->getFileSignature(), ML_DSA_87_SIGNATURE_BYTE_SIZE, nullptr);    // Signature
+
+    int ret = sqlite3_step(stmt);
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close_v2(db);
+}
+
+FileIndicator *DatabaseConnection::getFileIndicatorFromDB(std::string id) {
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    std::string sql("SELECT serverID, authorID, path, localPath, size, signature "
+                    "FROM Files "
+                    "WHERE fileID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects this file
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(id, uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    FileIndicator* file;
+
+    int ret = sqlite3_step(stmt);
+    if (ret == SQLITE_ROW) {
+        std::string serverID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+        std::string authorID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 1));
+        std::string path = (char*)sqlite3_column_text(stmt, 2);
+        std::string localPath = (char*)sqlite3_column_text(stmt, 3);
+        int size = sqlite3_column_int(stmt, 4);
+
+        unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        memcpy(sig, (unsigned char*)sqlite3_column_blob(stmt, 5), ML_DSA_87_SIGNATURE_BYTE_SIZE);
+
+        file = new FileIndicator(path, size, serverID, authorID, sig, localPath, id);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
+
+    return file;
+}
+
+
+std::vector<FileIndicator*>* DatabaseConnection::getAllFileIndicatorsFromDB(std::string serverID) {
+    sqlite3* db;
+    int exit = 0;
+    exit = sqlite3_open(DATABASE_NAME, &db);
+    std::string sql("SELECT fileID, serverID, authorID, path, localPath, size, signature "
+                    "FROM Files "
+                    "WHERE serverID = ?");
+
+    sqlite3_stmt* stmt; // will point to prepared stamement object
+    sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, nullptr);
+
+    // Selects this file
+    unsigned char uuid[UUID_BYTE_SIZE];
+    ID::BytesFromString(serverID, uuid);
+    sqlite3_bind_blob(stmt, 1, (char*)uuid, UUID_BYTE_SIZE, nullptr);
+
+    std::vector<FileIndicator*>* files = new std::vector<FileIndicator*>;
+
+    while (int ret = sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string fileID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 0));
+        std::string serverID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 1));
+        std::string authorID = ID::stringFromBytes((unsigned char*) sqlite3_column_blob(stmt, 2));
+        std::string path = (char*)sqlite3_column_text(stmt, 3);
+        std::string localPath = (char*)sqlite3_column_text(stmt, 4);
+        int size = sqlite3_column_int(stmt, 5);
+
+        unsigned char* sig = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        memcpy(sig, (unsigned char*)sqlite3_column_blob(stmt, 6), ML_DSA_87_SIGNATURE_BYTE_SIZE);
+
+        FileIndicator* file = new FileIndicator(path, size, serverID, authorID, sig, path, fileID, DataTypes::EMPTY);
+        files->emplace_back(file);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close_v2(db);
+
+    return files;
+}

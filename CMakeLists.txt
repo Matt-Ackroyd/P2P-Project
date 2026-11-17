@@ -1,18 +1,116 @@
 cmake_minimum_required(VERSION 3.23)
 
-project(project_fern)
+project(project_fern VERSION 0.1 LANGUAGES CXX)
 
-add_compile_options(-fsanitize=address)
-add_link_options(-fsanitize=address)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-string(REGEX REPLACE "\\b-g\\b" "-ggdb3" tmp_value "${CMAKE_C_FLAGS_DEBUG}")
-set_property(CACHE CMAKE_C_FLAGS_DEBUG PROPERTY VALUE "${tmp_value}")
+find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+#find_package(Qt6 REQUIRED COMPONENTS Multimedia)
 
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+qt_standard_project_setup(REQUIRES 6.10)
 
-# Adds All Internal Library Files
-add_subdirectory("include/ProjectFern")
+qt_add_executable(app_${PROJECT_NAME}
+    main.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/Files/FileContainer.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/MessageContainer.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/Files/FileIndicator.cpp
+    ${PROJECT_SOURCE_DIR}/src/DataTypes/ID.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/Encryption.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/Packet.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/UDPConnection.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/IncomingHandler.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/PrimaryClient.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/Server.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/RemoteUser.cpp
+    ${PROJECT_SOURCE_DIR}/src/Server/TextChannel.cpp
+    ${PROJECT_SOURCE_DIR}/src/Relay/RelayClient.cpp
+    ${PROJECT_SOURCE_DIR}/src/Networking/ML-KEM_Handshake.cpp
+    src/ConfigLoader.cpp
+    src/Networking/OutgoingHandler.cpp
+    src/DatabaseConnection.cpp
+    src/DataTypes/ServerContainer.cpp
+    src/DataTypes/TextChannelContainer.cpp
+    src/DataTypes/JoinRequest.cpp
+    src/DataTypes/UserContainer.cpp
+    src/DataTypes/SyncRequest.cpp
+    src/DataTypes/SyncResponse.cpp
+    src/DataTypes/Request.cpp
+    src/DataTypes/Files/FileHostClaim.cpp
+    src/Networking/FileHandler.cpp
+)
+target_include_directories(app_${PROJECT_NAME}
+    PUBLIC include/ProjectFern/DataTypes/
+    PUBLIC include/ProjectFern/Networking/
+    PUBLIC include/ProjectFern/Server/
+    PUBLIC include/ProjectFern/GUI/
+    #PUBLIC include/ProjectFern/GUI/Audio/
+    PUBLIC include/ProjectFern/Relay/
+    PUBLIC include/ProjectFern/
+)
 
-find_package(OpenSSL)
-target_link_libraries(${PROJECT_NAME} OpenSSL::Crypto)
+#add_subdirectory("include/ProjectFern")
+
+qt_add_qml_module(app_${PROJECT_NAME}
+    URI ${PROJECT_NAME}
+    QML_FILES
+        Main.qml
+        QML/ChannelStructure.qml
+        QML/ServerStructure.qml
+        QML/FileStructure.qml
+        QML/File.qml 
+        QML/Folder.qml
+        QML/Settings.qml
+        QML/NewChannelMenu.qml
+        QML/NewServerMenu.qml
+        QML/AddServerMenu.qml
+        QML/InvitationManager.qml
+    SOURCES
+        ${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/CppInterface.h
+        ${PROJECT_SOURCE_DIR}/src/GUI/CppInterface.cpp 
+        #${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/VoiceCapture.h
+        #${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/VoicePlayback.h
+        #${PROJECT_SOURCE_DIR}/include/ProjectFern/GUI/Audio/AudioHandler.h
+        #${PROJECT_SOURCE_DIR}/src/GUI/Audio/AudioHandler.cpp
+        
+)
+
+
+# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
+# If you are developing for iOS or macOS you should consider setting an
+# explicit, fixed bundle identifier manually though.
+set_target_properties(app_${PROJECT_NAME} PROPERTIES
+#    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.app_${PROJECT_NAME}
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    MACOSX_BUNDLE TRUE
+    WIN32_EXECUTABLE TRUE
+)
+
+find_package(OpenSSL REQUIRED)
+find_package(SQLite3 REQUIRED)
+target_link_libraries(app_${PROJECT_NAME}
+    #PRIVATE Qt6::Multimedia
+    PRIVATE Qt6::Quick
+    PRIVATE Qt6::Widgets
+    PRIVATE OpenSSL::Crypto
+    PRIVATE SQLite3::SQLite3
+)
+
+if(WIN32)
+    target_link_libraries(app_${PROJECT_NAME} PUBLIC wsock32 ws2_32)
+    # set_target_properties( app_${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+    #     ${CMAKE_BINARY_DIR}/bin )
+    # set_target_properties( app_${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+    #     ${CMAKE_BINARY_DIR}/bin )
+endif()
+
+install(TARGETS app_${PROJECT_NAME}
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+
+add_subdirectory("src/Relay")

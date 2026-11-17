@@ -3,23 +3,16 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
+#include <filesystem>
+
 #include "RemoteUser.h"
 #include "TextChannel.h"
 
 
-using namespace std;
-
+#define SERVER_PATH "/data/servers/"
 
 class Server {
-    UUID id;
-    unordered_map<string, RemoteUser*> knownUsers;
-    unordered_set<string> onlineUsers;
-
-    // All Active invitations to this server 
-    unordered_set<string> activeInvitations;
-
-    // All known TextChannels within this server 
-    unordered_map<int, TextChannel> knownChannels;
+    std::string id;
 
     // Server Settings 
 
@@ -28,9 +21,24 @@ class Server {
     // My Role?
 
 public: 
+    Server(std::string id = "");
     ~Server();
-    int addUser(RemoteUser *user, string invitation);
+    std::string* getID();
+    void addNewUser(RemoteUser *user);
+    void loadUser(RemoteUser *user);
     int removeUser(RemoteUser *user);
+
+    std::string createNewInvitation();
+
+    void createNewTextChannel(std::string id = "");
     
-    string createNewInvitation();
+    void loadChannel(TextChannel* channel);
+
+    TextChannel* getChannel(std::string id);
+
+    // All known TextChannels within this server 
+    std::unordered_map<std::string, TextChannel*> knownChannels;
+    std::unordered_map<std::string, RemoteUser*> knownUsers;
+    std::unordered_set<std::string> onlineUsers;
+    
 };

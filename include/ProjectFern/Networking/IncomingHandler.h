@@ -3,37 +3,55 @@
 #include <stdio.h>
 #include <strings.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <thread>
 #include <deque>
 #include <fstream>
+#include <unordered_set>
+
+#include "socketMacro.h"
 
 #include "Packet.h"
 #include "Encryption.h"
 #include "UDPConnection.h"
 #include "PrimaryClient.h"
 #include "DataTypes.h"
-
-#define MAXLINE 3000
-
-using namespace std;
+#include "ML-KEM_Handshake.h"
+#include "OutgoingHandler.h"
+#include "RelayClient.h"
+#include "Sync.h"
+#include "ThreadPool.h"
 
 class IncomingHandler {
     public:     
-        thread recvThread;
+        std::thread IncomingHandlerThread;
+
+        size_t threadCount = 30;
+        ThreadPool ThreadManager;
+        //std::mutex threadMTX;
+
+        IncomingHandler(int ReceivingPort);
         void acknowledgePacket(Packet packet, UDPConnection connectedUser);
-        void enableIncomingTraffic(int ReceivingPort);
+
+        void threadStarter(char *buffer, sockaddr_in cliaddr);
     private:
         int nextExpectedSeqNum;
         // Bool to accept Incoming messages from other clients
         bool acceptIncoming;
-        void startReceiving(int ReceivingPort);
-        deque<Packet> ReceivingBuffer;
+        void incomingStartup(int ReceivingPort);
+        void IncomingLoop(char* buffer);
+        void onPacketRecived(char *buffer, sockaddr_in cliaddr);
+        void handleIncoming(Packet *incomingPacket, sockaddr_in cliaddr);
+        std::deque<Packet> ReceivingBuffer;
 
-        void handleAck(Packet packet, UDPConnection connectedUser);
-        void handleConnectionRequest(Packet *packet, int returnSock, sockaddr_in *returnAdress, socklen_t returnLen);
-        void handleConnectionResponse(Packet *packet, int returnSock, sockaddr_in *returnAdress, socklen_t returnLen);
-        void handlePacket(Packet *packet, int datalen, int temp);
+        void handleAck(Packet* packet);
+        void handleConnectionRequest(Packet *packet);
+        void handleConnectionResponse(Packet *packet);
+        void handleRelayInfoResponse(Packet *packet);
+        void handlePacket(Packet *packet);
+        void handleKeepAlive(Packet *packet);
+
+        void handleMessage(unsigned char* decryptedData);
+        void handleNewTextChannel(unsigned char *decryptedData);
+        void handleJoinRequest(unsigned char *decryptedData, RemoteUser *requestee);
+        RemoteUser *onIncomingPacket(Packet *incomingPacket, sockaddr_in cliaddr);
 };

@@ -1,0 +1,89 @@
+import QtQuick
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 2.15
+
+Item {
+    id: settings
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        drag.target: settings
+    }
+
+    Rectangle {
+        id: rectangle
+        color: "#ffffff"
+        anchors.fill: parent
+    }
+
+    ColumnLayout {
+        id: columnLayout
+        width: 640
+        height: 480
+
+        Item {
+            id: item1
+            width: 640
+            height: 200
+
+            TextField {
+                id: usernameQuarry
+                x: 93
+                y: 21
+                width: 225
+                height: 20
+                placeholderText: "Text Field"
+
+                Connections {
+                    target: usernameQuarry
+                    function onAccepted() {
+                        CppInterface.username = usernameQuarry.text
+                        usernameQuarry.clear()
+                    }
+                }
+            }
+
+            Text {
+                id: text1
+                x: 30
+                y: 21
+                width: 57
+                height: 20
+                text: "Username:"
+                font.pixelSize: 12
+            }
+        }
+
+        Item {
+            id: item2
+            width: 200
+            height: 200
+        }
+
+        Item {
+            id: item3
+            width: 200
+            height: 200
+        }
+    }
+
+    Button {
+        id: closeSettings
+        width: 67
+        height: 31
+        text: "Close"
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: 8
+        anchors.bottomMargin: 8
+
+        Connections {
+            target: closeSettings
+            function onClicked() { settingsLoader.active = false }
+        }
+    }
+
+
+
+}

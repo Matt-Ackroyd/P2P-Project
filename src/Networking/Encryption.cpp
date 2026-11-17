@@ -1,4 +1,6 @@
 #include "Encryption.h"
+#include <filesystem>
+#include "ConfigLoader.h"
 
 // uses a GCM block cipher to encrypt plaintext into the ciphertext, returns the ciphertext length
 int symmetricEncryption(unsigned char *plaintext, int plaintext_len,
@@ -162,7 +164,7 @@ int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output
 }
 
 void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* rand1, unsigned char* rand2, unsigned char* output) { 
-    string saltStr = "Handshake";
+    std::string saltStr = "Handshake";
 
     int hashInputlen = premasterlen + 2*ML_KEM_HANDSHAKE_RANDSIZE + saltStr.length()+1;
     unsigned char hashInput[hashInputlen];
@@ -183,7 +185,132 @@ void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* ra
 
 
 void handleErrors() {
-    cout << "We Messed Up\n";
-    exit(1);
+    throw std::runtime_error("Encrypt/Decrypt Failure\n");
 }
 
+
+EVP_PKEY* getDSAkeyFromFile() {
+    EVP_PKEY* pkey;
+
+    std::filesystem::path path("Configs/PrimaryClient/DSAkey.bin");
+    if (!std::filesystem::exists(path)) {
+        EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-87", NULL);
+        pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-87");
+
+        unsigned char privateKey[4896];
+
+        size_t len;
+        EVP_PKEY_get_raw_private_key(pkey, NULL, &len);
+        EVP_PKEY_get_raw_private_key(pkey, privateKey, &len);
+        ConfigLoader::WriteBinaryFile("Configs/PrimaryClient/DSAkey.bin", (char*)privateKey, len);
+        
+    } else {    
+
+        unsigned char rawprivateKey[4896];
+        ConfigLoader::ReadBinaryFile("Configs/PrimaryClient/DSAkey.bin", (char*)rawprivateKey, 4896);
+
+        pkey = EVP_PKEY_new_raw_private_key_ex(NULL, "ML-DSA-87", NULL, rawprivateKey, ML_DSA_87_PRIVATE_KEY_BYTE_SIZE);
+    }
+    return pkey;
+}
+
+
+void signMessage(EVP_PKEY *key, unsigned char *msg, size_t msg_len, unsigned char* signatureBuffer) {
+    size_t sig_len;
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_sign_message_init(ctx, sig_alg, NULL);
+    EVP_PKEY_sign(ctx, signatureBuffer, &sig_len, msg, msg_len);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+}
+
+
+bool verifyMessage(EVP_PKEY *key, unsigned char* sig, unsigned char *msg, size_t msg_len) {
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_verify_message_init(ctx, sig_alg, NULL);
+
+    int ret = EVP_PKEY_verify(ctx, sig, ML_DSA_87_SIGNATURE_BYTE_SIZE, msg, msg_len);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+
+    if (ret == 1) {
+        return true;
+    }
+    return false;
+}
+
+
+void signFile(EVP_PKEY *key, std::string filePath, unsigned char* signatureBuffer) {
+    std::filesystem::path path(filePath);
+
+    if (!std::filesystem::exists(path)) {
+        return;
+    }
+
+    size_t sig_len = ML_DSA_87_SIGNATURE_BYTE_SIZE;
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_sign_message_init(ctx, sig_alg, NULL);
+
+    char buffer[1024];
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        return;
+    }
+    
+    while (int inlen = file.readsome(buffer, 1024) > 0) {
+        EVP_PKEY_sign_message_update(ctx, (unsigned char*)buffer, inlen);
+    }
+
+    EVP_PKEY_sign_message_final(ctx, signatureBuffer, &sig_len);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+
+}
+
+
+bool verifyFile(EVP_PKEY *key, unsigned char* sig, std::string filePath) {
+    std::filesystem::path path(filePath);
+
+    if (!std::filesystem::exists(path)) {
+        return false;
+    }
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
+    EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-87", NULL);
+
+    EVP_PKEY_verify_message_init(ctx, sig_alg, NULL);
+
+    EVP_PKEY_CTX_set_signature(ctx, sig, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+
+
+    char buffer[1024];
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        return false;
+    }
+    
+    while (int inlen = file.readsome(buffer, 1024) > 0) {
+        EVP_PKEY_verify_message_update(ctx, (unsigned char*)buffer, inlen);
+    }
+
+    int ret = EVP_PKEY_verify_message_final(ctx);
+
+    EVP_SIGNATURE_free(sig_alg);
+    EVP_PKEY_CTX_free(ctx);
+
+    if (ret == 1) {
+        return true;
+    }
+    return false;
+}

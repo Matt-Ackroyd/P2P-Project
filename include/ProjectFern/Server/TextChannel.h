@@ -1,9 +1,24 @@
 #pragma once
-#include <unordered_map>
+#include <vector>
 #include "DataTypes.h"
 
-using namespace std;
+class Server;
 
 class TextChannel {
+    std::string id;
+    Server* ownedByThisServer;
 
+public:
+    // Contains the last 100 or so messages by default
+    std::vector<MessageContainer*> messages;
+    TextChannel(Server* ownedByThisServer, std::string idString = "");
+    std::string* getID();
+
+    void receiveMessage(MessageContainer *message);
+
+    void loadMessage(MessageContainer* message);
+    void sendMessage(MessageContainer* message);
+    
+    Server* getServer();
+    static void onRequest(std::string serverID, std::string id, RemoteUser *requestee);
 };

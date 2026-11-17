@@ -3,16 +3,21 @@
 #include <string>
 #include "UDPConnection.h"
 
-using namespace std;
 
-
-class RemoteUser {
-    string Username;
-    UUID *id;
-
+class RemoteUser {  
+    std::string id;
+    
 public:
-    RemoteUser(UUID id, unsigned char* sharedSecret);
+    RemoteUser(std::string id);
     ~RemoteUser();
-    string getID();
-    UDPConnection* connection;
+    UDPConnection connection;
+    
+
+    std::string Username = "Unknown";
+    bool requiresRelay;
+    int contactAddress;
+    u_short contactPort;
+
+    std::string* getID();
+    static void onRequest(std::string serverID, std::string id, RemoteUser *requestee);
 };

@@ -1,20 +1,24 @@
 #pragma once
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/pem.h>
 #include <iostream>
 #include <cstring>
 
-using namespace std;
-
 //#define AES_256_KEY_LENGTH      32
 //#define AES_256_KEY_LENGTH_BITS 256
-#define AES_256_IV_LENGTH     16
+#define AES_256_IV_LENGTH     32
 #define AES_256_GCM_TAG_LENGTH  16
+
+#define SHAW_256_HASH_SIZE 32
 
 // Size of the 
 #define ML_KEM_KEYLENGTH 1568
 #define ML_KEM_HANDSHAKE_RANDSIZE 32
 
+#define ML_DSA_87_PUBLIC_KEY_BYTE_SIZE 2592 
+#define ML_DSA_87_PRIVATE_KEY_BYTE_SIZE 4896 
+#define ML_DSA_87_SIGNATURE_BYTE_SIZE 4627
 
 int symmetricEncryption(unsigned char *plaintext, int plaintext_len,
                 unsigned char *aad, int aad_len,
@@ -34,3 +38,12 @@ int shaw256Hash(unsigned char* input, int inputlen, unsigned char* shaw256output
 void handshakeHash(unsigned char* premaster, int premasterlen, unsigned char* rand1, unsigned char* rand2, unsigned char* output);
 
 void handleErrors();
+
+
+EVP_PKEY* getDSAkeyFromFile();
+void signMessage(EVP_PKEY *key, unsigned char *msg, size_t msg_len, unsigned char* signatureBuffer);
+bool verifyMessage(EVP_PKEY *key, unsigned char* sig, unsigned char *msg, size_t msg_len);
+
+
+void signFile(EVP_PKEY *key, std::string filePath, unsigned char* signatureBuffer);
+bool verifyFile(EVP_PKEY *key, unsigned char* sig, std::string filePath);

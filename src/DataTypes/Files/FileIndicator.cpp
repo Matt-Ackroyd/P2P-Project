@@ -1,0 +1,173 @@
+#include "DataTypes.h"
+#include "PrimaryClient.h"
+#include "DatabaseConnection.h"
+
+FileIndicator::FileIndicator(std::string relativePath, int fileSize, std::string serverID, std::string fileAuthor, unsigned char* signature, std::string localPath, 
+     std::string id, DataTypes type) : Container(type, UUID_BYTE_SIZE*3 + sizeof(int) + sizeof(int) + relativePath.length() + ML_DSA_87_SIGNATURE_BYTE_SIZE){
+    this->fileID = ID::clean(id);
+    this->fileAuthor = fileAuthor;
+    this->serverID = serverID;
+    this->fileSize = fileSize;
+    this->relativeFileLocation = relativePath;
+    this->localFileLocation = localPath;
+    this->signature = signature;
+
+    if (type == DataTypes::FILE_INDICATOR) {
+        serialize();
+    }
+}
+
+FileIndicator::~FileIndicator() {
+    delete[] this->signature;
+}
+
+void FileIndicator::serialize() {
+    unsigned char uuid[UUID_BYTE_SIZE];
+
+    if (this->signature == nullptr) {
+        this->signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+        signFile(PrimaryClient::getInstance()->getDSAkey(), localFileLocation, this->signature);
+    } 
+
+    // ID
+    ID::BytesFromString(this->fileID, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
+    offset += UUID_BYTE_SIZE;
+
+    // File author
+    ID::BytesFromString(this->fileAuthor, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
+    offset += UUID_BYTE_SIZE;
+
+    // Serverid
+    ID::BytesFromString(this->serverID, uuid);
+    memcpy(data+offset, uuid, UUID_BYTE_SIZE);
+    offset += UUID_BYTE_SIZE;
+
+    // File sig
+    memcpy(data+offset, this->signature, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
+
+    // FileSize
+    memcpy(data+offset, &this->fileSize, sizeof(this->fileSize));
+    offset += sizeof(this->fileSize);
+
+    // PathLength
+    int len = this->relativeFileLocation.length();
+    memcpy(data+offset, &len, sizeof(len));
+    offset += sizeof(len);
+
+    // Path String
+    memcpy(data+offset, this->relativeFileLocation.data(), len);
+    offset += len;
+}
+
+FileIndicator FileIndicator::deserialize(unsigned char* serializedData) { 
+    // The dataType has been removed by now
+    int offset = sizeof(DataTypes);
+
+    // ID
+    std::string fileID = ID::stringFromBytes(serializedData+offset);
+    offset += UUID_BYTE_SIZE;
+
+    // fileAuthor
+    std::string fileAuthor = ID::stringFromBytes(serializedData+offset);
+    offset += UUID_BYTE_SIZE;
+
+    // ServerID
+    std::string serverID = ID::stringFromBytes(serializedData+offset);
+    offset += UUID_BYTE_SIZE;
+
+    // Signature
+    unsigned char* signature = new unsigned char[ML_DSA_87_SIGNATURE_BYTE_SIZE];
+    memcpy(signature, serializedData+offset, ML_DSA_87_SIGNATURE_BYTE_SIZE);
+    offset += ML_DSA_87_SIGNATURE_BYTE_SIZE;
+
+    // File Size
+    int filelen;
+    memcpy(&filelen, serializedData+offset, sizeof(filelen));
+    offset += sizeof(filelen);
+
+    // path len
+    int len;
+    memcpy(&len, serializedData+offset, sizeof(len));
+    offset += sizeof(len);
+
+    // Path string
+    std::string path(reinterpret_cast<char const*>(serializedData+offset), len);
+
+    return FileIndicator(path, filelen, serverID, fileAuthor, signature, path, fileID, DataTypes::EMPTY);
+}
+
+
+std::string FileIndicator::getFileID()
+{
+    return this->fileID;
+}
+
+std::string FileIndicator::getFileAuthor()
+{
+    return this->fileAuthor;
+}
+
+std::string FileIndicator::getServerID()
+{
+    return this->serverID;
+}
+
+std::string FileIndicator::getFilePath()
+{
+    return this->relativeFileLocation;
+}
+
+std::string FileIndicator::getLocalFilePath()
+{
+    return this->localFileLocation;
+}
+
+int FileIndicator::getFileSize()
+{
+    return this->fileSize;
+}
+
+unsigned char *FileIndicator::getFileSignature()
+{
+    return this->signature;
+}
+
+
+void FileIndicator::onRequest(std::string serverID, std::string fileID, RemoteUser *requestee) {
+    PrimaryClient* client = PrimaryClient::getInstance();
+
+    Server* server = client->getServer(serverID);
+
+    try {
+        FileIndicator* fileIndicator = DatabaseConnection::getFileIndicatorFromDB(fileID);
+        // Check requesting users perms
+        if (fileIndicator->serverID != serverID) {
+            return;
+        }
+        
+        if (!server->knownUsers.contains(*requestee->getID())) { // If they dont belong to this server dont send them anything
+            return;
+        }
+
+        requestee->connection.sendEncrypted(fileIndicator->getData(), fileIndicator->getDataLen());
+
+        delete fileIndicator;
+
+
+    } catch (std::runtime_error e) {
+        return;
+    }
+}
+void FileIndicator::onRemoveRequest(std::string serverID, std::string fileID, RemoteUser *requestee) {
+
+}
+
+// Maybe name handle FileIndicator
+void FileIndicator::onReceived(unsigned char* output, RemoteUser* sender) {
+    FileIndicator file = FileIndicator::deserialize(output);
+
+    DatabaseConnection::addFileIndicatorToDB(&file);
+}

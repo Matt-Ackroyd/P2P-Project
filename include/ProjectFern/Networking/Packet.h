@@ -3,43 +3,61 @@
 #include <stdio.h>
 #include <string>
 #include <cstring>
+#include <chrono>
 
+#include "socketMacro.h"
 #include "Encryption.h"
-#include "UUID.h"
-//#include "PrimaryClient.h"
+#include "ID.h"
 
-using namespace std;
+#define MAX_RESEND_AMOUNT 10
+#define MAXLINE 8192
 
 enum PacketType
 {
-    PACKET,
+    NONE,
     ACK,
-    CONNECTION_REQUEST,
-    CONNECTION_RESPONSE,
-    NONE
+    KEEP_ALIVE,
+    RELAY_USER_INFO,
+    // Requires acknowledgement 
+    PACKET,
+    HANDSHAKE_REQUEST,
+    HANDSHAKE_RESPONSE,
+    RELAY_REGISTER_REQUEST,
+    RELAY_HANDSHAKE_RESPONSE,
+    HELLO
 };
 
 
 class Packet {
 private:
     PacketType packetType;
-    int seqNum;
+    //int seqNum;
+    std::string packetID;
     unsigned char IV[AES_256_IV_LENGTH];
     unsigned char MAC[AES_256_GCM_TAG_LENGTH];
-    unsigned char* data;
-
+    char* data;
+    int dataLen;
+    int packetLength;
 public:       
-    UUID packetAuthorID;
+    std::string packetAuthorID;
+    // Marks the next time where this packet should be sent
+    std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::_V2::system_clock::duration> timeToSend = std::chrono::system_clock::now();
+    int timesResent = 0;
 
-    Packet(int seqNum, PacketType packetType);
+    Packet(PacketType packetType, std::string* author, std::string packetID = "");
     ~Packet();
 
-    int serialize(unsigned char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
-    int deserialize(unsigned char* serializedData);
+    int serialize(char* unserializedData, int dataLen, unsigned char* IV, unsigned char* MAC);  
+    int deserialize(char* serializedData);
 
-    int getSeqNum();
+    std::string getPacketID();
     PacketType getPacketType();
-    unsigned char* getData();
+    char* getData();
+    int getDataLength();
+    int getPacketlength();
     unsigned char* getIV();
     unsigned char* getTag();
+
+    // PacketType(4) + SeqNum(4) + UUID(16) + dataLen(4) + ControlVar(1)
+    static int const MIN_PACKET_SIZE = SHAW_256_HASH_SIZE + sizeof(packetType) + UUID_BYTE_SIZE + UUID_BYTE_SIZE + sizeof(int) + sizeof(char);
 };
